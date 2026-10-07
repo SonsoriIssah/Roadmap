@@ -1,6 +1,7 @@
 import { h, card, cardHeader, button, chip, progressBar, toast } from '../ui.js';
 import { MODES, RITUALS } from '../data/defaults.js';
-import { fmtDay, fmtRange, relDays, weekKey, weekStart, fromMin, fmtDuration, WEEKDAYS_LONG, weekdayIndex, parts, toISO } from '../dates.js';
+import { fmtDay, fmtRange, relDays, weekKey, weekStart, fromMin, fmtDuration, WEEKDAYS_LONG, weekdayIndex, parts, toISO, toDay, isISODate } from '../dates.js';
+import { reviewTask, stageOf, STAGE_LABEL } from '../problems.js';
 import { resolveDay, activeRituals, upcoming, decisionHints } from '../engine.js';
 import { modeChip, modeReason, weekOverrideControl, banner } from './common.js';
 import { planFor, taskList, openProblemImport, trackSummary } from './tasks.js';
@@ -19,6 +20,7 @@ export function render(app) {
     header(today, r),
     ritualCards(app),
     hintCards(app),
+    yesterdayCard(app),
     todayCard(app, day),
     importPrompt(app),
     tomorrowCard(app, tomorrow),
@@ -62,6 +64,33 @@ function todayCard(app, day) {
     day.mode !== 'off' && day.mode !== 'exam'
       ? h('div', { class: 'row-actions wrap' }, h('span', { class: 'small muted' }, 'Finished early?'), button('+1 problem', () => more('problems'), { kind: 'ghost', size: 'sm' }), (app.state.tracks || []).some((t) => t.active !== false) ? button('+ next lesson', () => more('lessons'), { kind: 'ghost', size: 'sm' }) : null)
       : null,
+  );
+}
+
+/** The day-after check: what you ticked yesterday and when each comes back. */
+function yesterdayCard(app) {
+  const y = toISO(app.today - 1);
+  const entries = app.state.dsaLog.filter((e) => e.date === y && e.problemId);
+  if (!entries.length || app.state.dismissed[`yesterday:${y}`]) return null;
+  const byId = new Map(app.state.problems.map((p) => [p.id, p]));
+  const latest = new Map();
+  for (const e of entries) latest.set(e.problemId, e);
+  const rows = [...latest.values()].map((e) => ({ e, p: byId.get(e.problemId) })).filter((x) => x.p);
+  const solved = rows.filter((x) => ['alone', 'clean', 'over'].includes(x.e.outcome)).length;
+  return card(
+    cardHeader('Yesterday', button('Hide', () => app.update((s) => { s.dismissed[`yesterday:${y}`] = true; }), { kind: 'ghost', size: 'sm' }), `${solved} of ${rows.length} problems solved — reviews booked`),
+    h(
+      'ul',
+      { class: 'list' },
+      rows.map(({ p }) =>
+        h(
+          'li',
+          { class: 'list-row stacked' },
+          h('span', null, p.title, h('span', { class: 'small muted' }, ` · ${STAGE_LABEL[stageOf(p)]}`)),
+          isISODate(p.nextReview) ? h('span', { class: 'small review-when' }, `Review ${fmtDay(toDay(p.nextReview))} (${relDays(toDay(p.nextReview), app.today)}): ${reviewTask(p).step}`) : null,
+        ),
+      ),
+    ),
   );
 }
 

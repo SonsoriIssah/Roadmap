@@ -8,7 +8,7 @@ import { defaultState, normalise, migrate } from '../public/js/store.js';
 import { readXlsx, parseCSV, decodeEntities } from '../public/js/xlsx.js';
 import {
   detectTable, candidateSheets, rowsToProblems, mergeProblems, orderNew, mapStatus, mapDate, mapPriority,
-  applyFirstAttempt, applyRevisit, dueProblems, problemsToCSV, slugify,
+  applyOutcome, reviewGap, reviewTask, upcomingReviews, mapStage, dueProblems, problemsToCSV, slugify,
 } from '../public/js/problems.js';
 import { parseChapters, importChapters, videoLink, lessonsToText, parseLessonsText, lessonMinutes, fmtTimestamp } from '../public/js/learn.js';
 import { planDays, historyDay, semesterCourses } from '../public/js/planner.js';
@@ -115,7 +115,7 @@ test('re-importing keeps progress made in the app', () => {
   const today = d('2026-10-07');
   const bank = sampleProblems();
   const two = bank.find((p) => p.title === 'Two Sum');
-  Object.assign(two, applyFirstAttempt(two, 'alone', today));
+  Object.assign(two, applyOutcome(two, 'alone', today));
   const sheet = { name: 's', rows: [['Problem', 'Status'], ['Two Sum', 'Not Started'], ['Brand New', 'Not Started']], links: {} };
   const { problems, added, updated } = mergeProblems(bank, rowsToProblems(sheet, detectTable(sheet.rows)), { today, makeId });
   assert.equal(added, 1);
@@ -135,26 +135,46 @@ test('the roadmap topic decides which problems come first', () => {
   assert.equal(sheetOrder[0], 'Contains Duplicate');
 });
 
-test('outcomes schedule revisits; clean revisits retire a problem', () => {
+test("reviews follow your tracker's ladder and gaps", () => {
   const today = d('2026-10-07');
-  const p = { id: 'x', title: 'X', status: 'new' };
-  const failed = applyFirstAttempt(p, 'failed', today);
-  assert.equal(failed.status, 'attempted');
-  assert.equal(failed.nextReview, '2026-10-08');
-  assert.deepEqual(dueProblems([failed], today + 1).map((q) => q.id), ['x']);
-  let q = applyFirstAttempt(p, 'alone', today);
-  assert.equal(q.nextReview, '2026-10-14');
-  q = applyRevisit(q, true, today + 7);
-  assert.equal(q.interval, 18);
-  q = applyRevisit(q, true, today + 25);
-  q = applyRevisit(q, true, today + 70);
-  assert.equal(q.nextReview, null);
-  assert.ok(problemsToCSV([q]).includes('Solved'));
+  const p = { id: 'x', title: 'Two Sum', difficulty: 'Easy', status: 'new' };
+  let q = applyOutcome(p, 'alone', today);
+  assert.deepEqual([q.stage, q.nextReview], ['solved', '2026-10-10']); // not reimplemented → 3 days
+  assert.equal(reviewTask(q).title, 'Reimplement Two Sum from a blank editor');
+  q = applyOutcome(q, 'clean', d(q.nextReview));
+  assert.deepEqual([q.stage, q.nextReview], ['reimplemented', '2026-10-15']); // 5 days
+  assert.equal(reviewTask(q).title, 'Timed redo: Two Sum in under 15 min');
+  const over = applyOutcome(q, 'over', d(q.nextReview));
+  assert.deepEqual([over.stage, over.interval], ['reimplemented', 3]);
+  q = applyOutcome(q, 'clean', d(q.nextReview), { confidence: 4 });
+  assert.deepEqual([q.stage, q.interval], ['timed', 10]);
+  q = applyOutcome(q, 'clean', d(q.nextReview));
+  assert.deepEqual([q.stage, q.interval], ['mastered', 21]);
+  q = applyOutcome(q, 'clean', d(q.nextReview));
+  assert.deepEqual([q.stage, q.interval], ['mastered', 21]); // mastered keeps coming back
+  assert.deepEqual([applyOutcome(q, 'hints', today).stage, applyOutcome(q, 'hints', today).interval], ['hint', 2]);
+  const failed = applyOutcome(p, 'failed', today);
+  assert.deepEqual([failed.stage, failed.status, failed.nextReview], ['attempted', 'attempted', '2026-10-08']);
+  assert.deepEqual(dueProblems([failed], today + 1).map((x) => x.id), ['x']);
+  assert.equal(applyOutcome(p, 'alone', today, { confidence: 2 }).interval, 2);
+  assert.equal(reviewGap('solved', { confidence: 5 }), 3);
+  assert.ok(problemsToCSV([q]).includes('Mastered'));
+  assert.deepEqual(upcomingReviews([q, failed], today).map((x) => x.nextReview), ['2026-10-08', q.nextReview]);
 });
 
-// ---------------------------------------------------------------------------
-// Video chapters
-// ---------------------------------------------------------------------------
+test('imported statuses keep their stage and get a review date', () => {
+  assert.equal(mapStage('Mastered'), 'mastered');
+  assert.equal(mapStage('Reimplemented'), 'reimplemented');
+  assert.equal(mapStage('Timed'), 'timed');
+  assert.equal(mapStage('Hint Needed'), 'hint');
+  assert.equal(mapStage('Solved'), 'solved');
+  const sheet = { name: 's', rows: [['Problem', 'Status', 'Last Attempt', 'Next Review'], ['A', 'Solved', '2026-10-05', ''], ['B', 'Mastered', '2026-09-25', '2026-10-16'], ['C', 'Attempted', '', '']], links: {} };
+  const { problems } = mergeProblems([], rowsToProblems(sheet, detectTable(sheet.rows)), { today: d('2026-10-07'), makeId });
+  const by = Object.fromEntries(problems.map((p) => [p.title, p]));
+  assert.deepEqual([by.A.stage, by.A.nextReview], ['solved', '2026-10-08']); // last attempt + 3
+  assert.deepEqual([by.B.stage, by.B.nextReview], ['mastered', '2026-10-16']); // the sheet's own date wins
+  assert.deepEqual([by.C.stage, by.C.nextReview], ['attempted', '2026-10-08']); // no date: today + 1
+});
 
 test('YouTube chapter lists parse in common formats', () => {
   const ch = parseChapters('0:00 Intro\n1:13:00 - Creating Variables\n(1:40:30) Primitive Data Types\nnot a chapter\n2:15:00 – Arrays', 3 * 3600);
@@ -275,7 +295,8 @@ test("ticked items stay on today's list and tomorrow continues from there", () =
   const prob = first.items.find((i) => i.type === 'problem');
   lesson.lessonIds.forEach((id) => (s.lessonDone[id] = toISO(today)));
   const p = s.problems.find((x) => x.id === prob.problemId);
-  Object.assign(p, applyFirstAttempt(p, 'alone', today));
+  Object.assign(p, applyOutcome(p, 'alone', today));
+  s.dsaLog.push({ id: 'l1', problemId: p.id, date: toISO(today), kind: 'first', outcome: 'alone', prev: { ...p, stage: 'new', status: 'new', firstAt: null, lastAt: null, nextReview: null } });
   s.checks['kickoff:k1'] = toISO(today);
 
   const again = plan(s, ctx, today, today, 2).days;
@@ -292,14 +313,49 @@ test("ticked items stay on today's list and tomorrow continues from there", () =
   assert.ok(past.items.some((i) => i.type === 'problem'));
 });
 
-test('revisits appear when due, capped per day, overflow rolls forward', () => {
-  const today = d('2026-10-20'); // normal day: 2 revisits max
+test('reviews come first, then new problems fill the slots left; overflow rolls forward', () => {
+  const today = d('2026-10-20'); // normal day: 2 new + 2 reviews → up to 3 reviews, at least 1 new
   const { s, ctx } = setup((st) => {
-    for (const p of st.problems.slice(0, 3)) Object.assign(p, applyFirstAttempt(p, 'failed', today - 3));
+    for (const p of st.problems.slice(0, 5)) Object.assign(p, applyOutcome(p, 'failed', today - 3));
   });
   const [t, tm] = plan(s, ctx, today, today, 2).days;
-  assert.equal(t.items.filter((i) => i.type === 'revisit').length, 2);
-  assert.equal(tm.items.filter((i) => i.type === 'revisit').length, 1);
+  const dsa = (day) => day.items.filter((i) => i.type === 'revisit' || i.type === 'problem').map((i) => i.type);
+  assert.deepEqual(dsa(t), ['revisit', 'revisit', 'revisit', 'problem']);
+  assert.match(t.items.find((i) => i.type === 'revisit').title, /^Retry /);
+  assert.match(t.items.find((i) => i.type === 'revisit').meta, /overdue since/);
+  assert.deepEqual(dsa(tm), ['revisit', 'revisit', 'problem', 'problem']);
+});
+
+test('a problem ticked today shows when its review is, and that review appears later', () => {
+  const today = d('2026-10-07');
+  const { s, ctx } = setup();
+  const p = s.problems.find((x) => x.status === 'new');
+  const before = { ...p };
+  Object.assign(p, applyOutcome(p, 'alone', today));
+  s.dsaLog.push({ id: 'l1', problemId: p.id, date: toISO(today), kind: 'first', outcome: 'alone', prev: before });
+  const days = plan(s, ctx, today, today, 4).days;
+  const item = days[0].items.find((i) => i.key === `problem:${p.id}`);
+  assert.ok(item.done);
+  assert.equal(item.next, 'Review Sat 10 Oct: reimplement from blank');
+  const review = days[3].items.find((i) => i.key === `revisit:${p.id}`);
+  assert.equal(review.title, `Reimplement ${p.title} from a blank editor`);
+  assert.ok(!review.meta.includes('expected'));
+  // Problems planned but not yet done also get a review 3 days after their day.
+  const planned = days[1].items.find((i) => i.type === 'problem');
+  const expected = days[3].items.find((i) => i.key === `revisit:${planned.problemId}`);
+  assert.ok(!expected, 'day+3 of Oct 8 is Oct 11, outside this window');
+  const later = plan(s, ctx, today, today, 5).days[4].items.find((i) => i.key === `revisit:${planned.problemId}`);
+  assert.match(later.meta, /expected/);
+  // Ticking the review today moves it up the ladder and the list remembers what you did.
+  const r = s.problems.find((x) => x.id === p.id);
+  const snap = { ...r };
+  Object.assign(r, applyOutcome(r, 'clean', d('2026-10-10')));
+  s.dsaLog.push({ id: 'l2', problemId: p.id, date: '2026-10-10', kind: 'revisit', outcome: 'clean', prev: snap });
+  const done = plan(s, ctx, d('2026-10-10')).days[0].items.find((i) => i.key === `revisit:${p.id}`);
+  assert.ok(done.done);
+  assert.equal(done.title, `Reimplement ${p.title} from a blank editor`);
+  assert.equal(done.next, 'Review Thu 15 Oct: timed redo under 15 min');
+  assert.ok(historyDay(today, s, ctx).items.some((i) => i.title === `Solve ${p.title}`));
 });
 
 test('the roadmap module step and application actions are on the list', () => {
@@ -325,13 +381,14 @@ test('version-1 saves upgrade without losing data', () => {
     progress: { W1: { status: 'done' } },
   };
   const s = normalise(old);
-  assert.equal(s.version, 3);
+  assert.equal(s.version, 4);
   assert.equal(s.settings.theme, 'dark');
   assert.equal(s.settings.studyStart, undefined);
   assert.ok(s.calendar.some((e) => e.id === 'c-pre'));
   assert.deepEqual(s.modules.find((m) => m.id === 'W5').patterns, ['two pointer']);
   assert.equal(s.problems[0].title, 'Two Sum');
   assert.equal(s.problems[0].status, 'solved');
+  assert.equal(s.problems[0].stage, 'solved');
   assert.equal(s.tracks[0].id, 'java');
   assert.equal(s.progress.W1.status, 'done');
   assert.equal(migrate({ version: 2, a: 1 }).a, 1);

@@ -3,10 +3,10 @@
 // tasks), so tomorrow's list continues where today's leaves off and anything
 // you skip simply rolls forward. Pure — no DOM or storage.
 
-import { toISO, toDay, isISODate, weekKey, weekdayIndex } from './dates.js';
+import { toISO, toDay, isISODate, weekKey, weekdayIndex, fmtDay } from './dates.js';
 import { resolveDay, classesOn, timetableOn } from './engine.js';
 import { CHECKLISTS, DEFAULT_SETTINGS } from './data/defaults.js';
-import { orderNew, isDue } from './problems.js';
+import { orderNew, dueProblems, reviewTask, reviewGap, stageOf, targetMinutes, STAGE_LABEL } from './problems.js';
 import { lessonMinutes, trackWindow, remainingMinutes, isCourseDay, fmtTimestamp, videoLink } from './learn.js';
 
 export function dailyLoad(mode, settings) {
@@ -139,14 +139,20 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   const takenNew = new Set();
   const attemptedToday = problems.filter((p) => p.firstAt === iso0);
   const reviewedToday = problems.filter((p) => p.lastAt === iso0 && p.firstAt !== iso0);
-  const dueQueue = problems.filter((p) => isDue(p, today) && p.lastAt !== iso0);
+  const dueQueue = dueProblems(problems, today).filter((p) => p.lastAt !== iso0);
+  // Today's log entries hold each problem as it was before you ticked it, so a
+  // finished review still shows the step you did (not the next one).
+  const before = new Map();
+  for (const e of state.dsaLog || []) if (e.date === iso0 && e.prev && e.problemId) before.set(e.problemId, e.prev);
   const scheduledLater = new Map();
+  const schedule = (d, p) => (scheduledLater.get(d) || scheduledLater.set(d, []).get(d)).push(p);
   for (const p of problems) {
     if (p.status === 'new' || !isISODate(p.nextReview)) continue;
     const d = toDay(p.nextReview);
-    if (d > today) (scheduledLater.get(d) || scheduledLater.set(d, []).get(d)).push(p);
+    if (d > today) schedule(d, p);
   }
   let overflow = [];
+  const nextLabel = (p) => (isISODate(p.nextReview) ? `Review ${fmtDay(toDay(p.nextReview))}: ${reviewTask(p).step}` : '');
 
   // --- First-week tasks ------------------------------------------------------
   const kick = state.dismissed && state.dismissed.kickoff ? [] : CHECKLISTS.kickoff.items;
@@ -191,29 +197,60 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // 2. New problems (roadmap topic first)
+    // 2. DSA: reviews first (overdue, then due today), then new problems in
+    // the slots left, as in your tracker's "Study today" order.
     const mod = moduleOn(d, today, state.modules, fc, current);
     const focus = mod && mod.track === 'dsa' ? mod.patterns || [] : [];
-    const quotaP = load.problems + (isToday ? Number(extra.problems) || 0 : 0);
+    const doneReviews = isToday ? reviewedToday : [];
+    const dueNow = isToday ? dueQueue : [...overflow, ...(scheduledLater.get(d) || [])];
+    const reviewCap = Math.max(0, load.revisits + Math.max(0, load.problems - 1) - doneReviews.length);
+    const reviews = [...doneReviews, ...dueNow.slice(0, reviewCap)];
+    overflow = dueNow.slice(reviewCap);
+    for (const p of reviews) {
+      const done = isToday && p.lastAt === iso0 && p.firstAt !== iso0;
+      const src = done ? before.get(p.id) || p : p;
+      const task = reviewTask(src);
+      const overdue = !p.projected && isISODate(src.nextReview) && toDay(src.nextReview) < d;
+      items.push({
+        key: `revisit:${p.id}`,
+        type: 'revisit',
+        problemId: p.id,
+        title: task.title,
+        desc: task.desc,
+        meta: [STAGE_LABEL[stageOf(src)], p.pattern || p.topic, overdue ? `overdue since ${fmtDay(toDay(src.nextReview), { weekday: false })}` : '', p.projected ? 'expected' : ''].filter(Boolean).join(' · '),
+        url: p.url,
+        min: task.min,
+        done,
+        next: done ? nextLabel(p) : '',
+      });
+    }
+
+    const extraP = isToday ? Number(extra.problems) || 0 : 0;
+    const slots = load.problems > 0 ? Math.max(1, Math.min(load.problems, load.problems + load.revisits - reviews.length)) : 0;
+    const quotaP = slots + extraP;
     const todayNew = isToday ? attemptedToday.slice() : [];
     if (quotaP > todayNew.length) {
       const pool = orderNew(problems.filter((p) => !takenNew.has(p.id)), focus, s.problemOrder);
       for (const p of pool.slice(0, quotaP - todayNew.length)) {
         takenNew.add(p.id);
         todayNew.push(p);
+        // Expect it to be solved on its day: its first review shows up 3 days later.
+        schedule(d + reviewGap('solved'), { ...p, stage: 'solved', status: 'solved', nextReview: toISO(d + reviewGap('solved')), projected: true });
       }
     }
     for (const p of todayNew) {
-      items.push({ key: `problem:${p.id}`, type: 'problem', problemId: p.id, title: `Solve ${p.title}`, meta: [p.difficulty, p.pattern || p.topic, p.priority !== null && p.priority !== undefined ? `P${p.priority}` : ''].filter(Boolean).join(' · '), url: p.url, min: p.difficulty === 'Hard' ? 45 : p.difficulty === 'Easy' ? 20 : 30, done: isToday && p.firstAt === iso0 });
-    }
-
-    // 3. Revisits (spaced repetition from your attempts)
-    const dueNow = isToday ? dueQueue : [...overflow, ...(scheduledLater.get(d) || [])];
-    const show = dueNow.slice(0, load.revisits);
-    overflow = dueNow.slice(load.revisits);
-    const revisits = isToday ? [...reviewedToday, ...show] : show;
-    for (const p of revisits) {
-      items.push({ key: `revisit:${p.id}`, type: 'revisit', problemId: p.id, title: `Revisit ${p.title}`, meta: [p.status === 'attempted' ? 'not solved yet' : 'from memory, no notes', p.pattern || p.topic].filter(Boolean).join(' · '), url: p.url, min: 20, done: isToday && p.lastAt === iso0 && p.firstAt !== iso0 });
+      const done = isToday && p.firstAt === iso0;
+      items.push({
+        key: `problem:${p.id}`,
+        type: 'problem',
+        problemId: p.id,
+        title: `Solve ${p.title}`,
+        meta: [p.difficulty, p.pattern || p.topic, p.priority !== null && p.priority !== undefined ? `P${p.priority}` : ''].filter(Boolean).join(' · '),
+        url: p.url,
+        min: targetMinutes(p) + 10,
+        done,
+        next: done ? nextLabel(p) : '',
+      });
     }
 
     // 4. Roadmap module step
@@ -302,9 +339,13 @@ export function historyDay(day, state, ctx) {
     const done = (t.lessons || []).filter((l) => (state.lessonDone || {})[l.id] === iso);
     for (const g of groupLessons(done)) items.push(lessonItem(t, g, iso, state.lessonDone || {}));
   }
-  for (const p of state.problems || []) {
-    if (p.firstAt === iso) items.push({ key: `problem:${p.id}`, type: 'problem', problemId: p.id, title: `Solve ${p.title}`, meta: p.pattern || '', url: p.url, done: true });
-    else if (p.lastAt === iso) items.push({ key: `revisit:${p.id}`, type: 'revisit', problemId: p.id, title: `Revisit ${p.title}`, meta: p.pattern || '', url: p.url, done: true });
+  const byId = new Map((state.problems || []).map((p) => [p.id, p]));
+  for (const e of state.dsaLog || []) {
+    if (e.date !== iso || !e.problemId) continue;
+    const p = byId.get(e.problemId) || { title: e.title, url: '' };
+    const label = { alone: 'solved on your own', clean: 'done', over: 'over target time', hints: 'needed hints', failed: "couldn't solve" }[e.outcome] || '';
+    if (e.kind === 'first') items.push({ key: `problem:${e.problemId}`, type: 'problem', problemId: e.problemId, title: `Solve ${p.title}`, meta: label, url: p.url, done: true });
+    else items.push({ key: `revisit:${e.problemId}`, type: 'revisit', problemId: e.problemId, title: e.prev ? reviewTask(e.prev).title : `Review ${p.title}`, meta: label, url: p.url, done: true });
   }
   for (const [mid, prog] of Object.entries(state.progress || {})) {
     for (const task of ['objective', 'exit']) {

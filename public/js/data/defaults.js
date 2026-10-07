@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 3;
+export const DATA_VERSION = 4;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.

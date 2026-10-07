@@ -17,7 +17,10 @@ const ROLE_PATTERNS = [
   ['priority', /^priority\b/],
   ['status', /^(status|current status|progress)\b/],
   ['nextReview', /^next review/],
+  ['firstAttempt', /^first attempt/],
   ['lastAttempt', /^(last attempt|last attempted)/],
+  ['confidence', /^confidence/],
+  ['timeTaken', /^time taken/],
   ['notes', /^(notes?|key insight|mistake)/],
 ];
 
@@ -100,12 +103,33 @@ export function problemKey(title) {
   return clean(title).toLowerCase().replace(/\(premium\)/g, '').replace(/[^a-z0-9]+/g, '');
 }
 
-export function mapStatus(raw) {
+/**
+ * Review stages, following your tracker's status ladder:
+ * Attempted → Hint Needed → Solved → Reimplemented → Timed → Mastered.
+ */
+export const STAGES = ['new', 'attempted', 'hint', 'solved', 'reimplemented', 'timed', 'mastered'];
+export const STAGE_LABEL = { new: 'Not Started', attempted: 'Attempted', hint: 'Hint Needed', solved: 'Solved', reimplemented: 'Reimplemented', timed: 'Timed', mastered: 'Mastered' };
+
+export function mapStage(raw) {
   const s = clean(raw).toLowerCase();
   if (!s || /not\s*(started|done|attempted)|^todo|^to do|^new$|^no$|^false$|^-$|^—$/.test(s)) return 'new';
-  if (/master|solved|done|complete|reimplement|timed|^yes$|^true$|✓|✔/.test(s)) return 'solved';
-  if (/attempt|hint|progress|stuck|review|learning|started/.test(s)) return 'attempted';
+  if (/master/.test(s)) return 'mastered';
+  if (/timed/.test(s)) return 'timed';
+  if (/reimplement|rewr/.test(s)) return 'reimplemented';
+  if (/hint/.test(s)) return 'hint';
+  if (/solved|done|complete|^yes$|^true$|✓|✔/.test(s)) return 'solved';
+  if (/attempt|progress|stuck|review|learning|started/.test(s)) return 'attempted';
   return 'new';
+}
+
+/** The simple three-way status used for choosing problems. */
+export function statusOfStage(stage) {
+  if (!stage || stage === 'new') return 'new';
+  return stage === 'attempted' || stage === 'hint' ? 'attempted' : 'solved';
+}
+
+export function mapStatus(raw) {
+  return statusOfStage(mapStage(raw));
 }
 
 export function mapPriority(raw) {
@@ -169,9 +193,13 @@ export function rowsToProblems(sheet, table) {
       topic: get(row, 'topic'),
       difficulty: mapDifficulty(get(row, 'difficulty')),
       priority: mapPriority(get(row, 'priority')),
+      stage: mapStage(get(row, 'status')),
       status: mapStatus(get(row, 'status')),
       nextReview: mapDate(get(row, 'nextReview')),
+      firstAttempt: mapDate(get(row, 'firstAttempt')),
       lastAttempt: mapDate(get(row, 'lastAttempt')),
+      confidence: /^[1-5]$/.test(get(row, 'confidence')) ? Number(get(row, 'confidence')) : null,
+      timeTaken: Number(get(row, 'timeTaken')) || null,
       notes: get(row, 'notes'),
       order: out.length,
     });
@@ -196,7 +224,9 @@ export function mergeProblems(bank, rows, { replace = false, today, makeId }) {
     const prev = byKey.get(key);
     const meta = { title: row.title, url: row.url, lc: row.lc, pattern: row.pattern, topic: row.topic, difficulty: row.difficulty, priority: row.priority, notes: row.notes, order: i, source: 'sheet' };
     if (prev) {
-      const appAhead = prev.status !== 'new' && (!row.lastAttempt || (prev.lastAt && prev.lastAt >= row.lastAttempt));
+      // Keep what you ticked in the app unless the sheet has a later attempt.
+      const touched = isISODate(prev.lastAt);
+      const appAhead = touched && prev.status !== 'new' && (!row.lastAttempt || prev.lastAt >= row.lastAttempt);
       const progress = appAhead ? {} : sheetProgress(row, today);
       byKey.set(key, { ...prev, ...meta, ...progress });
       updated++;
@@ -216,11 +246,23 @@ export function mergeProblems(bank, rows, { replace = false, today, makeId }) {
 }
 
 function sheetProgress(row, today) {
-  if (row.status === 'new') return { status: 'new', interval: null, nextReview: null, firstAt: null, lastAt: null };
-  const last = row.lastAttempt || null;
-  let next = row.nextReview;
-  if (!next) next = row.status === 'attempted' ? toISO(today) : null;
-  return { status: row.status, interval: row.status === 'attempted' ? 1 : 7, nextReview: next, firstAt: last || 'imported', lastAt: last || 'imported' };
+  const stage = row.stage || (row.status === 'solved' ? 'solved' : row.status);
+  if (stage === 'new') return { stage: 'new', status: 'new', interval: null, nextReview: null, firstAt: null, lastAt: null, stageGuessed: false };
+  const last = row.lastAttempt || row.firstAttempt || null;
+  const gap = reviewGap(stage, { confidence: row.confidence });
+  // No review date in the sheet: schedule one from the last attempt by the same rules.
+  const next = row.nextReview || toISO((last ? toDay(last) : today) + gap);
+  return {
+    stage,
+    status: statusOfStage(stage),
+    interval: gap,
+    nextReview: next,
+    firstAt: row.firstAttempt || last || 'imported',
+    lastAt: last || 'imported',
+    confidence: row.confidence || null,
+    minutes: row.timeTaken || null,
+    stageGuessed: false,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -246,30 +288,103 @@ export function orderNew(problems, focusPatterns, mode = 'roadmap') {
     .map((x) => x.p);
 }
 
-// Outcomes ------------------------------------------------------------------
+// Reviews -------------------------------------------------------------------
+// The same rules as your tracker's Guide sheet: the next review is the last
+// attempt plus the first gap that applies.
 
-export const OUTCOMES = {
-  alone: { label: 'Solved on my own', status: 'solved', interval: 7, independent: true },
-  hints: { label: 'Solved with hints', status: 'solved', interval: 3, independent: false },
-  failed: { label: "Couldn't solve it yet", status: 'attempted', interval: 1, independent: false },
-};
+export const TARGET_MIN = { Easy: 15, Medium: 25, Hard: 40 };
 
-/** Next interval after a revisit. Returns null once a problem is retired. */
-export function nextInterval(prev, clean) {
-  if (!clean) return 2;
-  const next = Math.max(7, Math.round((prev || 2) * 2.5));
-  return next > 60 ? null : next;
+export function targetMinutes(p) {
+  return TARGET_MIN[p.difficulty] || 25;
 }
 
-export function applyFirstAttempt(p, outcome, day) {
-  const o = OUTCOMES[outcome];
+export function reviewGap(stage, { confidence = null, overTarget = false } = {}) {
+  if (stage === 'mastered') return 21;
+  if (stage === 'attempted') return 1;
+  if (stage === 'hint') return 2;
+  if (confidence && confidence <= 2) return 2;
+  if (overTarget) return 3;
+  if (stage === 'solved') return 3; // not yet reimplemented from blank
+  if (confidence === 3) return 5;
+  if (confidence === 4) return 10;
+  if (confidence === 5) return 14;
+  return stage === 'timed' ? 10 : 5;
+}
+
+const NEXT_STAGE = { new: 'solved', attempted: 'solved', hint: 'solved', solved: 'reimplemented', reimplemented: 'timed', timed: 'mastered', mastered: 'mastered' };
+
+export function stageOf(p) {
+  if (p.stage && STAGES.includes(p.stage)) return p.stage;
+  if (p.status === 'attempted') return 'attempted';
+  if (p.status === 'solved') return 'solved';
+  return 'new';
+}
+
+/** Choices offered by "How did it go?", depending on where the problem is. */
+export function outcomeChoices(p, isReview) {
+  const stage = stageOf(p);
+  if (!isReview) {
+    return [
+      ['alone', 'Solved on my own', 'review in 3 days: reimplement from blank'],
+      ['hints', 'Needed hints', 'review in 2 days'],
+      ['failed', "Couldn't solve it", 'try again tomorrow'],
+    ];
+  }
+  const t = reviewTask(p);
+  const first = [['clean', `Done — ${t.short}`, `next: ${STAGE_LABEL[NEXT_STAGE[stage]]}`]];
+  if (stage === 'reimplemented') first.push(['over', 'Solved, but over the target time', 'redo in 3 days']);
+  return [...first, ['hints', 'Needed hints', 'back to Hint Needed, 2 days'], ['failed', "Couldn't solve it", 'back to Attempted, tomorrow']];
+}
+
+/**
+ * Record an attempt or a review and schedule the next review.
+ * outcome: alone | clean | over | hints | failed
+ */
+export function applyOutcome(p, outcome, day, { confidence = null, minutes = null } = {}) {
+  const prevStage = stageOf(p);
+  let stage;
+  let overTarget = false;
+  if (outcome === 'failed') stage = 'attempted';
+  else if (outcome === 'hints') stage = 'hint';
+  else if (outcome === 'over') {
+    stage = prevStage === 'new' ? 'solved' : prevStage;
+    overTarget = true;
+  } else stage = prevStage === 'new' ? 'solved' : NEXT_STAGE[prevStage];
+  const gap = reviewGap(stage, { confidence, overTarget });
   const iso = toISO(day);
-  return { ...p, status: o.status, interval: o.interval, nextReview: toISO(day + o.interval), firstAt: iso, lastAt: iso, independent: o.independent };
+  return {
+    ...p,
+    stage,
+    status: statusOfStage(stage),
+    interval: gap,
+    nextReview: toISO(day + gap),
+    firstAt: isISODate(p.firstAt) ? p.firstAt : iso,
+    lastAt: iso,
+    confidence: confidence || p.confidence || null,
+    minutes: minutes || null,
+    independent: outcome === 'alone' || outcome === 'clean' || outcome === 'over',
+    stageGuessed: false,
+  };
 }
 
-export function applyRevisit(p, clean, day) {
-  const next = nextInterval(p.interval, clean);
-  return { ...p, status: clean ? 'solved' : p.status, interval: next, nextReview: next === null ? null : toISO(day + next), lastAt: toISO(day), retired: next === null };
+/** What a review asks you to do at each stage. */
+export function reviewTask(p) {
+  const stage = stageOf(p);
+  const t = targetMinutes(p);
+  switch (stage) {
+    case 'attempted':
+      return { title: `Retry ${p.title}`, step: 'retry it', short: 'solved it this time', desc: 'Solve it without help today.', min: 30 };
+    case 'hint':
+      return { title: `Re-solve ${p.title} without hints`, step: 're-solve without hints', short: 'solved without hints', desc: 'Fresh editor, no hints, no old code.', min: 25 };
+    case 'solved':
+      return { title: `Reimplement ${p.title} from a blank editor`, step: 'reimplement from blank', short: 'reimplemented from blank', desc: 'No notes, no peeking at your old solution.', min: 20 };
+    case 'reimplemented':
+      return { title: `Timed redo: ${p.title} in under ${t} min`, step: `timed redo under ${t} min`, short: `under ${t} min`, desc: 'Start a timer; say the approach before coding.', min: t };
+    case 'timed':
+      return { title: `Explain ${p.title} aloud, then code it`, step: 'explain aloud, then code it', short: 'explained and coded it', desc: 'Pattern, approach, complexity and edge cases, out loud. Then it counts as Mastered.', min: 20 };
+    default:
+      return { title: `Review ${p.title} from memory`, step: 'review from memory', short: 'solved from memory', desc: 'Spaced review — mastered problems come back every 21 days.', min: 15 };
+  }
 }
 
 export function isDue(p, day) {
@@ -278,6 +393,12 @@ export function isDue(p, day) {
 
 export function dueProblems(problems, day) {
   return problems.filter((p) => isDue(p, day)).sort((a, b) => (a.nextReview < b.nextReview ? -1 : a.nextReview > b.nextReview ? 1 : (a.order ?? 0) - (b.order ?? 0)));
+}
+
+export function upcomingReviews(problems, day) {
+  return problems
+    .filter((p) => p.status !== 'new' && isISODate(p.nextReview) && toDay(p.nextReview) > day)
+    .sort((a, b) => (a.nextReview < b.nextReview ? -1 : a.nextReview > b.nextReview ? 1 : (a.order ?? 0) - (b.order ?? 0)));
 }
 
 export function patternStats(problems) {
@@ -300,11 +421,10 @@ export function problemsToCSV(problems) {
     const s = String(v ?? '');
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const label = { new: 'Not Started', attempted: 'Attempted', solved: 'Solved' };
-  const lines = [['Problem', 'Link', 'Pattern', 'Difficulty', 'Priority', 'Status', 'First Attempt', 'Last Attempt', 'Next Review'].join(',')];
+  const lines = [['Problem', 'Link', 'Pattern', 'Difficulty', 'Priority', 'Status', 'First Attempt', 'Last Attempt', 'Time Taken (min)', 'Confidence (1–5)', 'Next Review'].join(',')];
   for (const p of problems) {
     const date = (d) => (isISODate(d) ? d : '');
-    lines.push([p.title, p.url, p.pattern || p.topic, p.difficulty, p.priority === null || p.priority === undefined ? '' : `P${p.priority}`, label[p.status] || '', date(p.firstAt), date(p.lastAt), date(p.nextReview)].map(esc).join(','));
+    lines.push([p.title, p.url, p.pattern || p.topic, p.difficulty, p.priority === null || p.priority === undefined ? '' : `P${p.priority}`, STAGE_LABEL[stageOf(p)], date(p.firstAt), date(p.lastAt), p.minutes || '', p.confidence || '', date(p.nextReview)].map(esc).join(','));
   }
   return lines.join('\n');
 }

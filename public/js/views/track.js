@@ -2,7 +2,7 @@ import { h, card, cardHeader, button, iconButton, chip, segmented, field, textar
 import { SCORE_AREAS, CHECKLISTS, APP_STATUSES } from '../data/defaults.js';
 import { fmtDay, fmtRange, fmtMonth, weekStart, weekKey, toDay, toISO, isISODate, relDays, monthKey } from '../dates.js';
 import { decisionHints, scoreTotal, dateConflicts } from '../engine.js';
-import { dueProblems, patternStats, orderNew, problemsToCSV } from '../problems.js';
+import { dueProblems, upcomingReviews, patternStats, orderNew, problemsToCSV, reviewTask, stageOf, STAGE_LABEL } from '../problems.js';
 import { banner, openAppEditor, eligibilityCount, statusTone } from './common.js';
 import { openProblemImport, openManualProblem } from './tasks.js';
 
@@ -114,12 +114,14 @@ function problemsTab(app) {
   const count = (st) => bank.filter((p) => p.status === st).length;
   const filter = app.ui.problemFilter || 'next';
   const nextOrder = orderNew(bank, app.current && app.current.track === 'dsa' ? app.current.patterns : [], app.state.settings.problemOrder);
+  const upcoming = upcomingReviews(bank, app.today);
   const lists = {
     next: nextOrder,
     due,
-    attempted: bank.filter((p) => p.status === 'attempted'),
+    upcoming,
     solved: bank.filter((p) => p.status === 'solved'),
   };
+  const guessed = bank.some((p) => p.stageGuessed);
   const shown = lists[filter] || [];
   const limit = app.ui.problemAll ? shown.length : 25;
 
@@ -142,13 +144,17 @@ function problemsTab(app) {
         : h('p', { class: 'small' }, 'Your daily list picks problems from here: the roadmap topic first, then your sheet’s priority (P0 → P1 → P2) and order. Solved problems come back for spaced revisits.'),
       h('div', { class: 'row-actions wrap' }, button('Add one problem', () => openManualProblem(app), { kind: 'ghost', size: 'sm', iconName: 'plus' }), bank.length ? button('Export progress CSV', exportCsv, { kind: 'ghost', size: 'sm', iconName: 'download' }) : null),
     ),
+    guessed ? banner('info', 'Re-import your sheet once', 'Reviews now follow your tracker’s ladder (Solved → Reimplemented → Timed → Mastered). Re-import so each problem’s exact stage comes across; what you ticked in the app is kept.', [button('Re-import', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' })]) : null,
+    card(
+      h('p', { class: 'small' }, h('strong', null, 'How reviews work: '), 'tick a problem on your daily list and it counts as solved — its next review is booked straight away (3 days later: reimplement from blank). Each review moves it up your ladder: timed redo → explain aloud → Mastered (every 21 days). Use “How did it go?” for hints, failed attempts or confidence.'),
+    ),
     bank.length
       ? card(
           segmented(
             [
               { value: 'next', label: 'Up next' },
               { value: 'due', label: `Due (${due.length})` },
-              { value: 'attempted', label: 'Attempted' },
+              { value: 'upcoming', label: `Upcoming (${upcoming.length})` },
               { value: 'solved', label: 'Solved' },
             ],
             filter,
@@ -172,12 +178,13 @@ function problemsTab(app) {
                       'span',
                       { class: 'grow' },
                       p.url ? h('a', { href: p.url, target: '_blank', rel: 'noopener' }, filter === 'next' ? `${i + 1}. ${p.title}` : p.title) : p.title,
-                      h('span', { class: 'small muted block' }, [p.difficulty, p.pattern || p.topic, p.priority !== null && p.priority !== undefined ? `P${p.priority}` : '', isISODate(p.nextReview) ? `revisit ${relDays(toDay(p.nextReview), app.today)}` : ''].filter(Boolean).join(' · ')),
+                      h('span', { class: 'small muted block' }, [p.status !== 'new' ? STAGE_LABEL[stageOf(p)] : '', p.difficulty, p.pattern || p.topic, p.priority !== null && p.priority !== undefined ? `P${p.priority}` : ''].filter(Boolean).join(' · ')),
+                      p.status !== 'new' && isISODate(p.nextReview) ? h('span', { class: 'small block review-when' }, `${toDay(p.nextReview) <= app.today ? 'Due' : 'Review'} ${relDays(toDay(p.nextReview), app.today)} (${fmtDay(toDay(p.nextReview), { weekday: true })}): ${reviewTask(p).step}`) : null,
                     ),
                   ),
                 ),
               )
-            : h('p', { class: 'small muted' }, filter === 'due' ? 'Nothing due. Revisits appear on your daily list automatically.' : 'None.'),
+            : h('p', { class: 'small muted' }, filter === 'due' ? 'Nothing due today. Reviews are added to your daily list on their day.' : filter === 'upcoming' ? 'No reviews booked yet. Tick a problem on your daily list and its review is added here.' : 'None.'),
           shown.length > limit ? button(`Show all ${shown.length}`, () => { app.ui.problemAll = true; app.rerender(); }, { kind: 'ghost', size: 'sm' }) : null,
         )
       : empty('No problems yet. Import your tracker — from Google Sheets use File → Download → Microsoft Excel (.xlsx).', button('Import sheet', () => openProblemImport(app), { kind: 'secondary', size: 'sm' })),

@@ -1031,6 +1031,26 @@ ol.tight {
   text-decoration-color: var(--line-strong);
 }
 
+.todo-next {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--info-ink);
+}
+
+.todo-item.done .todo-next {
+  color: var(--info-ink);
+}
+
+.review-when {
+  color: var(--info-ink);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 .linkish {
   border: 0;
   background: none;

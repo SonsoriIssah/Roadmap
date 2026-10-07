@@ -237,7 +237,7 @@ function trackCard(app, t, res) {
     h(
       'div',
       { class: 'form-row' },
-      h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Finish in (weeks)'), segmented(['2', '3', '4'].map((v) => ({ value: v, label: v })), String(weeks), (v) => set({ weeks: Number(v) }), { small: true, label: 'Weeks' })),
+      h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Finish in (weeks)'), segmented(['2', '3', '4'].map((v) => ({ value: v, label: v })), String(weeks), (v) => set({ weeks: Number(v) }), { small: true, label: 'Weeks' })),
       h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Starting'), h('input', { class: 'input', type: 'date', value: t.start || '', onchange: (e) => isISODate(e.target.value) && set({ start: e.target.value }) })),
     ),
     h('p', { class: 'small muted' }, t.url ? h('span', null, 'Video: ', h('a', { href: t.url, target: '_blank', rel: 'noopener' }, t.resource || t.url)) : t.lessons.some((l) => l.video) ? `Lessons ${t.lessons.filter((l) => l.video && !Number.isFinite(l.start)).length ? 'marked “Study in …” are placeholders for a video course: paste its chapter list to get exact timestamps.' : 'use your video chapters.'}` : null),

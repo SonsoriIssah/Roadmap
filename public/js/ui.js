@@ -112,7 +112,19 @@ export function segmented(options, value, onChange, { label, small } = {}) {
       const active = opt.value === value;
       return h(
         'button',
-        { type: 'button', role: 'radio', 'aria-checked': active ? 'true' : 'false', class: ['seg-btn', active && 'active'], dataset: opt.mode ? { mode: opt.mode } : null, onclick: () => onChange(opt.value) },
+        {
+          type: 'button',
+          role: 'radio',
+          'aria-checked': active ? 'true' : 'false',
+          class: ['seg-btn', active && 'active'],
+          dataset: opt.mode ? { mode: opt.mode } : null,
+          // Stop the click here: the control re-renders on change, and a click
+          // that reaches an enclosing <label> would be re-sent to its first button.
+          onclick: (e) => {
+            e.stopPropagation();
+            onChange(opt.value);
+          },
+        },
         opt.label,
       );
     }),

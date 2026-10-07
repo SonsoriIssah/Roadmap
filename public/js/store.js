@@ -155,6 +155,15 @@ export function migrate(raw) {
       }
     }
   }
+  if (v < 4) {
+    // Problems gained review stages (Attempted → … → Mastered). Infer them
+    // from the old status; a re-import restores the exact stage from your sheet.
+    for (const p of Array.isArray(out.problems) ? out.problems : []) {
+      if (!p || p.stage) continue;
+      p.stage = p.status === 'attempted' ? 'attempted' : p.status === 'solved' ? (p.independent === false ? 'hint' : 'solved') : 'new';
+      p.stageGuessed = p.status === 'solved' && !/^\d{4}-\d{2}-\d{2}$/.test(String(p.lastAt));
+    }
+  }
   out.version = DATA_VERSION;
   return out;
 }

@@ -2,9 +2,9 @@
 // importing your problem sheet, pasting video chapters, editing lessons).
 
 import { h, button, field, input, select, textarea, openSheet, toast, icon, segmented } from '../ui.js';
-import { toISO, fmtDuration, fmtDay, isISODate } from '../dates.js';
+import { toISO, toDay, fmtDuration, fmtDay, isISODate } from '../dates.js';
 import { planDays } from '../planner.js';
-import { OUTCOMES, applyFirstAttempt, applyRevisit, candidateSheets, rowsToProblems, mergeProblems } from '../problems.js';
+import { applyOutcome, outcomeChoices, reviewTask, stageOf, targetMinutes, STAGE_LABEL, candidateSheets, rowsToProblems, mergeProblems } from '../problems.js';
 import { readSpreadsheetFile } from '../xlsx.js';
 import { parseChapters, importChapters, parseTimestamp, lessonsToText, parseLessonsText } from '../learn.js';
 import { uid } from '../parse.js';
@@ -51,6 +51,15 @@ export function taskList(app, day, { interactive = false } = {}) {
           item.action ? h('div', { class: 'todo-action' }, item.url ? h('a', { href: item.url, target: '_blank', rel: 'noopener' }, item.action, ' ↗') : item.action) : null,
           item.desc ? h('div', { class: 'todo-desc' }, item.desc) : null,
           item.practice && item.practice.length ? h('ul', { class: 'todo-practice' }, item.practice.map((p) => h('li', null, h('span', { class: 'muted' }, 'Practice: '), p))) : null,
+          item.next
+            ? h(
+                'div',
+                { class: 'todo-next' },
+                icon('calendar', { size: 14 }),
+                h('span', null, item.next),
+                interactive ? h('button', { type: 'button', class: 'linkish', onclick: () => openOutcome(app, item.problemId, item.type === 'revisit') }, 'How did it go?') : null,
+              )
+            : null,
           h(
             'div',
             { class: 'todo-meta' },
@@ -84,8 +93,12 @@ export function toggleItem(app, item, done) {
       break;
     case 'problem':
     case 'revisit':
-      if (done) openOutcome(app, item.problemId, item.type === 'revisit');
-      else undoAttempt(app, item.problemId);
+      // Ticked = solved (or the review step done). The review is booked at
+      // once; "How did it go?" adjusts it for hints, failures or confidence.
+      if (done) {
+        const p = recordOutcome(app, item.problemId, item.type === 'revisit' ? 'clean' : 'alone', item.type === 'revisit');
+        if (p) toast(`${reviewSummary(p)}`, { action: 'How did it go?', onAction: () => openOutcome(app, item.problemId, item.type === 'revisit'), duration: 6000 });
+      } else undoAttempt(app, item.problemId);
       break;
     case 'module':
       setModuleTask(app, item.moduleId, item.task, done);
@@ -99,46 +112,76 @@ export function toggleItem(app, item, done) {
   }
 }
 
+function reviewSummary(p) {
+  if (!isISODate(p.nextReview)) return 'Recorded.';
+  return `${STAGE_LABEL[stageOf(p)]} · review ${fmtDay(toDay(p.nextReview))}: ${reviewTask(p).step}`;
+}
+
+/** Today's log entry for a problem (the attempt being adjusted), if any. */
+function todaysEntry(s, problemId, iso) {
+  for (let i = s.dsaLog.length - 1; i >= 0; i--) {
+    const e = s.dsaLog[i];
+    if (e.problemId === problemId && e.date === iso && e.prev) return i;
+  }
+  return -1;
+}
+
+/**
+ * Apply an outcome for today. Re-recording replaces today's earlier outcome
+ * (it starts again from the problem as it was this morning).
+ */
+function recordOutcome(app, problemId, outcome, isRevisit, opts = {}) {
+  let result = null;
+  app.update((s) => {
+    const iso = toISO(app.today);
+    const pi = s.problems.findIndex((x) => x.id === problemId);
+    if (pi < 0) return;
+    const li = todaysEntry(s, problemId, iso);
+    const base = li >= 0 ? s.dsaLog[li].prev : s.problems[pi];
+    const next = applyOutcome(base, outcome, app.today, opts);
+    s.problems[pi] = next;
+    const entry = { id: li >= 0 ? s.dsaLog[li].id : uid('l'), problemId, title: base.title, pattern: base.pattern || base.topic || '', date: iso, kind: isRevisit ? 'revisit' : 'first', outcome, independent: next.independent, minutes: Number(opts.minutes) || 0, confidence: opts.confidence || null, prev: base };
+    if (li >= 0) s.dsaLog[li] = entry;
+    else s.dsaLog.push(entry);
+    result = next;
+  });
+  return result;
+}
+
 function openOutcome(app, problemId, isRevisit) {
-  const p = app.state.problems.find((x) => x.id === problemId);
-  if (!p) return;
-  let minutes = '';
-  const record = (key) => {
-    app.update((s) => {
-      const i = s.problems.findIndex((x) => x.id === problemId);
-      const prev = s.problems[i];
-      const next = isRevisit ? applyRevisit(prev, key === 'clean', app.today) : applyFirstAttempt(prev, key, app.today);
-      s.problems[i] = next;
-      s.dsaLog.push({ id: uid('l'), problemId, title: prev.title, pattern: prev.pattern || prev.topic || '', date: toISO(app.today), kind: isRevisit ? 'revisit' : 'first', outcome: key, independent: isRevisit ? key === 'clean' : OUTCOMES[key].independent, minutes: Number(minutes) || 0, prev });
-    });
-  };
-  const choices = isRevisit
-    ? [
-        ['clean', 'Clean — solved from memory', 'primary'],
-        ['struggled', 'Struggled — show it again in 2 days', 'secondary'],
-      ]
-    : [
-        ['alone', `${OUTCOMES.alone.label} — revisit in a week`, 'primary'],
-        ['hints', `${OUTCOMES.hints.label} — revisit in 3 days`, 'secondary'],
-        ['failed', `${OUTCOMES.failed.label} — try again tomorrow`, 'secondary'],
-      ];
+  const iso = toISO(app.today);
+  const li = todaysEntry(app.state, problemId, iso);
+  const current = app.state.problems.find((x) => x.id === problemId);
+  if (!current) return;
+  const base = li >= 0 ? app.state.dsaLog[li].prev : current;
+  const logged = li >= 0 ? app.state.dsaLog[li] : null;
+  let minutes = logged && logged.minutes ? String(logged.minutes) : '';
+  let confidence = logged && logged.confidence ? logged.confidence : null;
+  const confRow = h('div');
+  const renderConf = () =>
+    confRow.replaceChildren(
+      segmented(['1', '2', '3', '4', '5'].map((v) => ({ value: v, label: v })), confidence ? String(confidence) : '', (v) => { confidence = Number(v); renderConf(); }, { small: true, label: 'Confidence' }),
+    );
+  renderConf();
+  const t = targetMinutes(base);
   openSheet({
-    title: p.title,
+    title: isRevisit ? reviewTask(base).title : base.title,
     body: (close) =>
       h(
         'div',
         { class: 'form-grid' },
-        h('p', { class: 'small muted' }, [p.difficulty, p.pattern || p.topic].filter(Boolean).join(' · ')),
-        field('Minutes taken (optional)', input({ type: 'number', min: '0', inputmode: 'numeric', oninput: (e) => (minutes = e.target.value) })),
+        h('p', { class: 'small muted' }, [base.difficulty, base.pattern || base.topic, `target ${t} min`].filter(Boolean).join(' · ')),
+        h('div', { class: 'form-row' }, field('Minutes taken', input({ type: 'number', min: '0', inputmode: 'numeric', value: minutes, oninput: (e) => (minutes = e.target.value) })), h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Confidence (1–5)'), confRow)),
+        h('p', { class: 'small muted' }, 'Same rules as your tracker: low confidence brings it back in 2 days; 3 → 5 days, 4 → 10, 5 → 14.'),
         h(
           'div',
           { class: 'choice-list' },
-          choices.map(([key, label, kind]) =>
-            button(label, () => {
-              record(key);
+          outcomeChoices(base, isRevisit).map(([key, label, hint], i) =>
+            button(`${label} — ${hint}`, () => {
+              const p = recordOutcome(app, problemId, key, isRevisit, { minutes: Number(minutes) || null, confidence });
               close();
-              toast('Recorded. It comes back for a revisit when due.');
-            }, { kind }),
+              if (p) toast(reviewSummary(p));
+            }, { kind: i === 0 ? 'primary' : 'secondary' }),
           ),
         ),
       ),
