@@ -868,53 +868,234 @@ ol.tight {
   padding: 4px 0;
 }
 
-/* ---------- Day bar ---------- */
+/* ---------- Daily to-do list ---------- */
 
-.daybar {
-  position: relative;
-  height: 22px;
-  border-radius: 6px;
-  background: var(--surface-2);
-  margin-bottom: 14px;
+.todo {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: todo;
 }
 
-.daybar-tick {
-  position: absolute;
-  top: 0;
-  bottom: -14px;
-  width: 1px;
-  background: var(--line);
+.todo-item {
+  counter-increment: todo;
+  display: grid;
+  grid-template-columns: 30px 26px minmax(0, 1fr);
+  align-items: start;
+  gap: 0 8px;
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
 }
 
-.daybar-tick i {
-  position: absolute;
-  top: 24px;
-  left: -8px;
-  font-style: normal;
-  font-size: 10px;
+.todo-item:first-child {
+  border-top: 0;
+}
+
+.todo-item::before {
+  content: counter(todo, lower-roman) '.';
+  font-size: 14px;
+  font-weight: 700;
   color: var(--muted);
+  text-align: right;
+  padding-top: 2px;
   font-variant-numeric: tabular-nums;
 }
 
-.daybar-block {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  border-radius: 4px;
-  min-width: 3px;
+.todo-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  border-radius: 7px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
 }
 
-.daybar-block.class {
-  background: var(--class-block);
-}
-
-.daybar-block.study {
+.todo-check:checked {
   background: var(--accent);
-  box-shadow: 0 0 0 2px var(--surface-2);
+  border-color: var(--accent);
 }
 
-.daybar-block.study.done {
-  background: color-mix(in srgb, var(--accent) 35%, var(--surface-2));
+.todo-check:checked::after {
+  content: '';
+  width: 6px;
+  height: 11px;
+  border: solid var(--accent-ink);
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.todo-done {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  color: var(--accent);
+  margin-top: 1px;
+}
+
+.todo-blank {
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 7px;
+  border: 1.5px dashed var(--line);
+}
+
+.todo-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.todo-title {
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.todo-action {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.todo-action a {
+  text-decoration: none;
+}
+
+.todo-desc {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.todo-practice {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.todo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.todo-tag {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+
+.t-lesson .todo-tag {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.t-problem .todo-tag,
+.t-revisit .todo-tag {
+  background: color-mix(in srgb, var(--m-normal) 14%, var(--surface));
+  color: var(--info-ink);
+}
+.t-revise .todo-tag {
+  background: color-mix(in srgb, var(--m-break) 16%, var(--surface));
+  color: var(--good-ink);
+}
+
+.todo-link {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.todo-item.done .todo-title,
+.todo-item.done .todo-action,
+.todo-item.done .todo-desc {
+  color: var(--muted);
+}
+
+.todo-item.done .todo-title {
+  text-decoration: line-through;
+  text-decoration-color: var(--line-strong);
+}
+
+.linkish {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.lectures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choice-list .btn {
+  justify-content: flex-start;
+  white-space: normal;
+  text-align: left;
+}
+
+.day-card.is-past {
+  opacity: 0.8;
+}
+
+/* ---------- Daily load table ---------- */
+
+.load-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.load-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(4, 54px);
+  gap: 6px;
+  align-items: center;
+}
+
+.load-head {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.load-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.input-xs {
+  min-height: 36px;
+  padding: 4px 6px;
+  text-align: center;
 }
 
 /* ---------- Lists ---------- */
@@ -1415,6 +1596,11 @@ ul.pairs {
 .result-dot.miss {
   background: transparent;
   border: 2px solid var(--critical);
+}
+
+.result-dot.new {
+  background: transparent;
+  border: 2px solid var(--line-strong);
 }
 
 .app-foot {

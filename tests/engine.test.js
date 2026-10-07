@@ -3,13 +3,12 @@ import assert from 'node:assert/strict';
 
 import { toDay, toISO, weekStart, weekdayIndex, fmtRange, localToday } from '../public/js/dates.js';
 import {
-  makeContext, resolveDay, weekInfo, forecast, currentModule, classesOn, freeTime, subtractIntervals,
-  pickSlot, planWeek, dateConflicts, activeRituals, upcoming, relatedCourses, decisionHints, nextInterval,
-  dueReviews, patternStats, moduleRemaining,
+  makeContext, resolveDay, weekInfo, forecast, currentModule, classesOn, dateConflicts, activeRituals,
+  upcoming, relatedCourses, decisionHints, moduleRemaining,
 } from '../public/js/engine.js';
 import { defaultState, normalise, importJSON, exportJSON, createStore } from '../public/js/store.js';
 import { parseTimetableText, timetableToText, parseCalendarText, calendarToText } from '../public/js/parse.js';
-import { DEFAULT_MODULES, SESSION_TEMPLATES } from '../public/js/data/defaults.js';
+import { DEFAULT_MODULES } from '../public/js/data/defaults.js';
 
 const d = toDay;
 const ctxOf = (mutate) => {
@@ -31,6 +30,7 @@ test('dates: day numbers round-trip and weekdays are Monday-based', () => {
 
 test('modes follow the KNUST calendar', () => {
   const { ctx } = ctxOf();
+  assert.equal(resolveDay(d('2026-10-07'), ctx).mode, 'break'); // free time before the semester
   assert.equal(resolveDay(d('2026-10-21'), ctx).mode, 'normal'); // teaching
   assert.equal(resolveDay(d('2026-12-15'), ctx).mode, 'exam'); // mid-sem
   assert.equal(resolveDay(d('2026-12-25'), ctx).mode, 'break'); // Christmas beats teaching
@@ -72,52 +72,6 @@ test('classes only appear on teaching days within the timetable range', () => {
   assert.equal(classesOn(d('2026-12-14'), ctx).length, 0); // mid-sem week: no lectures
   assert.equal(classesOn(d('2026-12-21'), ctx).length, 0); // Christmas
   assert.equal(classesOn(d('2026-10-12'), ctx).length, 0); // before teaching starts
-});
-
-test('free time subtracts classes plus buffer', () => {
-  const { ctx } = ctxOf();
-  const free = freeTime(d('2026-10-20'), ctx); // Tuesday: 13:00–14:55
-  assert.deepEqual(free, [
-    { s: 360, e: 765 },
-    { s: 910, e: 1350 },
-  ]);
-  assert.deepEqual(subtractIntervals(0, 100, [{ s: -10, e: 20 }, { s: 50, e: 60 }, { s: 90, e: 200 }]), [
-    { s: 20, e: 50 },
-    { s: 60, e: 90 },
-  ]);
-});
-
-test('pickSlot prefers the chosen window and falls back to the nearest gap', () => {
-  const free = [{ s: 360, e: 600 }, { s: 1150, e: 1350 }];
-  assert.equal(pickSlot(free, 60, 'evening'), 1155); // 19:15, first quarter-hour after the gap opens
-  assert.equal(pickSlot(free, 60, 'morning'), 360);
-  assert.equal(pickSlot([{ s: 360, e: 420 }], 60, 'evening'), 360);
-  assert.equal(pickSlot([{ s: 360, e: 400 }], 60, 'evening'), null);
-});
-
-test('planWeek places every session without overlapping classes', () => {
-  const { ctx } = ctxOf();
-  const ws = d('2026-10-19');
-  const plan = planWeek(ws, ctx);
-  assert.equal(plan.info.dominant, 'normal');
-  assert.equal(plan.sessions.length, SESSION_TEMPLATES.normal.length);
-  assert.equal(plan.unplaced.length, 0);
-  for (const s of plan.sessions) {
-    for (const c of classesOn(s.day, ctx)) assert.ok(s.e <= c.s - 15 || s.s >= c.e + 15, `session overlaps ${c.code}`);
-  }
-  const perDay = {};
-  for (const s of plan.sessions) perDay[s.day] = (perDay[s.day] || 0) + 1;
-  assert.ok(Object.values(perDay).every((n) => n <= 2));
-  // Deterministic.
-  assert.deepEqual(planWeek(ws, ctx).sessions, plan.sessions);
-});
-
-test('planWeek uses lighter templates in exam and heavy weeks', () => {
-  const { ctx } = ctxOf();
-  assert.ok(planWeek(d('2027-01-25'), ctx).sessions.every((s) => s.kind === 'recall'));
-  assert.equal(planWeek(d('2027-01-18'), ctx).info.dominant, 'heavy');
-  const off = ctxOf((s) => (s.weekOverrides['2026-10-19'] = 'off')).ctx;
-  assert.equal(planWeek(d('2026-10-19'), off).sessions.length, 0);
 });
 
 test('forecast schedules every module and respects exam weeks', () => {
@@ -223,20 +177,6 @@ test('decision hints read the last two scorecards', () => {
   assert.deepEqual(decisionHints({}, d('2026-10-21')), []);
 });
 
-test('spaced revisits grow and retire', () => {
-  assert.equal(nextInterval(2, false), 2);
-  assert.equal(nextInterval(2, true), 7);
-  assert.equal(nextInterval(7, true), 18);
-  assert.equal(nextInterval(30, true), null);
-  const log = [
-    { id: 1, pattern: 'Graphs (BFS/DFS)', independent: false, nextReview: '2026-10-05' },
-    { id: 2, pattern: 'Graphs (BFS/DFS)', independent: true, nextReview: '2026-10-30' },
-    { id: 3, pattern: 'Two pointers', independent: true, nextReview: null },
-  ];
-  assert.deepEqual(dueReviews(log, d('2026-10-06')).map((p) => p.id), [1]);
-  assert.equal(patternStats(log)[0].pattern, 'Graphs (BFS/DFS)');
-});
-
 test('timetable text round-trips and reports bad lines', () => {
   const s = defaultState();
   const text = timetableToText(s.timetables[0].sessions);
@@ -264,7 +204,10 @@ test('calendar text round-trips and accepts kind aliases', () => {
 });
 
 test('normalise repairs partial or hostile input', () => {
-  const s = normalise({ settings: { pace: { normal: 'x', break: 3 }, defaultMode: 'party' }, weekOverrides: { a: 'heavy', b: 'nope' }, modules: [] });
+  const s = normalise({ version: 2, settings: { pace: { normal: 'x', break: 3 }, defaultMode: 'party', daily: { normal: { problems: 'lots', learn: 45 } } }, weekOverrides: { a: 'heavy', b: 'nope' }, modules: [] });
+  assert.equal(s.settings.daily.normal.problems, 2);
+  assert.equal(s.settings.daily.normal.learn, 45);
+  assert.equal(s.settings.daily.exam.rotate, 3);
   assert.equal(s.settings.pace.normal, 1);
   assert.equal(s.settings.pace.break, 3);
   assert.equal(s.settings.defaultMode, 'normal');

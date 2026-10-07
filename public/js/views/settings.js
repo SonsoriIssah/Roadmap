@@ -1,6 +1,6 @@
 import { h, card, cardHeader, button, segmented, field, input, select, toast, confirmSheet, icon } from '../ui.js';
-import { MODES, MODE_ORDER, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_MODULES, DEFAULT_SETTINGS } from '../data/defaults.js';
-import { isISODate, isTime, toISO, fmtDay, toDay } from '../dates.js';
+import { MODES, MODE_ORDER, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_MODULES, DEFAULT_SETTINGS, DEFAULT_TRACKS, DAILY_FIELDS } from '../data/defaults.js';
+import { isISODate, toISO, fmtDay, toDay } from '../dates.js';
 import { exportJSON, importJSON, defaultState } from '../store.js';
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -73,34 +73,7 @@ export function render(app) {
       ),
     ),
 
-    card(
-      cardHeader('Study sessions', null, 'Sessions are placed in the gaps between your classes.'),
-      h(
-        'div',
-        { class: 'form-row' },
-        field('Earliest start', input({ type: 'time', value: s.studyStart, onchange: (e) => isTime(e.target.value) && set({ studyStart: e.target.value }) })),
-        field('Latest end', input({ type: 'time', value: s.studyEnd, onchange: (e) => isTime(e.target.value) && set({ studyEnd: e.target.value }) })),
-      ),
-      h(
-        'div',
-        { class: 'form-row' },
-        field('Gap around classes (min)', input({ type: 'number', min: '0', max: '120', step: '5', value: String(s.bufferMin), inputmode: 'numeric', onchange: (e) => set({ bufferMin: Math.max(0, Math.min(120, Number(e.target.value) || 0)) }) })),
-        field('Max sessions per day', select(['1', '2', '3'], String(s.maxSessionsPerDay), { onchange: (e) => set({ maxSessionsPerDay: Number(e.target.value) }) })),
-      ),
-      field(
-        'Preferred time',
-        segmented(
-          [
-            { value: 'morning', label: 'Morning' },
-            { value: 'afternoon', label: 'Afternoon' },
-            { value: 'evening', label: 'Evening' },
-          ],
-          s.preferredTime,
-          (v) => set({ preferredTime: v }),
-          { label: 'Preferred study time' },
-        ),
-      ),
-    ),
+    dailyCard(app),
 
     card(
       cardHeader('Plan dates'),
@@ -125,6 +98,48 @@ export function render(app) {
     dataCard(app),
     resetCard(app),
     aboutCard(app),
+  );
+}
+
+function dailyCard(app) {
+  const s = app.state.settings;
+  const modes = ['break', 'normal', 'heavy', 'exam'];
+  const setVal = (mode, key, v) =>
+    app.update((st) => {
+      st.settings.daily[mode][key] = Math.max(0, Math.min(600, Number(v) || 0));
+    });
+  return card(
+    cardHeader('Daily list', null, 'How much goes on each day’s list, by kind of week. Free days before the semester count as Break.'),
+    h(
+      'div',
+      { class: 'load-table', role: 'table', 'aria-label': 'Daily load by mode' },
+      h('div', { class: 'load-row load-head', role: 'row' }, h('span', { role: 'columnheader' }, ''), modes.map((m) => h('span', { role: 'columnheader', class: 'load-mode', dataset: { mode: m } }, h('span', { class: 'dot' }), MODES[m].short))),
+      DAILY_FIELDS.map((f) =>
+        h(
+          'div',
+          { class: 'load-row', role: 'row' },
+          h('span', { role: 'rowheader', class: 'small' }, f.label, f.unit ? h('span', { class: 'muted' }, ` (${f.unit})`) : null),
+          modes.map((m) =>
+            input({
+              type: 'number',
+              min: '0',
+              max: '600',
+              inputmode: 'numeric',
+              value: String(s.daily[m][f.key]),
+              class: 'input input-xs',
+              'aria-label': `${f.label}, ${MODES[m].short}`,
+              onchange: (e) => setVal(m, f.key, e.target.value),
+            }),
+          ),
+        ),
+      ),
+    ),
+    h(
+      'div',
+      { class: 'form-row' },
+      field('Lecture-day boost', select([{ value: '1', label: 'None' }, { value: '1.5', label: '1.5×' }, { value: '2', label: '2×' }, { value: '3', label: '3×' }], String(s.courseBoost), { onchange: (e) => app.update((st) => { st.settings.courseBoost = Number(e.target.value); }) }), 'More Java on CSM 281 days.'),
+      field('Problem order', select([{ value: 'roadmap', label: 'Roadmap topic first' }, { value: 'sheet', label: 'My sheet’s order' }], s.problemOrder, { onchange: (e) => app.update((st) => { st.settings.problemOrder = e.target.value; }) }), 'Both respect P0 → P1 → P2.'),
+    ),
   );
 }
 
@@ -223,6 +238,7 @@ function resetCard(app) {
       button('Calendar', () => reset('calendar', 'Replace your calendar with the KNUST 2026/27 calendar?', (s) => { s.calendar = clone(DEFAULT_CALENDAR); }), { kind: 'secondary', size: 'sm' }),
       button('Timetable', () => reset('timetable', 'Replace all timetables with the Group 1 first-semester timetable?', (s) => { s.timetables = clone(DEFAULT_TIMETABLES); }), { kind: 'secondary', size: 'sm' }),
       button('Roadmap modules', () => reset('roadmap', 'Restore the original modules and order? Progress on modules with the same id is kept.', (s) => { s.modules = clone(DEFAULT_MODULES); }), { kind: 'secondary', size: 'sm' }),
+      button('Java track', () => reset('Java track', 'Restore the default Java lessons? Pasted video chapters are removed.', (s) => { s.tracks = [...s.tracks.filter((t) => t.id !== 'java'), clone(DEFAULT_TRACKS[0])]; }), { kind: 'secondary', size: 'sm' }),
       button('Settings', () => reset('settings', 'Restore default settings?', (s) => { s.settings = clone(DEFAULT_SETTINGS); }), { kind: 'secondary', size: 'sm' }),
       button('Everything', () => reset('everything', 'Erase all progress, applications and logs on this device? Back up first if unsure.', () => defaultState()), { kind: 'ghost-danger', size: 'sm' }),
     ),
@@ -232,7 +248,7 @@ function resetCard(app) {
 function aboutCard(app) {
   return card(
     cardHeader('About'),
-    h('p', { class: 'small' }, 'Roadmap re-plans itself from your calendar, timetable and progress every time you open it. When the university changes dates or your timetable changes, edit them in Schedule — modules, weekly sessions and alerts follow.'),
+    h('p', { class: 'small' }, 'Roadmap re-plans itself from your calendar, timetable, problem sheet and progress every time you open it. When the university changes dates or your timetable changes, edit them in Schedule — daily lists, the forecast and alerts follow.'),
     h('p', { class: 'small muted' }, `Version ${app.version || 'dev'}`),
   );
 }

@@ -1,9 +1,9 @@
 // Pieces shared by several views.
 
 import { h, chip, segmented, openSheet, field, input, select, textarea, formData, toast, icon, checkbox, button } from '../ui.js';
-import { MODES, MODE_ORDER, SESSION_KINDS, TRACKS, PHASES, APP_STATUSES, ELIGIBILITY_CHECKS } from '../data/defaults.js';
-import { fmtDay, fmtRange, relDays, weekKey, weekStart, fromMin, toDay, isISODate, toISO } from '../dates.js';
-import { weekInfo, dateConflicts, dueReviews } from '../engine.js';
+import { MODES, MODE_ORDER, TRACKS, PHASES, APP_STATUSES, ELIGIBILITY_CHECKS } from '../data/defaults.js';
+import { fmtDay, fmtRange, relDays, weekKey, weekStart, toDay, isISODate, toISO } from '../dates.js';
+import { weekInfo, dateConflicts } from '../engine.js';
 import { uid } from '../parse.js';
 
 export function modeChip(mode, text) {
@@ -36,43 +36,13 @@ export function weekOverrideControl(app, ws) {
   );
 }
 
-/** Module the forecast places on a given day (or the current one for today/past). */
-export function moduleForDay(app, day) {
-  if (day <= app.today) return app.current;
-  const byId = app.fc.byId;
-  for (const m of app.state.modules) {
-    const r = byId[m.id];
-    if (r && r.start <= day && day <= r.end) return m;
-  }
-  return app.current;
-}
-
-export function sessionText(kind, mod, app) {
-  const label = SESSION_KINDS[kind] ? SESSION_KINDS[kind].label : kind;
-  switch (kind) {
-    case 'primary':
-      return mod ? { title: `${mod.id} · ${mod.title}`, desc: mod.objective } : { title: label, desc: 'Roadmap complete. Plan the next quarter from your evidence.' };
-    case 'revision':
-      return { title: label, desc: mod ? mod.exit : 'Re-solve an older problem without notes.' };
-    case 'dsa': {
-      const due = dueReviews(app.state.dsaLog, app.today).length;
-      return { title: label, desc: due ? `${due} problem${due > 1 ? 's' : ''} due for revisit in your DSA log.` : 'One unseen problem in a pattern you have covered, or revisit an old miss.' };
-    }
-    case 'project':
-      return { title: label, desc: 'LedgerCore / aggregation API: failure tests, reproducible metrics, documentation.' };
-    case 'career':
-      return { title: label, desc: 'Check new openings and deadlines, update the tracker, take one next action.' };
-    case 'recall':
-      return { title: label, desc: 'Re-solve one old problem from memory. No new topics; exams come first.' };
-    default:
-      return { title: label, desc: '' };
-  }
-}
-
 export function setModuleTask(app, id, key, value) {
   app.update((s) => {
     const p = (s.progress[id] = s.progress[id] || {});
     p.tasks = { ...(p.tasks || {}), [key]: value };
+    p.taskDates = { ...(p.taskDates || {}) };
+    if (value) p.taskDates[key] = toISO(app.today);
+    else delete p.taskDates[key];
     if (p.tasks.objective && p.tasks.exit) {
       p.status = 'done';
       p.completedOn = p.completedOn || toISO(app.today);
@@ -96,21 +66,8 @@ export function setModuleStatus(app, id, status) {
       delete p.status;
       delete p.completedOn;
       p.tasks = {};
+      p.taskDates = {};
     }
-  });
-}
-
-export function isSessionDone(app, ws, idx) {
-  const rec = app.state.sessionsDone[weekKey(ws)];
-  return !!(rec && rec[idx]);
-}
-
-export function toggleSession(app, ws, idx, done) {
-  app.update((s) => {
-    const k = weekKey(ws);
-    s.sessionsDone[k] = s.sessionsDone[k] || {};
-    if (done) s.sessionsDone[k][idx] = true;
-    else delete s.sessionsDone[k][idx];
   });
 }
 
@@ -120,25 +77,6 @@ export function banner(tone, title, body, actions) {
     { class: ['banner', `tone-${tone}`], role: tone === 'critical' ? 'alert' : null },
     h('div', { class: 'banner-icon' }, icon(tone === 'info' || tone === 'good' ? 'info' : 'alert', { size: 18 })),
     h('div', { class: 'banner-body' }, h('strong', null, title), body && h('div', { class: 'banner-text' }, body), actions && h('div', { class: 'banner-actions' }, actions)),
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Visual time bar for one day: classes (grey) and study sessions (accent).
-// ---------------------------------------------------------------------------
-export function dayBar(classes, sessions, settings) {
-  const start = 360;
-  const end = 1380;
-  const span = end - start;
-  const pos = (m) => `${((Math.max(start, Math.min(end, m)) - start) / span) * 100}%`;
-  const width = (a, b) => `${((Math.min(end, b) - Math.max(start, a)) / span) * 100}%`;
-  const ticks = [480, 720, 960, 1200];
-  return h(
-    'div',
-    { class: 'daybar', 'aria-hidden': 'true' },
-    ticks.map((t) => h('span', { class: 'daybar-tick', style: { left: pos(t) } }, h('i', null, fromMin(t).slice(0, 2)))),
-    classes.map((c) => h('span', { class: 'daybar-block class', style: { left: pos(c.s), width: width(c.s, c.e) } })),
-    sessions.map((s) => h('span', { class: ['daybar-block', 'study', `k-${s.kind}`, s.done && 'done'], style: { left: pos(s.s), width: width(s.s, s.e) } })),
   );
 }
 

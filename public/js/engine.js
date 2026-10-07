@@ -1,9 +1,9 @@
 // The planning engine: pure functions that turn your calendar, timetable and
-// progress into modes, forecasts and weekly study sessions. Nothing here
+// progress into modes, forecasts, alerts and date checks. Nothing here
 // touches the DOM or storage, so it is covered by tests in /tests.
 
 import { toDay, isISODate, weekStart, weekKey, weekdayIndex, toMin, isTime, lastDayOfMonth, monthKey } from './dates.js';
-import { KINDS, MODES, SESSION_TEMPLATES } from './data/defaults.js';
+import { KINDS, MODES } from './data/defaults.js';
 
 // ---------------------------------------------------------------------------
 // Context
@@ -213,105 +213,6 @@ export function classesOn(day, ctx) {
   return tt.sessions.filter((c) => c.day === wd);
 }
 
-/** Subtract busy intervals from [start, end). Intervals are minute pairs. */
-export function subtractIntervals(start, end, busy) {
-  const sorted = busy.filter((b) => b.e > start && b.s < end).sort((a, b) => a.s - b.s);
-  const free = [];
-  let cur = start;
-  for (const b of sorted) {
-    if (b.s > cur) free.push({ s: cur, e: Math.min(b.s, end) });
-    cur = Math.max(cur, b.e);
-    if (cur >= end) break;
-  }
-  if (cur < end) free.push({ s: cur, e: end });
-  return free.filter((f) => f.e > f.s);
-}
-
-export function freeTime(day, ctx, extraBusy = []) {
-  const st = ctx.settings;
-  const start = isTime(st.studyStart) ? toMin(st.studyStart) : 360;
-  const end = isTime(st.studyEnd) ? toMin(st.studyEnd) : 1350;
-  const buf = Math.max(0, Number(st.bufferMin) || 0);
-  const busy = classesOn(day, ctx).map((c) => ({ s: c.s - buf, e: c.e + buf }));
-  return subtractIntervals(start, end, busy.concat(extraBusy));
-}
-
-const WINDOWS = {
-  morning: { s: 360, e: 600 },
-  afternoon: { s: 780, e: 1080 },
-  evening: { s: 1110, e: 1350 },
-};
-
-const roundUp15 = (m) => Math.ceil(m / 15) * 15;
-const roundDown15 = (m) => Math.floor(m / 15) * 15;
-
-/**
- * Best start time for a session of `len` minutes, or null if nothing fits.
- * Prefers starting inside the preferred window, then as close to it as possible.
- */
-export function pickSlot(free, len, preferred = 'evening') {
-  const win = WINDOWS[preferred] || WINDOWS.evening;
-  let best = null;
-  for (const f of free) {
-    const a = roundUp15(f.s);
-    const b = roundDown15(f.e - len);
-    if (a > b) continue;
-    const start = Math.min(Math.max(win.s, a), b);
-    const score = start < win.s ? win.s - start : start < win.e ? 0 : start - win.e + 1;
-    if (!best || score < best.score || (score === best.score && start < best.s)) best = { s: start, score };
-  }
-  return best ? best.s : null;
-}
-
-/**
- * Lay out the week's study sessions in your free time.
- * Deterministic for a given calendar/timetable/settings, so the plan for a
- * week stays stable while you work through it.
- */
-export function planWeek(ws, ctx) {
-  const info = weekInfo(ws, ctx);
-  const template = SESSION_TEMPLATES[info.dominant] || [];
-  const maxPerDay = Math.max(1, Number(ctx.settings.maxSessionsPerDay) || 2);
-  const pref = ctx.settings.preferredTime || 'evening';
-
-  let eligible = info.days.filter((d) => d.mode === info.dominant).map((d) => d.day);
-  if (eligible.length * maxPerDay < template.length) {
-    eligible = info.days.filter((d) => d.mode !== 'off').map((d) => d.day);
-  }
-
-  const load = {};
-  const placed = {};
-  for (const d of eligible) {
-    load[d] = classesOn(d, ctx).reduce((sum, c) => sum + (c.e - c.s), 0);
-    placed[d] = [];
-  }
-
-  const sessions = [];
-  const unplaced = [];
-  // Place longer sessions first so they get the large gaps, but keep each
-  // session's template index so its "done" state is stable.
-  const order = template.map((t, idx) => ({ ...t, idx })).sort((a, b) => b.min - a.min || a.idx - b.idx);
-  for (const t of order) {
-    const days = eligible
-      .filter((d) => placed[d].length < maxPerDay)
-      .sort((a, b) => placed[a].length - placed[b].length || load[a] - load[b] || a - b);
-    let done = false;
-    for (const d of days) {
-      const busy = placed[d].map((p) => ({ s: p.s - 15, e: p.e + 15 }));
-      const s = pickSlot(freeTime(d, ctx, busy), t.min, pref);
-      if (s === null) continue;
-      const sess = { idx: t.idx, kind: t.kind, min: t.min, day: d, s, e: s + t.min };
-      placed[d].push(sess);
-      sessions.push(sess);
-      done = true;
-      break;
-    }
-    if (!done) unplaced.push({ idx: t.idx, kind: t.kind, min: t.min });
-  }
-  sessions.sort((a, b) => a.day - b.day || a.s - b.s);
-  return { info, sessions, unplaced, totalMin: template.reduce((s, t) => s + t.min, 0) };
-}
-
 // ---------------------------------------------------------------------------
 // Course synergy: modules that overlap with a course you're taking.
 // ---------------------------------------------------------------------------
@@ -445,37 +346,4 @@ export function decisionHints(scorecards = {}, today) {
 export function scoreTotal(card) {
   if (!card) return 0;
   return ['dsa', 'timed', 'cs', 'project', 'interview', 'recruitment', 'academic'].reduce((s, k) => s + (Number(card[k]) || 0), 0);
-}
-
-// ---------------------------------------------------------------------------
-// DSA log: spaced revisits
-// ---------------------------------------------------------------------------
-
-/** Interval (days) after a first attempt. */
-export function firstInterval(independent) {
-  return independent ? 7 : 2;
-}
-
-/** Next interval after a revisit. Returns null once a problem is retired. */
-export function nextInterval(prev, clean) {
-  if (!clean) return 2;
-  const next = Math.max(7, Math.round((prev || 2) * 2.5));
-  return next > 60 ? null : next;
-}
-
-export function dueReviews(log = [], today) {
-  return log.filter((p) => isISODate(p.nextReview) && toDay(p.nextReview) <= today).sort((a, b) => (a.nextReview < b.nextReview ? -1 : 1));
-}
-
-export function patternStats(log = []) {
-  const stats = {};
-  for (const p of log) {
-    const k = p.pattern || 'Other';
-    stats[k] = stats[k] || { pattern: k, attempts: 0, independent: 0 };
-    stats[k].attempts++;
-    if (p.independent) stats[k].independent++;
-  }
-  return Object.values(stats)
-    .map((s) => ({ ...s, rate: s.attempts ? s.independent / s.attempts : 0 }))
-    .sort((a, b) => a.rate - b.rate || b.attempts - a.attempts);
 }

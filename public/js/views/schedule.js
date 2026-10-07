@@ -1,9 +1,11 @@
-import { h, card, cardHeader, button, iconButton, chip, segmented, field, input, select, textarea, openSheet, confirmSheet, formData, toast, empty, checkbox } from '../ui.js';
+import { h, card, cardHeader, button, iconButton, chip, segmented, field, input, select, textarea, openSheet, confirmSheet, formData, toast, empty } from '../ui.js';
 import { MODES, KINDS, KIND_ORDER } from '../data/defaults.js';
 import { fmtDay, fmtRange, fmtMonth, fromMin, fmtDuration, weekStart, toDay, toISO, isISODate, isTime, toMin, WEEKDAYS, WEEKDAYS_LONG, relDays } from '../dates.js';
-import { planWeek, classesOn, resolveDay, timetableOn, parseTimetables } from '../engine.js';
+import { weekInfo, resolveDay, timetableOn, parseTimetables } from '../engine.js';
+import { historyDay } from '../planner.js';
+import { planFor, taskList } from './tasks.js';
 import { parseTimetableText, timetableToText, parseCalendarText, calendarToText, uid } from '../parse.js';
-import { modeChip, modeReason, weekOverrideControl, sessionText, isSessionDone, toggleSession, dayBar, moduleForDay, banner, modeStrip } from './common.js';
+import { modeChip, modeReason, weekOverrideControl, banner, modeStrip } from './common.js';
 
 export function render(app, sub) {
   const tab = ['week', 'timetable', 'calendar'].includes(sub) ? sub : 'week';
@@ -26,18 +28,21 @@ export function render(app, sub) {
 }
 
 // ---------------------------------------------------------------------------
-// Week
+// Week: every day's numbered list
 // ---------------------------------------------------------------------------
 function weekView(app) {
   const offset = app.ui.weekOffset || 0;
   const ws = weekStart(app.today) + offset * 7;
-  const plan = planWeek(ws, app.ctx);
-  const info = plan.info;
+  const info = weekInfo(ws, app.ctx);
   const go = (n) => {
     app.ui.weekOffset = n;
     app.rerender();
   };
-  const doneN = plan.sessions.filter((s) => isSessionDone(app, ws, s.idx)).length;
+  // Future days come from the planner (which walks forward from today).
+  const planned = ws + 6 >= app.today ? planFor(app, Math.max(ws, app.today), ws + 7 - Math.max(ws, app.today)).days : [];
+  const days = [];
+  for (let d = ws; d < ws + 7; d++) days.push(d < app.today ? historyDay(d, app.state, app.ctx) : planned.find((x) => x.day === d));
+  const totalMin = days.filter((x) => x && !x.past).reduce((sum, x) => sum + x.minutes, 0);
 
   return h(
     'div',
@@ -50,41 +55,27 @@ function weekView(app) {
         h('div', { class: 'week-nav-label' }, h('strong', null, fmtRange(ws, ws + 6, { year: true })), h('span', { class: 'small muted' }, offset === 0 ? 'This week' : offset === 1 ? 'Next week' : offset === -1 ? 'Last week' : relDays(ws, weekStart(app.today)))),
         iconButton('chevR', () => go(offset + 1), 'Next week'),
       ),
-      h('div', { class: 'mode-summary', dataset: { mode: info.dominant } }, h('div', { class: 'mode-big' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), MODES[info.dominant].label), h('div', { class: 'mode-meta' }, `${MODES[info.dominant].hours} target · ${fmtDuration(plan.totalMin)} planned · ${doneN}/${plan.sessions.length} done`)),
+      h('div', { class: 'mode-summary', dataset: { mode: info.dominant } }, h('div', { class: 'mode-big' }, h('span', { class: 'dot', 'aria-hidden': 'true' }), MODES[info.dominant].label), h('div', { class: 'mode-meta' }, `${MODES[info.dominant].hours} career prep target${totalMin ? ` · ${fmtDuration(totalMin)} planned` : ''}`)),
       weekOverrideControl(app, ws),
       offset !== 0 ? h('div', { class: 'row-actions' }, button('Back to this week', () => go(0), { kind: 'ghost', size: 'sm' })) : null,
     ),
-    plan.unplaced.length ? banner('warning', `${plan.unplaced.length} session(s) didn't fit`, 'Your free time this week is too fragmented. Widen the study window or allow more sessions per day in Settings.') : null,
-    info.days.map((d) => dayCard(app, d, plan, ws)),
+    days.map((d) => d && dayCard(app, d, ws)),
   );
 }
 
-function dayCard(app, d, plan, ws) {
-  const classes = classesOn(d.day, app.ctx);
-  const sessions = plan.sessions.filter((s) => s.day === d.day).map((s) => ({ ...s, done: isSessionDone(app, ws, s.idx) }));
+function dayCard(app, d, ws) {
   const isToday = d.day === app.today;
-  const items = [
-    ...classes.map((c) => ({ t: c.s, node: h('li', { class: 'agenda-item class' }, h('span', { class: 'agenda-time' }, fromMin(c.s), h('small', null, fromMin(c.e))), h('div', { class: 'agenda-body' }, h('strong', null, c.code), h('span', { class: 'small muted' }, [c.title, c.venue].filter(Boolean).join(' · ')))) })),
-    ...sessions.map((s) => {
-      const t = sessionText(s.kind, moduleForDay(app, s.day), app);
-      return {
-        t: s.s,
-        node: h(
-          'li',
-          { class: ['agenda-item', 'study', `k-${s.kind}`, s.done && 'done'] },
-          h('span', { class: 'agenda-time' }, fromMin(s.s), h('small', null, fmtDuration(s.min))),
-          h('div', { class: 'agenda-body' }, checkbox(s.done, (v) => toggleSession(app, ws, s.idx, v), h('strong', null, t.title), { sub: t.desc })),
-        ),
-      };
-    }),
-  ].sort((a, b) => a.t - b.t);
-
   return h(
     'section',
-    { class: ['card', 'day-card', isToday && 'is-today'] },
-    h('div', { class: 'day-head' }, h('div', null, h('strong', null, WEEKDAYS_LONG[d.day - ws]), h('span', { class: 'muted small' }, ` ${fmtDay(d.day, { weekday: false })}`), isToday ? h('span', { class: 'badge' }, 'Today') : null), modeChip(d.mode)),
-    classes.length || sessions.length ? dayBar(classes, sessions, app.state.settings) : null,
-    items.length ? h('ol', { class: 'agenda' }, items.map((i) => i.node)) : h('p', { class: 'small muted' }, d.mode === 'exam' ? 'Exam day — no lectures.' : 'Free day.'),
+    { class: ['card', 'day-card', isToday && 'is-today', d.past && 'is-past'] },
+    h(
+      'div',
+      { class: 'day-head' },
+      h('div', null, h('strong', null, WEEKDAYS_LONG[d.day - ws]), h('span', { class: 'muted small' }, ` ${fmtDay(d.day, { weekday: false })}`), isToday ? h('span', { class: 'badge' }, 'Today') : null),
+      h('div', { class: 'inline' }, !d.past && d.minutes ? h('span', { class: 'small muted' }, fmtDuration(d.minutes)) : null, modeChip(d.mode)),
+    ),
+    d.classes.length ? h('div', { class: 'lectures' }, h('span', { class: 'small muted' }, 'Lectures: '), d.classes.map((c) => chip(`${fromMin(c.s)} ${c.code}`, { title: `${c.title} · ${c.venue || ''}` }))) : null,
+    d.past ? (d.items.length ? h('div', null, h('p', { class: 'small muted' }, 'Done that day:'), taskList(app, d)) : h('p', { class: 'small muted' }, 'Nothing recorded.')) : taskList(app, d, { interactive: isToday }),
   );
 }
 
@@ -100,7 +91,7 @@ function timetableView(app) {
   return h(
     'div',
     { class: 'stack' },
-    h('p', { class: 'small muted' }, 'Each timetable covers a date range, so every semester can have its own. Lectures only count on teaching days — not during mid-sems, exams or breaks.'),
+    h('p', { class: 'small muted' }, 'Each timetable covers a date range, so every semester can have its own. Lectures only count on teaching days — not during mid-sems, exams or breaks. Each lecture adds a “Revise …” item to that day’s list.'),
     nextTeach ? banner('info', `No timetable yet for ${nextTeach.title}`, `Starts ${fmtDay(nextTeach.s, { year: true })}. Add one when your new schedule is published (copying the old one is a quick start).`, [button('Add timetable', () => editTimetableMeta(app, null, nextTeach), { kind: 'primary', size: 'sm' })]) : null,
     tts.length ? tts.map((t) => timetableCard(app, t, active && active.id === t.id)) : empty('No timetables yet.'),
     h('div', { class: 'row-actions' }, button('New timetable', () => editTimetableMeta(app, null), { kind: 'secondary', iconName: 'plus' })),
@@ -239,7 +230,7 @@ function editClass(app, ttId, c) {
         if (i >= 0) t.sessions[i] = rec;
         else t.sessions.push(rec);
       });
-      toast('Saved. This week’s sessions were re-planned.');
+      toast('Saved. Your daily lists now include revising these lectures.');
     },
   });
 }

@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 1;
+export const DATA_VERSION = 2;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.
@@ -40,60 +40,37 @@ export const DEFAULT_SETTINGS = {
   pace: { normal: 1, heavy: 0.4, exam: 0, break: 2, off: 0 },
   defaultMode: 'normal', // mode for days not covered by any calendar period
   preExamDays: 7, // days before an exam period that count as "heavy" (0 = off)
-  studyStart: '06:00',
-  studyEnd: '22:30',
-  bufferMin: 15, // gap kept free around classes
-  preferredTime: 'evening', // morning | afternoon | evening
-  maxSessionsPerDay: 2,
   previewDate: null, // "pretend today is" for exploring future weeks
+  daily: {
+    // Per day, by mode. learn = max minutes of lessons; lecture = minutes to
+    // revise each course you had a lecture in; rotate = courses revised in
+    // rotation on days without lectures (and every day before/during exams).
+    break: { problems: 4, revisits: 3, learn: 150, lecture: 0, rotate: 1, rotateMin: 45, module: 60, kickoff: 4 },
+    normal: { problems: 2, revisits: 2, learn: 60, lecture: 25, rotate: 2, rotateMin: 40, module: 30, kickoff: 2 },
+    heavy: { problems: 1, revisits: 1, learn: 20, lecture: 0, rotate: 2, rotateMin: 60, module: 0, kickoff: 0 },
+    exam: { problems: 0, revisits: 1, learn: 0, lecture: 0, rotate: 3, rotateMin: 90, module: 0, kickoff: 0 },
+    off: { problems: 0, revisits: 0, learn: 0, lecture: 0, rotate: 0, rotateMin: 0, module: 0, kickoff: 0 },
+  },
+  courseBoost: 2, // extra learning on days you have a lecture in the same subject
+  problemOrder: 'roadmap', // roadmap: current topic first | sheet: your sheet's priority and order
 };
 
-// ---------------------------------------------------------------------------
-// Study session templates per mode (minutes). The planner places these into
-// the free gaps of your timetable each week.
-// ---------------------------------------------------------------------------
-export const SESSION_KINDS = {
-  primary: { label: 'Roadmap module', icon: '◆' },
-  revision: { label: 'Revision / exit task', icon: '↺' },
-  dsa: { label: 'DSA keep-warm', icon: '#' },
-  project: { label: 'Project deep work', icon: '▣' },
-  career: { label: 'Applications', icon: '✉' },
-  recall: { label: 'Light recall (optional)', icon: '·' },
-};
-
-export const SESSION_TEMPLATES = {
-  normal: [
-    { kind: 'primary', min: 60 },
-    { kind: 'primary', min: 60 },
-    { kind: 'revision', min: 45 },
-    { kind: 'dsa', min: 45 },
-    { kind: 'career', min: 30 },
-  ],
-  heavy: [
-    { kind: 'primary', min: 45 },
-    { kind: 'dsa', min: 30 },
-    { kind: 'career', min: 15 },
-  ],
-  exam: [
-    { kind: 'recall', min: 25 },
-    { kind: 'recall', min: 25 },
-  ],
-  break: [
-    { kind: 'primary', min: 90 },
-    { kind: 'primary', min: 90 },
-    { kind: 'primary', min: 90 },
-    { kind: 'revision', min: 60 },
-    { kind: 'dsa', min: 60 },
-    { kind: 'project', min: 120 },
-    { kind: 'career', min: 60 },
-  ],
-  off: [],
-};
+export const DAILY_FIELDS = [
+  { key: 'problems', label: 'New problems', unit: '' },
+  { key: 'revisits', label: 'Revisits (max)', unit: '' },
+  { key: 'learn', label: 'Learning (max)', unit: 'min' },
+  { key: 'lecture', label: 'Revise each lecture', unit: 'min' },
+  { key: 'rotate', label: 'Courses in rotation', unit: '' },
+  { key: 'rotateMin', label: 'Per rotated course', unit: 'min' },
+  { key: 'module', label: 'Roadmap task', unit: 'min' },
+  { key: 'kickoff', label: 'First-week tasks', unit: '' },
+];
 
 // ---------------------------------------------------------------------------
 // KNUST 2026/2027 academic calendar (student-relevant entries).
 // ---------------------------------------------------------------------------
 export const DEFAULT_CALENDAR = [
+  { id: 'c-pre', title: 'Free time before the semester', start: '2026-10-05', end: '2026-10-18', kind: 'break' },
   { id: 'c-sem1', title: 'First Semester', start: '2026-10-13', end: '2027-02-13', kind: 'semester' },
   { id: 'c-reg1', title: 'Online course registration (continuing students)', start: '2026-10-12', end: '2026-10-29', kind: 'admin' },
   { id: 'c-arr1', title: 'Arrival of continuing students', start: '2026-10-17', end: '2026-10-17', kind: 'milestone' },
@@ -164,7 +141,24 @@ export const TRACKS = {
   career: 'Career',
 };
 
-const m = (id, phase, track, title, objective, exit, extra = {}) => ({ id, phase, track, title, objective, exit, weight: 1, keywords: [], ...extra });
+// Words matched against the Pattern / Topic columns of your problem sheet, so
+// the roadmap's current topic decides which problems come next.
+export const MODULE_PATTERNS = {
+  W3: ['array', 'hash', 'frequency', 'prefix', 'running state', 'kadane', 'string'],
+  W5: ['two pointer'],
+  W6: ['sliding window'],
+  W7: ['stack', 'queue', 'monotonic'],
+  W9: ['binary search'],
+  W10: ['linked list', 'recursion'],
+  W13: ['tree', 'trie', 'bst'],
+  W14: ['heap', 'priority queue', 'interval', 'top k'],
+  W15: ['graph', 'island', 'union find', 'matrix'],
+  W21: ['topological', 'shortest path', 'dijkstra', 'advanced graph'],
+  W22: ['greedy', 'backtrack'],
+  W25: ['dynamic programming', 'dp'],
+};
+
+const m = (id, phase, track, title, objective, exit, extra = {}) => ({ id, phase, track, title, objective, exit, weight: 1, keywords: [], patterns: MODULE_PATTERNS[id] || [], ...extra });
 
 export const DEFAULT_MODULES = [
   m('W1', 'p1', 'dsa', 'Baseline', 'Solve two unseen DSA problems; record time, hints and complexity.', 'Write your starting scorecard.'),
@@ -202,6 +196,51 @@ export const DEFAULT_MODULES = [
   m('W37', 'p4', 'dsa', 'Targeted revision', 'Use actual interview feedback or diagnostic weaknesses.', 'Re-solve previously missed problems.'),
   m('W38', 'p4', 'career', 'Portfolio and applications', 'Polish documentation and verify application records.', 'Remove unsupported resume claims.'),
   m('W39', 'p4', 'career', 'Retrospective', 'Evaluate outcomes, eligibility blockers and time allocation.', 'Build the next plan from evidence.'),
+];
+
+// ---------------------------------------------------------------------------
+// Learning tracks. Lessons are spread over the track's weeks; days with a
+// lecture matching `keywords` (CSM 281) get more. Lessons marked `video` are
+// placeholders for a video course: paste its YouTube chapter list in the app
+// and they become exact timestamps ("Watch 1:13:00–2:15:00").
+// ---------------------------------------------------------------------------
+const L = (id, title, min, practice, extra = {}) => ({ id, title, min, practice, ...extra });
+
+export const DEFAULT_TRACKS = [
+  {
+    id: 'java',
+    name: 'Java',
+    start: '2026-10-07',
+    weeks: 3,
+    active: true,
+    keywords: ['java', 'object oriented'],
+    resource: 'Amigoscode Java course',
+    url: '',
+    lessons: [
+      L('j1', 'Install JDK + IntelliJ, first program, javac and java', 30, 'Write Hello World, compile it with javac and run it from the terminal.', { video: true, match: ['install', 'intellij', 'first', 'syntax', 'compil', 'running'] }),
+      L('j2', 'Variables, primitive and reference data types', 40, 'Declare one variable of every primitive type; cast between int, long and double.', { video: true, match: ['variable', 'primitive', 'reference', 'data type'] }),
+      L('j3', 'The String class, packages and imports', 35, 'Reverse a String with StringBuilder and check if it is a palindrome.', { video: true, match: ['string', 'package', 'import'] }),
+      L('j4', 'Operators: arithmetic, comparison, logical, ternary', 30, 'FizzBuzz 1–100 using % and the ternary operator.', { video: true, match: ['arithmetic', 'comparison', 'logical', 'ternary', 'operator'] }),
+      L('j5', 'Control flow: if statements and switch', 30, 'Grade calculator using an enhanced switch.', { video: true, match: ['if', 'switch'] }),
+      L('j6', 'Arrays, for / enhanced for, while, do-while, break and continue', 45, 'Max, min and sum of an int[]; solve Contains Duplicate in Java.', { video: true, match: ['array', 'loop', 'for', 'while', 'break', 'continue'] }),
+      L('j7', 'User input (Scanner) and methods', 40, 'Write static isPrime(int) and call it on input from Scanner.', { video: true, match: ['input', 'method'] }),
+      L('j8', 'Classes and objects: fields, constructors, this, toString', 45, 'Model a Passport (or Student) class with a constructor and toString.', { video: true, match: ['class', 'object', 'passport'] }),
+      L('j9', 'Encapsulation: access modifiers, getters/setters, final', 40, 'BankAccount with a private balance and validated deposit/withdraw.'),
+      L('j10', 'Inheritance: extends, super, overriding, equals and hashCode', 50, 'Shape → Circle and Rectangle with area(); override equals/hashCode on Circle.'),
+      L('j11', 'Polymorphism and abstract classes', 45, 'Store Shapes in a List<Shape> and total their areas polymorphically.'),
+      L('j12', 'Interfaces, default methods, Comparable vs Comparator', 45, 'Sort Students by GPA (descending), then by name.'),
+      L('j13', 'Exceptions: try/catch/finally, checked vs unchecked, custom, try-with-resources', 45, 'Throw an InsufficientFundsException from BankAccount.withdraw.'),
+      L('j14', 'Collections I: List, ArrayList, LinkedList, iterating', 40, 'Remove duplicates from an ArrayList while keeping order.'),
+      L('j15', 'Collections II: HashMap, HashSet, TreeMap; the equals/hashCode contract', 50, 'Solve Two Sum and Valid Anagram in Java with HashMap.'),
+      L('j16', 'Stack, Queue and Deque (ArrayDeque); PriorityQueue', 40, 'Solve Valid Parentheses in Java with ArrayDeque.'),
+      L('j17', 'Generics: classes, methods, bounded types', 40, 'Write a generic Pair<A, B> and max(List<T extends Comparable<T>>).'),
+      L('j18', 'Enums, records and nested classes', 30, 'An enum Direction with a turnRight() method; a record Point(int x, int y).'),
+      L('j19', 'Lambdas and streams: map, filter, sorted, collect', 45, 'From a List<Student>, collect the names with GPA > 3.5, sorted.'),
+      L('j20', 'Testing with JUnit 5 and a Maven/Gradle project', 45, 'Write five JUnit tests for BankAccount, including the exception.'),
+      L('j21', 'DSA in Java: re-solve three problems you solved before', 60, 'Time each one; list the Java syntax you still had to look up.'),
+      L('j22', 'Checkpoint: small CLI app (library or bank) with classes, collections and exceptions', 90, 'Push it to GitHub with a README.'),
+    ],
+  },
 ];
 
 // Weeks of the original plan that depend on the calendar rather than on
