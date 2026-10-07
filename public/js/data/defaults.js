@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 2;
+export const DATA_VERSION = 3;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.
@@ -200,11 +200,98 @@ export const DEFAULT_MODULES = [
 
 // ---------------------------------------------------------------------------
 // Learning tracks. Lessons are spread over the track's weeks; days with a
-// lecture matching `keywords` (CSM 281) get more. Lessons marked `video` are
-// placeholders for a video course: paste its YouTube chapter list in the app
-// and they become exact timestamps ("Watch 1:13:00–2:15:00").
+// lecture matching `keywords` (CSM 281) get more. Video lessons carry their
+// chapter timestamps, so the daily list says "Watch 26:02 → 34:32".
 // ---------------------------------------------------------------------------
 const L = (id, title, min, practice, extra = {}) => ({ id, title, min, practice, ...extra });
+
+const secs = (t) => t.split(':').map(Number).reduce((acc, n) => acc * 60 + n, 0);
+
+// Chapters of "Java Tutorial for Beginners" (Programming with Mosh, YouTube).
+// [id, start, title, practice?, practice minutes?, extra?]. Each chapter ends
+// where the next begins; the free video stops before "Clean Coding".
+const MOSH_CHAPTERS = [
+  ['mo1', '0:00', 'Introduction'],
+  ['mo2', '1:48', 'Installing Java'],
+  ['mo3', '4:02', 'Anatomy of a Java Program'],
+  ['mo4', '8:46', 'Your First Java Program', 'Create a HelloWorld project in IntelliJ and run it.', 10, { match: ['first'] }],
+  ['mo5', '16:01', 'Cheat Sheet'],
+  ['mo6', '16:29', 'How Java Code Gets Executed', 'Compile Main.java with javac and run it with java from the terminal.', 10, { match: ['execut', 'compil'] }],
+  ['mo7', '22:56', 'Course Structure'],
+  ['mo8', '25:24', 'Types'],
+  ['mo9', '26:02', 'Variables'],
+  ['mo10', '29:14', 'Primitive Types', 'Declare one variable of every primitive type (note the L and F suffixes).', 10, { match: ['primitive'] }],
+  ['mo11', '34:32', 'Reference Types'],
+  ['mo12', '39:19', 'Primitive Types vs Reference Types', 'Show in code that copying a Point shares one object but copying an int does not.', 10, { match: ['reference'] }],
+  ['mo13', '43:42', 'Strings', 'Reverse a String and check if it is a palindrome; try trim, replace and indexOf.', 15, { match: ['string'] }],
+  ['mo14', '50:49', 'Escape Sequences'],
+  ['mo15', '53:25', 'Arrays', 'Solve Contains Duplicate in Java using Arrays.sort.', 20, { match: ['array'] }],
+  ['mo16', '58:50', 'Multi-Dimensional Arrays'],
+  ['mo17', '1:01:30', 'Constants'],
+  ['mo18', '1:03:18', 'Arithmetic Expressions'],
+  ['mo19', '1:07:25', 'Order of Operations'],
+  ['mo20', '1:08:45', 'Casting', 'Read "1.5" as a String, parse it, and add it to an int.', 10, { match: ['cast'] }],
+  ['mo21', '1:15:14', 'The Math Class'],
+  ['mo22', '1:19:56', 'Formatting Numbers'],
+  ['mo23', '1:25:46', 'Reading Input', 'Read a name and an age with Scanner and print a formatted greeting.', 10, { match: ['input'] }],
+  ['mo24', '1:30:48', 'Project: Mortgage Calculator', 'Build the mortgage calculator yourself before watching the solution.', 45, { match: ['mortgage'], breakAfter: true }],
+  ['mo25', '1:32:58', 'Solution: Mortgage Calculator'],
+  ['mo26', '1:37:17', 'Types Summary'],
+  ['mo27', '1:38:45', 'Control Flow'],
+  ['mo28', '1:39:34', 'Comparison Operators'],
+  ['mo29', '1:41:21', 'Logical Operators', 'Write the loan-eligibility rule with &&, || and !.', 10, { match: ['logical'] }],
+  ['mo30', '1:45:57', 'If Statements'],
+  ['mo31', '1:50:23', 'Simplifying If Statements'],
+  ['mo32', '1:53:52', 'The Ternary Operator'],
+  ['mo33', '1:56:19', 'Switch Statements'],
+  ['mo34', '2:00:10', 'Exercise: FizzBuzz', 'Pause at 2:00:55 and solve FizzBuzz before watching the solution.', 15, { match: ['fizz'] }],
+  ['mo35', '2:06:10', 'For Loops', 'Print a 1–10 multiplication table with nested for loops.', 10, { match: ['for loop'] }],
+  ['mo36', '2:09:57', 'While Loops'],
+  ['mo37', '2:14:26', 'Do...While Loops'],
+  ['mo38', '2:15:39', 'Break and Continue', 'Write a loop that echoes input until the user types quit.', 10, { match: ['break', 'continue'] }],
+  ['mo39', '2:18:55', 'For-Each Loop'],
+  ['mo40', '2:22:02', 'Project: Mortgage Calculator (validation)', 'Add input validation to your calculator yourself before watching the solution.', 30, { match: ['mortgage'], breakAfter: true }],
+  ['mo41', '2:23:30', 'Solution: Mortgage Calculator (validation)'],
+  ['mo42', '2:28:28', 'Control Flow Summary'],
+];
+const MOSH_END = '2:29:26';
+
+export function moshLessons() {
+  return MOSH_CHAPTERS.map(([id, start, title, practice = '', practiceMin = 0, extra = {}], i) => ({
+    id,
+    title,
+    start: secs(start),
+    end: secs(i + 1 < MOSH_CHAPTERS.length ? MOSH_CHAPTERS[i + 1][1] : MOSH_END),
+    video: true,
+    practice,
+    practiceMin,
+    ...extra,
+  }));
+}
+
+export const JAVA_VIDEO = {
+  resource: 'Mosh',
+  url: 'https://www.youtube.com/watch?v=eIrMbAQSU34',
+};
+
+export const JAVA_STUDY_LESSONS = [
+  L('j7', 'Methods: parameters, return values, overloading, static', 40, 'Refactor your mortgage calculator into methods: readNumber(prompt, min, max), calculateMortgage(...).'),
+  L('j8', 'Classes and objects: fields, constructors, this, toString', 45, 'Model a Student class with a constructor and toString.'),
+  L('j9', 'Encapsulation: access modifiers, getters/setters, final', 40, 'BankAccount with a private balance and validated deposit/withdraw.'),
+  L('j10', 'Inheritance: extends, super, overriding, equals and hashCode', 50, 'Shape → Circle and Rectangle with area(); override equals/hashCode on Circle.'),
+  L('j11', 'Polymorphism and abstract classes', 45, 'Store Shapes in a List<Shape> and total their areas polymorphically.'),
+  L('j12', 'Interfaces, default methods, Comparable vs Comparator', 45, 'Sort Students by GPA (descending), then by name.'),
+  L('j13', 'Exceptions: try/catch/finally, checked vs unchecked, custom, try-with-resources', 45, 'Throw an InsufficientFundsException from BankAccount.withdraw.'),
+  L('j14', 'Collections I: List, ArrayList, LinkedList, iterating', 40, 'Remove duplicates from an ArrayList while keeping order.'),
+  L('j15', 'Collections II: HashMap, HashSet, TreeMap; the equals/hashCode contract', 50, 'Solve Two Sum and Valid Anagram in Java with HashMap.'),
+  L('j16', 'Stack, Queue and Deque (ArrayDeque); PriorityQueue', 40, 'Solve Valid Parentheses in Java with ArrayDeque.'),
+  L('j17', 'Generics: classes, methods, bounded types', 40, 'Write a generic Pair<A, B> and max(List<T extends Comparable<T>>).'),
+  L('j18', 'Enums, records and nested classes', 30, 'An enum Direction with a turnRight() method; a record Point(int x, int y).'),
+  L('j19', 'Lambdas and streams: map, filter, sorted, collect', 45, 'From a List<Student>, collect the names with GPA > 3.5, sorted.'),
+  L('j20', 'Testing with JUnit 5 and a Maven/Gradle project', 45, 'Write five JUnit tests for BankAccount, including the exception.'),
+  L('j21', 'DSA in Java: re-solve three problems you solved before', 60, 'Time each one; list the Java syntax you still had to look up.'),
+  L('j22', 'Checkpoint: small CLI app (library or bank) with classes, collections and exceptions', 90, 'Push it to GitHub with a README.'),
+];
 
 export const DEFAULT_TRACKS = [
   {
@@ -214,34 +301,23 @@ export const DEFAULT_TRACKS = [
     weeks: 3,
     active: true,
     keywords: ['java', 'object oriented'],
-    resource: 'Amigoscode Java course',
-    url: '',
-    lessons: [
-      L('j1', 'Install JDK + IntelliJ, first program, javac and java', 30, 'Write Hello World, compile it with javac and run it from the terminal.', { video: true, match: ['install', 'intellij', 'first', 'syntax', 'compil', 'running'] }),
-      L('j2', 'Variables, primitive and reference data types', 40, 'Declare one variable of every primitive type; cast between int, long and double.', { video: true, match: ['variable', 'primitive', 'reference', 'data type'] }),
-      L('j3', 'The String class, packages and imports', 35, 'Reverse a String with StringBuilder and check if it is a palindrome.', { video: true, match: ['string', 'package', 'import'] }),
-      L('j4', 'Operators: arithmetic, comparison, logical, ternary', 30, 'FizzBuzz 1–100 using % and the ternary operator.', { video: true, match: ['arithmetic', 'comparison', 'logical', 'ternary', 'operator'] }),
-      L('j5', 'Control flow: if statements and switch', 30, 'Grade calculator using an enhanced switch.', { video: true, match: ['if', 'switch'] }),
-      L('j6', 'Arrays, for / enhanced for, while, do-while, break and continue', 45, 'Max, min and sum of an int[]; solve Contains Duplicate in Java.', { video: true, match: ['array', 'loop', 'for', 'while', 'break', 'continue'] }),
-      L('j7', 'User input (Scanner) and methods', 40, 'Write static isPrime(int) and call it on input from Scanner.', { video: true, match: ['input', 'method'] }),
-      L('j8', 'Classes and objects: fields, constructors, this, toString', 45, 'Model a Passport (or Student) class with a constructor and toString.', { video: true, match: ['class', 'object', 'passport'] }),
-      L('j9', 'Encapsulation: access modifiers, getters/setters, final', 40, 'BankAccount with a private balance and validated deposit/withdraw.'),
-      L('j10', 'Inheritance: extends, super, overriding, equals and hashCode', 50, 'Shape → Circle and Rectangle with area(); override equals/hashCode on Circle.'),
-      L('j11', 'Polymorphism and abstract classes', 45, 'Store Shapes in a List<Shape> and total their areas polymorphically.'),
-      L('j12', 'Interfaces, default methods, Comparable vs Comparator', 45, 'Sort Students by GPA (descending), then by name.'),
-      L('j13', 'Exceptions: try/catch/finally, checked vs unchecked, custom, try-with-resources', 45, 'Throw an InsufficientFundsException from BankAccount.withdraw.'),
-      L('j14', 'Collections I: List, ArrayList, LinkedList, iterating', 40, 'Remove duplicates from an ArrayList while keeping order.'),
-      L('j15', 'Collections II: HashMap, HashSet, TreeMap; the equals/hashCode contract', 50, 'Solve Two Sum and Valid Anagram in Java with HashMap.'),
-      L('j16', 'Stack, Queue and Deque (ArrayDeque); PriorityQueue', 40, 'Solve Valid Parentheses in Java with ArrayDeque.'),
-      L('j17', 'Generics: classes, methods, bounded types', 40, 'Write a generic Pair<A, B> and max(List<T extends Comparable<T>>).'),
-      L('j18', 'Enums, records and nested classes', 30, 'An enum Direction with a turnRight() method; a record Point(int x, int y).'),
-      L('j19', 'Lambdas and streams: map, filter, sorted, collect', 45, 'From a List<Student>, collect the names with GPA > 3.5, sorted.'),
-      L('j20', 'Testing with JUnit 5 and a Maven/Gradle project', 45, 'Write five JUnit tests for BankAccount, including the exception.'),
-      L('j21', 'DSA in Java: re-solve three problems you solved before', 60, 'Time each one; list the Java syntax you still had to look up.'),
-      L('j22', 'Checkpoint: small CLI app (library or bank) with classes, collections and exceptions', 90, 'Push it to GitHub with a README.'),
-    ],
+    ...JAVA_VIDEO,
+    lessons: [...moshLessons(), ...JAVA_STUDY_LESSONS],
   },
 ];
+
+// Saves from before the Mosh course used topic placeholders for the first
+// lessons. If those are still untouched they are swapped for the chapters,
+// and lessons already ticked carry over to the chapters covering that topic.
+export const OLD_JAVA_PLACEHOLDERS = {
+  j1: ['mo1', 'mo2', 'mo3', 'mo4', 'mo5', 'mo6', 'mo7'],
+  j2: ['mo8', 'mo9', 'mo10', 'mo11', 'mo12'],
+  j3: ['mo13', 'mo14'],
+  j4: ['mo17', 'mo18', 'mo19', 'mo20', 'mo21', 'mo22', 'mo28', 'mo29', 'mo32'],
+  j5: ['mo30', 'mo31', 'mo33', 'mo34'],
+  j6: ['mo15', 'mo16', 'mo35', 'mo36', 'mo37', 'mo38', 'mo39'],
+  j7: ['mo23'],
+};
 
 // Weeks of the original plan that depend on the calendar rather than on
 // sequence. They appear automatically when their trigger fires.

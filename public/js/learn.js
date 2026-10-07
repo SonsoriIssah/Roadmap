@@ -30,9 +30,26 @@ export function fmtTimestamp(sec) {
  * The last chapter ends at `totalSec` (or 15 minutes later if unknown).
  */
 export function parseChapters(text, totalSec = null) {
-  const out = [];
+  const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const isStamp = (l) => /^\d{1,2}(?::\d{2}){1,2}$/.test(l);
+  const stamps = lines.filter(isStamp).length;
+  let out = [];
+  if (stamps >= 3 && stamps >= lines.length * 0.2) {
+    // A pasted YouTube transcript: timestamp lines alternate with caption
+    // lines, and a chapter title is an extra line just before a timestamp.
+    let last = 0;
+    lines.forEach((l, i) => {
+      if (!isStamp(l)) return;
+      last = Math.max(last, parseTimestamp(l));
+      const prev = lines[i - 1];
+      if (prev !== undefined && !isStamp(prev) && (i < 2 || !isStamp(lines[i - 2])) && prev.length <= 80) {
+        out.push({ title: prev, start: parseTimestamp(l) });
+      }
+    });
+    if (!totalSec && last) totalSec = last + 15;
+  }
   const re = /^\s*[[(]?(\d{1,2}(?::\d{2}){1,2})[\])]?\s*[-–—:|.)]?\s*(.+?)\s*$/;
-  for (const line of String(text || '').split(/\r?\n/)) {
+  for (const line of out.length ? [] : lines) {
     const m = re.exec(line);
     if (!m) continue;
     const start = parseTimestamp(m[1]);
@@ -58,8 +75,12 @@ export function videoLink(url, startSec) {
   return `${clean}${clean.includes('?') ? '&' : '?'}t=${startSec}s`;
 }
 
+/** Minutes a lesson takes: video length plus its practice task, or the study estimate. */
 export function lessonMinutes(l) {
-  if (Number.isFinite(l.start) && Number.isFinite(l.end) && l.end > l.start) return Math.max(5, Math.round((l.end - l.start) / 60));
+  if (Number.isFinite(l.start) && Number.isFinite(l.end) && l.end > l.start) {
+    const practice = Number.isFinite(Number(l.practiceMin)) && l.practiceMin !== undefined && l.practiceMin !== '' ? Number(l.practiceMin) : l.practice ? 10 : 0;
+    return Math.max(1, Math.round((l.end - l.start) / 60)) + practice;
+  }
   return Math.max(5, Number(l.min) || 30);
 }
 
@@ -72,7 +93,7 @@ export function importChapters(track, chapters, { url = '', resource = '', repla
   const lessons = track.lessons || [];
   const firstVideo = lessons.findIndex((l) => l.video);
   const placeholders = replaceAll ? lessons : lessons.filter((l) => l.video);
-  const newLessons = chapters.map((c) => ({ id: makeId(), title: c.title, start: c.start, end: c.end, video: true, practice: '' }));
+  const newLessons = chapters.map((c) => ({ id: makeId(), title: c.title, start: c.start, end: c.end, video: true, practice: '', practiceMin: 0 }));
 
   for (const ph of placeholders) {
     if (!ph.practice || !newLessons.length) continue;
@@ -83,7 +104,11 @@ export function importChapters(track, chapters, { url = '', resource = '', repla
     });
     const t = newLessons[target >= 0 ? target : newLessons.length - 1];
     t.practice = t.practice ? `${t.practice} · ${ph.practice}` : ph.practice;
+    t.practiceMin = (t.practiceMin || 0) + (Number(ph.practiceMin) || 10);
+    if (ph.breakAfter) t.breakAfter = true;
   }
+  // Projects and exercises are a natural place to stop and build before the solution.
+  for (const l of newLessons) if (/\b(project|exercise)\b/i.test(l.title)) l.breakAfter = true;
 
   let next;
   if (replaceAll) next = newLessons;
@@ -127,7 +152,7 @@ export function parseLessonsText(text, makeId, previous = []) {
         const start = parseTimestamp(range[1]);
         const end = parseTimestamp(range[2]);
         if (start === null || end === null || end <= start) return errors.push({ line: i + 1, message: 'Video range must look like 1:13:00-2:15:00' });
-        lessons.push({ id: old ? old.id : makeId(), title, start, end, video: true, practice });
+        lessons.push({ id: old ? old.id : makeId(), title, start, end, video: true, practice, practiceMin: old && old.practice === practice ? old.practiceMin : practice ? 10 : 0, breakAfter: old ? old.breakAfter : undefined, match: old && old.match });
       } else if (!time || /^\d+$/.test(time)) {
         lessons.push({ id: old ? old.id : makeId(), title, min: Number(time) || 30, video: old ? !!old.video : false, practice, match: old && old.match });
       } else errors.push({ line: i + 1, message: `"${time}" is neither minutes nor a video range` });

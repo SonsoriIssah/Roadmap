@@ -9,19 +9,28 @@ No accounts, no server, no dependencies. Your data stays on your phone (with bac
 Every day gets a numbered to-do list, built for that day:
 
 ```
-Thursday 22 October · Normal week · lectures 08:00 CSM 255 · 15:00 CSM 281 · 17:00 CSM 297
- i.   Java: Creating Variables, Primitive Data Types → Watch Amigoscode Java course 1:13:00 → 2:15:00
-        Practice: Declare one variable of every primitive type…
- ii.  Solve Contains Duplicate        Easy · Hash map lookup · P0   Open ↗
- iii. Solve Two Sum                   Easy · Hash map lookup · P0   Open ↗
- iv.  Revisit Valid Anagram           from memory, no notes
- v.   W3 · Arrays and hashing         Practise frequency maps, sets and prefix sums
- vi.  Revise CSM 255 · Open Source Operating Systems
- vii. Revise CSM 281 · Object Oriented Programming with Java   (rewrite today's examples in code)
- viii.Revise CSM 297 · Database Concepts and Technologies I
+Thursday 8 October · Break (free time before the semester)
+ i.   Java: Primitive Types vs Reference Types → Order of Operations (8 chapters)
+        → Watch Mosh 39:19 → 1:08:45 ↗
+        Practice: Reverse a String and check if it is a palindrome…
+ ii.  Solve Valid Palindrome          Easy · Two pointers · P0   Open ↗
+ iii. Solve Move Zeroes               Easy · Two pointers · P0   Open ↗
+ iv.  Solve Two Sum II                Medium · Two pointers · P0 Open ↗
+ v.   Solve 3Sum                      Medium · Two pointers · P0 Open ↗
+ vi.  W1 · Baseline                   Solve two unseen DSA problems…
+ vii. Update your resume …            First-week task
+
+Thursday 22 October · Normal week · lectures CSM 255, CSM 281, CSM 297
+ i.   Java: Testing with JUnit 5 and a Maven/Gradle project
+ ii.  Solve Course Schedule
+ iii. Solve Implement Trie (Prefix Tree)
+ iv.  W4 · Project audit
+ v.   Revise CSM 255 · Open Source Operating Systems
+ vi.  Revise CSM 281 · Object Oriented Programming with Java   (rewrite today's examples in code)
+ vii. Revise CSM 297 · Database Concepts and Technologies I
 ```
 
-- **Learning tracks** — a default *Java in 3 weeks* track (setup → variables → … → OOP, collections, generics, streams, JUnit, a checkpoint project). Pick 2, 3 or 4 weeks; lessons are spread so you finish on time, with **about double on CSM 281 (Java) lecture days** and none during exams. Miss a day and the rest is re-spread. Paste a YouTube chapter list once and lessons become exact ranges (“Watch 1:13:00 → 2:15:00”) that open the video at that moment.
+- **Learning tracks** — a default *Java in 3 weeks* track: the 42 chapters of [Programming with Mosh's *Java Tutorial for Beginners*](https://www.youtube.com/watch?v=eIrMbAQSU34) with exact timestamps and a practice task after key chapters (the day's video stops at each mortgage-calculator project so you build it before the solution), then methods, OOP, exceptions, collections, generics, streams, JUnit and a checkpoint project. Pick 2, 3 or 4 weeks; lessons are spread so you finish on time, with **about double on CSM 281 (Java) lecture days** and none during exams. Miss a day and the rest is re-spread. To switch courses, paste another video's chapter list or its whole YouTube transcript.
 - **Your DSA sheet** — import your tracker (.xlsx or .csv; Google Sheets → File → Download → Microsoft Excel). It reads problem names, links (including “Open ↗” hyperlinks), pattern/topic, P0/P1/P2, status and next-review dates — common tracker layouts are recognised, including multi-tab workbooks with a dashboard tab and sheets whose problem-name column has no header. Problems are picked by the roadmap's current topic, then priority, then your sheet's order. Tick one and say how it went (alone / hints / couldn't) and it comes back as a spaced revisit. Re-import any time; progress made in the app is kept. *Export progress CSV* lets you paste results back into the sheet.
 - **Coursework** — a *Revise …* item for every course you had a lecture in that day; weekends rotate through all your courses; before and during exams the list becomes course revision only (three courses a day in exam weeks), with no new problems or lessons.
 - **First-week tasks, roadmap steps, applications** — the seven kick-off tasks are spread at four a day on free days (done in two days), the current roadmap module's next step appears daily, and application next-actions show up on their date.
@@ -81,7 +90,7 @@ Everything is stored in the browser's local storage on that device. Use **Settin
 Requires Node 18+. There are no npm dependencies.
 
 ```bash
-npm test          # 38 tests: planner, import, engine, storage (node:test)
+npm test          # 41 tests: planner, import, engine, storage (node:test)
 npm run dev       # build + serve public/ at http://localhost:5173
 npm run build     # stamp version + offline file list into public/sw.js
 ```

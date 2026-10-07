@@ -188,7 +188,7 @@ test('lesson text editing round-trips', () => {
   ];
   const { lessons: back, errors } = parseLessonsText(lessonsToText(lessons), makeId, lessons);
   assert.equal(errors.length, 0);
-  assert.deepEqual(back.map((l) => [l.id, lessonMinutes(l), l.practice]), [['a', 62, 'Declare variables'], ['b', 40, 'Write Pair<A,B>']]);
+  assert.deepEqual(back.map((l) => [l.id, lessonMinutes(l), l.practice]), [['a', 72, 'Declare variables'], ['b', 40, 'Write Pair<A,B>']]); // 62 min video + 10 min practice
   assert.equal(parseLessonsText('X | 9:00-8:00', makeId).errors.length, 1);
 });
 
@@ -325,7 +325,7 @@ test('version-1 saves upgrade without losing data', () => {
     progress: { W1: { status: 'done' } },
   };
   const s = normalise(old);
-  assert.equal(s.version, 2);
+  assert.equal(s.version, 3);
   assert.equal(s.settings.theme, 'dark');
   assert.equal(s.settings.studyStart, undefined);
   assert.ok(s.calendar.some((e) => e.id === 'c-pre'));
@@ -335,4 +335,61 @@ test('version-1 saves upgrade without losing data', () => {
   assert.equal(s.tracks[0].id, 'java');
   assert.equal(s.progress.W1.status, 'done');
   assert.equal(migrate({ version: 2, a: 1 }).a, 1);
+});
+
+// ---------------------------------------------------------------------------
+// Mosh Java course
+// ---------------------------------------------------------------------------
+
+test('a pasted YouTube transcript yields its chapter titles and times', () => {
+  const transcript = [
+    'Introduction', '0:00', 'hello and welcome to the course', '0:07', 'we start by installing tools',
+    'Installing Java', '1:48', 'search for jdk download', '1:53', 'jdk is short for java development kit',
+    'Variables', '26:02', 'we use variables to store data', '26:11', 'int age equals thirty',
+  ].join('\n');
+  const ch = parseChapters(transcript);
+  assert.deepEqual(ch.map((c) => [c.title, c.start]), [['Introduction', 0], ['Installing Java', 108], ['Variables', 1562]]);
+  assert.equal(ch[1].end, 1562);
+  assert.equal(ch[2].end, 26 * 60 + 11 + 15); // last caption + 15 s
+});
+
+test("Java lessons are Mosh's chapters with exact timestamps and links", () => {
+  const { s, ctx } = setup();
+  const java = s.tracks[0];
+  assert.equal(java.lessons.filter((l) => l.video).length, 42);
+  const first = plan(s, ctx, d('2026-10-07')).days[0].items.find((i) => i.type === 'lesson');
+  assert.match(first.action, /^Watch Mosh 0:00 → \d+:\d{2}/);
+  assert.equal(first.url, 'https://www.youtube.com/watch?v=eIrMbAQSU34');
+  assert.ok(first.practice.length >= 1);
+  // A project chapter ends that day's watch range, so you build it before the solution.
+  const days = plan(s, ctx, d('2026-10-07'), d('2026-10-07'), 21).days;
+  const lessonItems = days.flatMap((x) => x.items.filter((i) => i.type === 'lesson'));
+  const withProject = lessonItems.find((i) => i.lessonIds.includes('mo24'));
+  assert.equal(withProject.lessonIds[withProject.lessonIds.length - 1], 'mo24');
+  assert.match(withProject.action, /→ 1:32:58$/);
+  // All 42 chapters, then the OOP / collections lessons, inside three weeks.
+  const fin = plan(s, ctx, d('2026-10-07'), d('2026-10-07'), 1, { horizon: 120 }).trackFinish.java;
+  assert.ok(fin <= d('2026-10-27'), `finished ${toISO(fin)}`);
+});
+
+test('saves with the old Java placeholders switch to Mosh and keep ticks', () => {
+  const placeholders = [
+    { id: 'j1', title: 'Install JDK', min: 30, video: true },
+    { id: 'j2', title: 'Variables', min: 40, video: true },
+    { id: 'j7', title: 'Input and methods', min: 40, video: true },
+    { id: 'j8', title: 'Classes and objects', min: 45, video: true },
+    { id: 'j9', title: 'Encapsulation', min: 40 },
+  ];
+  const v2 = { version: 2, tracks: [{ id: 'java', name: 'Java', start: '2026-10-07', weeks: 2, resource: 'Amigoscode Java course', url: '', lessons: placeholders }], lessonDone: { j1: '2026-10-07' } };
+  const s = normalise(v2);
+  const java = s.tracks[0];
+  assert.equal(java.weeks, 2);
+  assert.equal(java.url, 'https://www.youtube.com/watch?v=eIrMbAQSU34');
+  assert.deepEqual(java.lessons.slice(-3).map((l) => l.id), ['j7', 'j8', 'j9']);
+  assert.equal(java.lessons.filter((l) => l.video).length, 42);
+  for (const id of ['mo1', 'mo4', 'mo7']) assert.equal(s.lessonDone[id], '2026-10-07');
+  assert.equal(s.lessonDone.mo8, undefined);
+  // Pasted chapters are never overwritten.
+  const pasted = normalise({ version: 2, tracks: [{ id: 'java', name: 'Java', lessons: [{ id: 'v1', title: 'Intro', start: 0, end: 60, video: true }] }] });
+  assert.equal(pasted.tracks[0].lessons[0].id, 'v1');
 });

@@ -3,6 +3,7 @@
 
 import {
   DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
+  JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, moshLessons,
 } from './data/defaults.js';
 
 export const STORAGE_KEY = 'roadmap.state.v1';
@@ -128,6 +129,30 @@ export function migrate(raw) {
         });
         e.problemId = id;
       });
+    }
+  }
+  if (v < 3) {
+    // The Java track moved to Mosh's course: swap the untouched topic
+    // placeholders for its chapters and carry over lessons already ticked.
+    const java = Array.isArray(out.tracks) ? out.tracks.find((t) => t && t.id === 'java') : null;
+    const lessons = java && Array.isArray(java.lessons) ? java.lessons : [];
+    const isPlaceholder = (l) => l && l.video && !Number.isFinite(l.start);
+    if (lessons.some(isPlaceholder) && !lessons.some((l) => l && Number.isFinite(l.start))) {
+      const next = [];
+      let inserted = false;
+      for (const l of lessons) {
+        if (isPlaceholder(l)) {
+          if (!inserted) next.push(...moshLessons(), ...clone(JAVA_STUDY_LESSONS.filter((x) => x.id === 'j7' || x.id === 'j8')));
+          inserted = true;
+        } else next.push(l);
+      }
+      java.lessons = next;
+      if (!java.url) Object.assign(java, JAVA_VIDEO);
+      out.lessonDone = obj(out.lessonDone);
+      for (const [oldId, newIds] of Object.entries(OLD_JAVA_PLACEHOLDERS)) {
+        const date = out.lessonDone[oldId];
+        if (date) for (const id of newIds) if (!out.lessonDone[id]) out.lessonDone[id] = date;
+      }
     }
   }
   out.version = DATA_VERSION;

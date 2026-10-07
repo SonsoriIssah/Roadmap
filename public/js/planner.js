@@ -89,7 +89,8 @@ function groupLessons(lessons) {
   const groups = [];
   for (const l of lessons) {
     const g = groups[groups.length - 1];
-    const contiguous = g && l.video && g[g.length - 1].video && Number.isFinite(l.start) && Number.isFinite(g[g.length - 1].end) && l.start === g[g.length - 1].end;
+    const prev = g && g[g.length - 1];
+    const contiguous = prev && !prev.breakAfter && l.video && prev.video && Number.isFinite(l.start) && Number.isFinite(prev.end) && l.start === prev.end;
     if (contiguous) g.push(l);
     else groups.push([l]);
   }
@@ -173,7 +174,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       const chosen = isToday ? [...tr.doneToday] : [];
       let used = chosen.reduce((sum, l) => sum + lessonMinutes(l), 0);
       let extraN = isToday ? Number(extra.lessons) || 0 : 0;
-      while (tr.queue.length) {
+      while (tr.queue.length && (quota > 0 || extraN > 0)) {
         const l = tr.queue[0];
         const m = lessonMinutes(l);
         const fits = used + m <= quota + 10;

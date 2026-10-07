@@ -271,11 +271,11 @@ export function openChapterImport(app, track) {
     body: h(
       'div',
       { class: 'form-grid' },
-      h('p', { class: 'small' }, 'Open the video on YouTube, expand the description and copy the chapter list (lines like “1:13:00 Creating Variables”). Your daily list will then say exactly which minutes to watch.'),
+      h('p', { class: 'small' }, 'Paste the video’s chapter list from its description (lines like “26:02 Variables”), or the whole transcript from YouTube’s “Show transcript” — chapter titles are picked out automatically. Your daily list will then say exactly which minutes to watch.'),
       field('Video link', input({ name: 'url', type: 'url', inputmode: 'url', value: track.url || '', placeholder: 'https://www.youtube.com/watch?v=…' })),
-      h('div', { class: 'form-row' }, field('Name', input({ name: 'resource', value: track.resource || '', placeholder: 'Amigoscode Java course' })), field('Video length', input({ name: 'videoLength', placeholder: '3:30:00' }), 'Sets the last chapter’s end.')),
-      field('Chapters', textarea({ name: 'chapters', rows: 10, class: 'input mono', placeholder: '0:00 Intro\n4:12 Installing JDK\n…\n1:13:00 Creating Variables', spellcheck: 'false', autocapitalize: 'off' })),
-      h('label', { class: 'check-inline' }, h('input', { type: 'checkbox', name: 'replaceAll' }), ' Replace every lesson (otherwise only the video placeholders, keeping OOP, collections and the rest)'),
+      h('div', { class: 'form-row' }, field('Short name', input({ name: 'resource', value: track.resource || '', placeholder: 'Mosh' }), 'Shown as “Watch Mosh 26:02 → 34:32”.'), field('Video length', input({ name: 'videoLength', placeholder: '3:30:00' }), 'Sets the last chapter’s end.')),
+      field('Chapters', textarea({ name: 'chapters', rows: 10, class: 'input mono', placeholder: '0:00 Introduction\n1:48 Installing Java\n…\n26:02 Variables', spellcheck: 'false', autocapitalize: 'off' })),
+      h('label', { class: 'check-inline' }, h('input', { type: 'checkbox', name: 'replaceAll' }), ' Replace every lesson (otherwise only the video chapters are replaced; methods, OOP, collections and the rest stay)'),
       errBox,
     ),
     onSubmit: (form) => {
