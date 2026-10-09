@@ -5,9 +5,10 @@ import { decisionHints, scoreTotal, dateConflicts } from '../engine.js';
 import { dueProblems, upcomingReviews, patternStats, orderNew, problemsToCSV, reviewTask, stageOf, STAGE_LABEL } from '../problems.js';
 import { banner, openAppEditor, eligibilityCount, statusTone } from './common.js';
 import { openProblemImport, openManualProblem } from './tasks.js';
+import { renderCoursesTab } from './courses.js';
 
 export function render(app, sub) {
-  const tab = ['score', 'dsa', 'apps', 'evidence'].includes(sub) ? sub : 'score';
+  const tab = ['score', 'courses', 'dsa', 'apps', 'evidence'].includes(sub) ? sub : 'score';
   return h(
     'div',
     { class: 'stack' },
@@ -15,6 +16,7 @@ export function render(app, sub) {
     segmented(
       [
         { value: 'score', label: 'Score' },
+        { value: 'courses', label: 'Courses' },
         { value: 'dsa', label: 'Problems' },
         { value: 'apps', label: 'Applications' },
         { value: 'evidence', label: 'Evidence' },
@@ -23,7 +25,7 @@ export function render(app, sub) {
       (v) => app.nav(`track/${v}`),
       { label: 'Track section' },
     ),
-    tab === 'score' ? scorecard(app) : tab === 'dsa' ? problemsTab(app) : tab === 'apps' ? applications(app) : evidence(app),
+    tab === 'score' ? scorecard(app) : tab === 'courses' ? renderCoursesTab(app) : tab === 'dsa' ? problemsTab(app) : tab === 'apps' ? applications(app) : evidence(app),
   );
 }
 

@@ -2,7 +2,7 @@
 // backups and moving between devices.
 
 import {
-  DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
+  DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_COURSES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
   JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, moshLessons,
 } from './data/defaults.js';
 
@@ -19,6 +19,13 @@ export function defaultState() {
     settings: clone(DEFAULT_SETTINGS),
     calendar: clone(DEFAULT_CALENDAR),
     timetables: clone(DEFAULT_TIMETABLES),
+    courses: clone(DEFAULT_COURSES),
+    academic: {
+      targetAverage: 85,
+      progress: {},
+      assessments: [],
+      studyTasks: [],
+    },
     modules: clone(DEFAULT_MODULES),
     tracks: clone(DEFAULT_TRACKS),
     problems: [],
@@ -74,6 +81,15 @@ export function normalise(input) {
     timetables: Array.isArray(raw.timetables)
       ? raw.timetables.filter(isObj).map((t) => ({ ...t, sessions: arr(t.sessions).filter(isObj) }))
       : base.timetables,
+    courses: Array.isArray(raw.courses) && raw.courses.length ? raw.courses : base.courses,
+    academic: isObj(raw.academic)
+      ? {
+          targetAverage: Number(raw.academic.targetAverage) || 85,
+          progress: obj(raw.academic.progress),
+          assessments: arr(raw.academic.assessments).filter(isObj),
+          studyTasks: arr(raw.academic.studyTasks).filter(isObj),
+        }
+      : base.academic,
     modules: Array.isArray(raw.modules) && raw.modules.length ? raw.modules.filter((m) => isObj(m) && m.id) : base.modules,
     tracks: Array.isArray(raw.tracks) ? raw.tracks.filter((t) => isObj(t) && t.id).map((t) => ({ ...t, lessons: arr(t.lessons).filter((l) => isObj(l) && l.id) })) : base.tracks,
     problems: arr(raw.problems).filter((p) => isObj(p) && p.id && p.title),
@@ -164,6 +180,12 @@ export function migrate(raw) {
       p.stageGuessed = p.status === 'solved' && !/^\d{4}-\d{2}-\d{2}$/.test(String(p.lastAt));
     }
   }
+  if (!Array.isArray(out.courses) || !out.courses.length) {
+    out.courses = clone(DEFAULT_COURSES);
+  }
+  if (!isObj(out.academic)) {
+    out.academic = { targetAverage: 85, progress: {}, assessments: [], studyTasks: [] };
+  }
   out.version = DATA_VERSION;
   return out;
 }
@@ -241,7 +263,7 @@ export function importJSON(text) {
     throw new Error('That file is not valid JSON.');
   }
   if (!isObj(data)) throw new Error('That file does not contain a Roadmap backup.');
-  const known = ['settings', 'calendar', 'timetables', 'modules', 'progress', 'applications', 'dsaLog', 'scorecards', 'problems', 'tracks'];
+  const known = ['settings', 'calendar', 'timetables', 'courses', 'academic', 'modules', 'progress', 'applications', 'dsaLog', 'scorecards', 'problems', 'tracks'];
   if (!known.some((k) => k in data)) throw new Error('That file does not contain a Roadmap backup.');
   return normalise(data);
 }

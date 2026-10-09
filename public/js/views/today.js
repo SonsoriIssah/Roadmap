@@ -5,6 +5,7 @@ import { reviewTask, stageOf, STAGE_LABEL } from '../problems.js';
 import { resolveDay, activeRituals, upcoming, decisionHints } from '../engine.js';
 import { modeChip, modeReason, weekOverrideControl, banner } from './common.js';
 import { planFor, taskList, openProblemImport, trackSummary } from './tasks.js';
+import { academicTodayWidget } from './courses.js';
 
 const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -22,6 +23,7 @@ export function render(app) {
     hintCards(app),
     yesterdayCard(app),
     todayCard(app, day),
+    academicTodayWidget(app),
     importPrompt(app),
     tomorrowCard(app, tomorrow),
     weekCard(app, r),

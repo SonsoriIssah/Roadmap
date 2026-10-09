@@ -15,7 +15,18 @@ export function planFor(app, from, count, opts = {}) {
   return planDays(Math.max(from, app.today), count, app.state, app.ctx, app.today, { fc: app.fc, current: app.current, ...opts });
 }
 
-const TYPE_LABEL = { lesson: 'Learn', problem: 'DSA', revisit: 'Revisit', module: 'Roadmap', kickoff: 'First week', revise: 'Coursework', career: 'Career' };
+const TYPE_LABEL = {
+  lesson: 'Learn',
+  problem: 'DSA',
+  revisit: 'Revisit',
+  module: 'Roadmap',
+  kickoff: 'First week',
+  revise: 'Coursework',
+  academic: 'Academics',
+  career: 'Career',
+  basics: 'Fundamentals',
+  personal: 'Personal',
+};
 
 /** Render a day's items as a numbered (i, ii, iii…) list. */
 export function taskList(app, day, { interactive = false } = {}) {

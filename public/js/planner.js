@@ -35,8 +35,15 @@ export function semesterCourses(day, ctx, { lookback = false } = {}) {
 
 const doneOn = (v, iso) => v === iso;
 
+export const SEM1_START = toDay('2026-10-13');
+export const SEM1_END = toDay('2027-02-13');
+export const XMAS_START = toDay('2026-12-19');
+export const XMAS_END = toDay('2027-01-03');
+export const isSem1StudyWindow = (day) => day >= SEM1_START && day <= SEM1_END;
+export const isXmasBreak = (day) => day >= XMAS_START && day <= XMAS_END;
+
 /** Highest priority first. Lower number = kept first when a day is over the cap. */
-const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, career: 4, kickoff: 5, module: 6 };
+const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, academic: 3, career: 4, kickoff: 5, module: 6, personal: 7 };
 const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
 /** Module the forecast places on a day (falls back to the current one). */
 function moduleOn(day, today, modules, fc, current) {
@@ -64,6 +71,7 @@ function lessonItem(track, group, iso, lessonDone) {
     return {
       key: `lesson:${ids.join(',')}`,
       type: 'lesson',
+      category: 'learning',
       lessonIds: ids,
       trackId: track.id,
       title: groupTitle(track, group),
@@ -77,6 +85,7 @@ function lessonItem(track, group, iso, lessonDone) {
   return {
     key: `lesson:${ids.join(',')}`,
     type: 'lesson',
+    category: 'learning',
     lessonIds: ids,
     trackId: track.id,
     title: `${track.name}: ${group.map((l) => l.title).join(', ')}`,
@@ -224,6 +233,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       items.push({
         key: `revisit:${p.id}`,
         type: 'revisit',
+        category: 'dsa',
         problemId: p.id,
         title: task.title,
         desc: task.desc,
@@ -253,6 +263,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       items.push({
         key: `problem:${p.id}`,
         type: 'problem',
+        category: 'dsa',
         problemId: p.id,
         title: `Solve ${p.title}`,
         meta: [p.difficulty, p.pattern || p.topic, p.priority !== null && p.priority !== undefined ? `P${p.priority}` : ''].filter(Boolean).join(' · '),
@@ -275,7 +286,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       else if (!tasks.objective) task = 'objective';
       else if (!tasks.exit) task = 'exit';
       if (task) {
-        items.push({ key: `module:${mod.id}:${task}`, type: 'module', moduleId: mod.id, task, title: `${mod.id} · ${mod.title}${task === 'exit' ? ' (exit task)' : ''}`, desc: task === 'exit' ? mod.exit : mod.objective, meta: mod.track === 'dsa' ? 'Your problems today count toward this' : '', min: load.module, done });
+        items.push({ key: `module:${mod.id}:${task}`, type: 'module', category: mod.track || 'project', moduleId: mod.id, task, title: `${mod.id} · ${mod.title}${task === 'exit' ? ' (exit task)' : ''}`, desc: task === 'exit' ? mod.exit : mod.objective, meta: mod.track === 'dsa' ? 'Your problems today count toward this' : '', min: load.module, done });
       }
     }
 
@@ -283,23 +294,38 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     if (load.kickoff > 0 || (isToday && kickToday.length)) {
       const chosen = isToday ? [...kickToday] : [];
       while (kickQueue.length && chosen.length < load.kickoff + (isToday ? kickToday.length : 0)) chosen.push(kickQueue.shift());
-      for (const i of chosen) items.push({ key: `kickoff:${i.id}`, type: 'kickoff', title: i.text, meta: 'First-week task', min: 45, done: doneOn(checks[`kickoff:${i.id}`], iso) });
+      for (const i of chosen) items.push({ key: `kickoff:${i.id}`, type: 'kickoff', category: 'kickoff', title: i.text, meta: 'First-week task', min: 45, done: doneOn(checks[`kickoff:${i.id}`], iso) });
     }
 
-    // 6. Coursework revision
+    // 6. Coursework revision and university study
+    // Strict scheduling rules (Section 10):
+    // All university study activities fall within 2026-10-13 to 2027-02-13.
+    // Christmas break (2026-12-19 to 2027-01-03) is left free from routine academic scheduling.
+    const inSem1 = isSem1StudyWindow(d);
+    const inXmas = isXmasBreak(d);
     const trackKeys = tracks.flatMap((tr) => tr.t.keywords || []);
     const lectured = [];
-    if (load.lecture > 0) {
+    if (inSem1 && !inXmas && load.lecture > 0) {
       const seen = new Set();
       for (const c of classes) {
         if (seen.has(c.code)) continue;
         seen.add(c.code);
         lectured.push(c);
         const javaish = isCourseDay([c], trackKeys);
-        items.push({ key: `revise:${iso}:${c.code}`, type: 'revise', title: `Revise ${c.code} · ${c.title.replace(/\s*\(combined\)\s*$/i, '')}`, desc: javaish ? "Rewrite today's lecture examples in code, then add one variation of your own." : "Go over today's notes and write three questions an exam could ask.", min: load.lecture, done: doneOn(checks[`revise:${iso}:${c.code}`], iso) });
+        items.push({
+          key: `revise:${iso}:${c.code}`,
+          type: 'revise',
+          category: 'academic',
+          courseCode: c.code,
+          title: `Revise ${c.code} · ${c.title.replace(/\s*\(combined\)\s*$/i, '')}`,
+          desc: javaish ? "Rewrite today's lecture examples in code, then add one variation of your own." : "Go over today's notes and write three questions an exam could ask.",
+          meta: 'Coursework',
+          min: load.lecture,
+          done: doneOn(checks[`revise:${iso}:${c.code}`], iso),
+        });
       }
     }
-    if (load.rotate > 0 && !lectured.length) {
+    if (inSem1 && !inXmas && load.rotate > 0 && !lectured.length) {
       const examLike = r.mode === 'exam' || r.mode === 'heavy';
       const courses = r.mode === 'break' ? (timetableOn(d, ctx) ? semesterCourses(d, ctx) : []) : semesterCourses(d, ctx, { lookback: examLike });
       if (courses.length) {
@@ -307,11 +333,42 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         for (let k = 0; k < n; k++) {
           const c = courses[(((d * n + k) % courses.length) + courses.length) % courses.length];
           const desc = r.mode === 'exam' ? 'Past questions, then a one-page summary from memory.' : examLike ? 'Exam prep: summary notes and past questions.' : 'Review the week: rewrite the key points and examples.';
-          items.push({ key: `revise:${iso}:${c.code}`, type: 'revise', title: `Revise ${c.code} · ${c.title}`, desc, min: load.rotateMin, done: doneOn(checks[`revise:${iso}:${c.code}`], iso) });
+          items.push({
+            key: `revise:${iso}:${c.code}`,
+            type: 'revise',
+            category: 'academic',
+            courseCode: c.code,
+            title: `Revise ${c.code} · ${c.title}`,
+            desc,
+            meta: r.mode === 'exam' ? 'Exam prep' : 'Revision',
+            min: load.rotateMin,
+            done: doneOn(checks[`revise:${iso}:${c.code}`], iso),
+          });
         }
       }
     }
-        // 6b. Fundamentals revisit on Upsoma (rotates one topic a day)
+
+    // 6c. Scheduled university study sessions & academic deadlines
+    if (inSem1 && state.academic && Array.isArray(state.academic.studyTasks)) {
+      for (const t of state.academic.studyTasks) {
+        if (t.date === iso) {
+          items.push({
+            key: `academic:${t.id}`,
+            type: 'academic',
+            category: 'academic',
+            taskId: t.id,
+            courseCode: t.courseCode || '',
+            title: t.title,
+            desc: t.desc || '',
+            meta: [t.courseCode, t.topic || t.meta || 'Study session'].filter(Boolean).join(' · '),
+            min: Number(t.min) || 45,
+            done: doneOn(checks[`academic:${t.id}`], iso),
+          });
+        }
+      }
+    }
+
+    // 6d. Fundamentals revisit on Upsoma (rotates one topic a day)
     if (basicsOn && r.mode !== 'off' && r.mode !== 'exam') {
       const n = BASICS.topics.length;
       const idx = isToday && basicsDoneToday ? Number(basicsDoneToday[0].split(':').pop()) : (basicsBase + (d - today)) % n;
@@ -320,7 +377,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         const key = `revise:${iso}:basics:${idx}`;
         items.push({
           key,
-          type: 'revise',
+          type: 'basics',
+          category: 'personal',
           basics: true,
           title: `${t.name}: Revisit this topic`,
           desc: t.area === 'python'
@@ -341,56 +399,33 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         const key = `app:${a.id}:${a.nextActionDate}`;
         const doneDate = checks[key];
         if (isToday ? ad <= d && (!doneDate || doneOn(doneDate, iso)) : ad === d && !doneDate) {
-          items.push({ key, type: 'career', appId: a.id, title: `${a.nextAction}`, meta: [a.company, a.role].filter(Boolean).join(' · ') + (ad < d ? ' · overdue' : ''), min: 20, done: doneOn(doneDate, iso) });
+          items.push({ key, type: 'career', category: 'career', appId: a.id, title: `${a.nextAction}`, meta: [a.company, a.role].filter(Boolean).join(' · ') + (ad < d ? ' · overdue' : ''), min: 20, done: doneOn(doneDate, iso) });
         }
       }
       if (weekdayIndex(d) === 5 && r.mode !== 'exam') {
         const key = `career:${weekKey(d)}`;
-        items.push({ key, type: 'career', title: 'Check new openings and deadlines', meta: 'Careers pages, then update the tracker', min: 30, done: doneOn(checks[key], iso) });
+        items.push({ key, type: 'career', category: 'career', title: 'Check new openings and deadlines', meta: 'Careers pages, then update the tracker', min: 30, done: doneOn(checks[key], iso) });
       }
     }
 
-    // 8. Cap: at most `maxPerDay` open items per day (plus anything already
-    // done today, plus the "+1" extras you asked for). Dropped work goes back
-    // to its queue so it rolls forward instead of disappearing.
-    const cap = maxPerDay + (isToday ? (Number(extra.problems) || 0) + (Number(extra.lessons) || 0) : 0);
-    const doneCount = items.filter((i) => i.done).length;
-    const openSlots = Math.max(0, cap - doneCount);
-    const open = items
-      .map((item, idx) => ({ item, idx }))
-      .filter((x) => !x.item.done)
-      .sort((a, b) => rankOf(a.item) - rankOf(b.item) || a.idx - b.idx);
-    const keepOpen = new Set(open.slice(0, openSlots).map((x) => x.item));
-    const dropped = open.slice(openSlots).map((x) => x.item);
-
-    if (dropped.length) {
-      for (const it of [...dropped].reverse()) {
-        if (it.type === 'lesson') {
-          const tr = tracks.find((x) => x.t.id === it.trackId);
-          if (tr) {
-            const back = it.lessonIds.map((id) => tr.t.lessons.find((l) => l.id === id)).filter((l) => l && !lessonDone[l.id]);
-            tr.queue.unshift(...back);
-            tr.rem += back.reduce((sum, l) => sum + lessonMinutes(l), 0);
-          }
-        } else if (it.type === 'problem') {
-          takenNew.delete(it.problemId);
-          const key = d + reviewGap('solved');
-          const arr = scheduledLater.get(key);
-          if (arr) scheduledLater.set(key, arr.filter((p) => !(p.projected && p.id === it.problemId)));
-        } else if (it.type === 'kickoff') {
-          const k = kick.find((x) => `kickoff:${x.id}` === it.key);
-          if (k) kickQueue.unshift(k);
-        }
+    // 8. Cap: at most 3 open items for the 'personal' activities category only.
+    // Do not apply this limit to academic studies, DSA, projects, career, or learning tasks.
+    const maxPersonal = Math.max(1, Math.floor(Number(s.maxPersonalPerDay ?? s.maxPersonalTasks)) || 3);
+    const personalItems = items.filter((i) => i.category === 'personal');
+    if (personalItems.length > maxPersonal) {
+      const doneCount = personalItems.filter((i) => i.done).length;
+      const openSlots = Math.max(0, maxPersonal - doneCount);
+      const openPersonal = personalItems
+        .map((item, idx) => ({ item, idx }))
+        .filter((x) => !x.item.done)
+        .sort((a, b) => a.idx - b.idx);
+      const keepOpen = new Set(openPersonal.slice(0, openSlots).map((x) => x.item));
+      const droppedPersonal = new Set(openPersonal.slice(openSlots).map((x) => x.item));
+      if (droppedPersonal.size) {
+        const kept = items.filter((i) => !droppedPersonal.has(i));
+        items.length = 0;
+        items.push(...kept);
       }
-      const droppedReviews = new Set(dropped.filter((i) => i.type === 'revisit').map((i) => i.problemId));
-      if (droppedReviews.size) overflow = [...reviews.filter((p) => droppedReviews.has(p.id)), ...overflow];
-      for (const tr of tracks) {
-        const stillHasLesson = items.some((i) => i.type === 'lesson' && i.trackId === tr.t.id && (i.done || keepOpen.has(i)));
-        if (tr.finish === d && !stillHasLesson) tr.finish = tr.prevFinish;
-      }
-      const kept = items.filter((i) => i.done || keepOpen.has(i));
-      items.length = 0;
-      items.push(...kept);
     }
 
     if (d >= from && d < from + count) {
@@ -438,7 +473,19 @@ export function historyDay(day, state, ctx) {
       const code = key.split(':').slice(2).join(':');
       const bm = code.match(/^basics:(\d+)$/);
       const bt = bm && BASICS.topics[Number(bm[1])];
-      items.push({ key, type: 'revise', title: bt ? `${bt.name}: Revisit this topic` : `Revise ${code}`, done: true });
+      items.push({ key, type: bt ? 'basics' : 'revise', category: bt ? 'personal' : 'academic', title: bt ? `${bt.name}: Revisit this topic` : `Revise ${code}`, done: true });
+    } else if (key.startsWith('academic:')) {
+      const taskId = key.split(':')[1];
+      const task = ((state.academic && state.academic.studyTasks) || []).find((t) => t.id === taskId);
+      items.push({
+        key,
+        type: 'academic',
+        category: 'academic',
+        title: task ? task.title : 'Academic study task',
+        desc: task ? task.desc : '',
+        meta: task ? task.courseCode : 'Academics',
+        done: true,
+      });
     } else if (key.startsWith('career:') || key.startsWith('app:')) {
       items.push({ key, type: 'career', title: key.startsWith('career:') ? 'Checked new openings and deadlines' : 'Application next action', done: true });
     }
