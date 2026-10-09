@@ -8,6 +8,7 @@ import { resolveDay, classesOn, timetableOn } from './engine.js';
 import { CHECKLISTS, DEFAULT_SETTINGS } from './data/defaults.js';
 import { orderNew, dueProblems, reviewTask, reviewGap, stageOf, targetMinutes, STAGE_LABEL } from './problems.js';
 import { lessonMinutes, trackWindow, remainingMinutes, isCourseDay, fmtTimestamp, videoLink } from './learn.js';
+import { BASICS } from './data/basics.js';
 
 export function dailyLoad(mode, settings) {
   const base = DEFAULT_SETTINGS.daily[mode] || DEFAULT_SETTINGS.daily.off;
@@ -36,7 +37,7 @@ const doneOn = (v, iso) => v === iso;
 
 /** Highest priority first. Lower number = kept first when a day is over the cap. */
 const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, career: 4, kickoff: 5, module: 6 };
-
+const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
 /** Module the forecast places on a day (falls back to the current one). */
 function moduleOn(day, today, modules, fc, current) {
   if (day <= today || !fc) return current;
@@ -162,7 +163,11 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   const kick = state.dismissed && state.dismissed.kickoff ? [] : CHECKLISTS.kickoff.items;
   let kickQueue = kick.filter((i) => !checks[`kickoff:${i.id}`]);
   const kickToday = kick.filter((i) => doneOn(checks[`kickoff:${i.id}`], iso0));
-
+  
+  const basicsOn = s.basicsRevisit !== false && BASICS.topics.length > 0;
+  const basicsKeys = Object.entries(checks).filter(([k]) => k.startsWith('revise:') && k.includes(':basics:'));
+  const basicsBase = basicsKeys.filter(([, v]) => v !== iso0).length;
+  const basicsDoneToday = basicsKeys.find(([, v]) => v === iso0);
   const days = [];
   const last = from + Math.max(count, horizon) - 1;
   for (let d = today; d <= last; d++) {
@@ -306,7 +311,28 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         }
       }
     }
-
+        // 6b. Fundamentals revisit on Upsoma (rotates one topic a day)
+    if (basicsOn && r.mode !== 'off' && r.mode !== 'exam') {
+      const n = BASICS.topics.length;
+      const idx = isToday && basicsDoneToday ? Number(basicsDoneToday[0].split(':').pop()) : (basicsBase + (d - today)) % n;
+      const t = BASICS.topics[idx];
+      if (t) {
+        const key = `revise:${iso}:basics:${idx}`;
+        items.push({
+          key,
+          type: 'revise',
+          basics: true,
+          title: `${t.name}: Revisit this topic`,
+          desc: t.area === 'python'
+            ? 'Revisit it on Upsoma, then close the tab and write a short example from memory.'
+            : 'Revisit it on Upsoma, then explain it aloud in two minutes with one example from your own projects.',
+          meta: t.area === 'python' ? 'Python basics · Upsoma' : 'Software engineering · Upsoma',
+          url: BASICS.url,
+          min: 30,
+          done: doneOn(checks[key], iso),
+        });
+      }
+    }
     // 7. Applications
     if (r.mode !== 'off') {
       for (const a of state.applications || []) {
@@ -333,7 +359,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     const open = items
       .map((item, idx) => ({ item, idx }))
       .filter((x) => !x.item.done)
-      .sort((a, b) => (RANK[a.item.type] ?? 99) - (RANK[b.item.type] ?? 99) || a.idx - b.idx);
+      .sort((a, b) => rankOf(a.item) - rankOf(b.item) || a.idx - b.idx);
     const keepOpen = new Set(open.slice(0, openSlots).map((x) => x.item));
     const dropped = open.slice(openSlots).map((x) => x.item);
 
@@ -409,7 +435,10 @@ export function historyDay(day, state, ctx) {
       const i = CHECKLISTS.kickoff.items.find((x) => `kickoff:${x.id}` === key);
       if (i) items.push({ key, type: 'kickoff', title: i.text, done: true });
     } else if (key.startsWith(`revise:${iso}:`)) {
-      items.push({ key, type: 'revise', title: `Revise ${key.split(':').slice(2).join(':')}`, done: true });
+      const code = key.split(':').slice(2).join(':');
+      const bm = code.match(/^basics:(\d+)$/);
+      const bt = bm && BASICS.topics[Number(bm[1])];
+      items.push({ key, type: 'revise', title: bt ? `${bt.name}: Revisit this topic` : `Revise ${code}`, done: true });
     } else if (key.startsWith('career:') || key.startsWith('app:')) {
       items.push({ key, type: 'career', title: key.startsWith('career:') ? 'Checked new openings and deadlines' : 'Application next action', done: true });
     }
