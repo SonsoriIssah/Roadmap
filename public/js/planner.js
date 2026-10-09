@@ -34,6 +34,9 @@ export function semesterCourses(day, ctx, { lookback = false } = {}) {
 
 const doneOn = (v, iso) => v === iso;
 
+/** Highest priority first. Lower number = kept first when a day is over the cap. */
+const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, career: 4, kickoff: 5, module: 6 };
+
 /** Module the forecast places on a day (falls back to the current one). */
 function moduleOn(day, today, modules, fc, current) {
   if (day <= today || !fc) return current;
@@ -109,6 +112,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   const problems = state.problems || [];
   const extra = (state.extra || {})[iso0] || {};
   const boost = Number(s.courseBoost) > 0 ? Number(s.courseBoost) : 1;
+  const maxPerDay = Math.max(1, Math.floor(Number(s.maxPerDay)) || 3);
 
   // --- Learning tracks: queues and pacing ---------------------------------
   const tracks = (state.tracks || [])
@@ -132,7 +136,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         if (win) for (let x = d; x <= win.end; x++) sum += weight(x);
         return sum;
       };
-      return { t, win, queue: pending, doneToday, weight, weightLeft, rem: remainingMinutes(t, lessonDone, today), finish: null };
+      return { t, win, queue: pending, doneToday, weight, weightLeft, rem: remainingMinutes(t, lessonDone, today), finish: null, prevFinish: null };
     });
 
   // --- Problems ----------------------------------------------------------------
@@ -192,6 +196,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
       tr.rem -= used;
       if (chosen.length) {
+        tr.prevFinish = tr.finish;
         tr.finish = d;
         for (const g of groupLessons(chosen)) items.push(lessonItem(tr.t, g, iso, lessonDone));
       }
@@ -317,6 +322,49 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         const key = `career:${weekKey(d)}`;
         items.push({ key, type: 'career', title: 'Check new openings and deadlines', meta: 'Careers pages, then update the tracker', min: 30, done: doneOn(checks[key], iso) });
       }
+    }
+
+    // 8. Cap: at most `maxPerDay` open items per day (plus anything already
+    // done today, plus the "+1" extras you asked for). Dropped work goes back
+    // to its queue so it rolls forward instead of disappearing.
+    const cap = maxPerDay + (isToday ? (Number(extra.problems) || 0) + (Number(extra.lessons) || 0) : 0);
+    const doneCount = items.filter((i) => i.done).length;
+    const openSlots = Math.max(0, cap - doneCount);
+    const open = items
+      .map((item, idx) => ({ item, idx }))
+      .filter((x) => !x.item.done)
+      .sort((a, b) => (RANK[a.item.type] ?? 99) - (RANK[b.item.type] ?? 99) || a.idx - b.idx);
+    const keepOpen = new Set(open.slice(0, openSlots).map((x) => x.item));
+    const dropped = open.slice(openSlots).map((x) => x.item);
+
+    if (dropped.length) {
+      for (const it of [...dropped].reverse()) {
+        if (it.type === 'lesson') {
+          const tr = tracks.find((x) => x.t.id === it.trackId);
+          if (tr) {
+            const back = it.lessonIds.map((id) => tr.t.lessons.find((l) => l.id === id)).filter((l) => l && !lessonDone[l.id]);
+            tr.queue.unshift(...back);
+            tr.rem += back.reduce((sum, l) => sum + lessonMinutes(l), 0);
+          }
+        } else if (it.type === 'problem') {
+          takenNew.delete(it.problemId);
+          const key = d + reviewGap('solved');
+          const arr = scheduledLater.get(key);
+          if (arr) scheduledLater.set(key, arr.filter((p) => !(p.projected && p.id === it.problemId)));
+        } else if (it.type === 'kickoff') {
+          const k = kick.find((x) => `kickoff:${x.id}` === it.key);
+          if (k) kickQueue.unshift(k);
+        }
+      }
+      const droppedReviews = new Set(dropped.filter((i) => i.type === 'revisit').map((i) => i.problemId));
+      if (droppedReviews.size) overflow = [...reviews.filter((p) => droppedReviews.has(p.id)), ...overflow];
+      for (const tr of tracks) {
+        const stillHasLesson = items.some((i) => i.type === 'lesson' && i.trackId === tr.t.id && (i.done || keepOpen.has(i)));
+        if (tr.finish === d && !stillHasLesson) tr.finish = tr.prevFinish;
+      }
+      const kept = items.filter((i) => i.done || keepOpen.has(i));
+      items.length = 0;
+      items.push(...kept);
     }
 
     if (d >= from && d < from + count) {
