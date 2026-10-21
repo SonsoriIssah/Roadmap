@@ -1,6 +1,6 @@
 import { h, card, cardHeader, checkbox, button, iconButton, chip, progressBar, segmented, textarea, icon, toast, confirmSheet } from '../ui.js';
-import { PHASES, TRACKS, RITUALS, PLAYBOOK, ELIGIBILITY_CHECKS } from '../data/defaults.js';
-import { fmtDay, fmtRange, toDay, isISODate } from '../dates.js';
+import { PHASES, TRACKS, RITUALS, PLAYBOOK, ELIGIBILITY_CHECKS, CHECKLISTS } from '../data/defaults.js';
+import { fmtDay, fmtRange, toDay, isISODate, weekKey } from '../dates.js';
 import { moduleState, relatedCourses } from '../engine.js';
 import { modeStrip, openModuleEditor, openAppEditor, setModuleTask, setModuleStatus } from './common.js';
 import { planFor, trackSummary, openChapterImport, openLessonsEditor, openNewTrack } from './tasks.js';
@@ -76,9 +76,48 @@ function roadmap(app) {
     'div',
     { class: 'stack' },
     summary,
+    weekDeliverablesCard(app),
     phaseKeys.map((pk) => phaseSection(app, pk, groups[pk])),
     h('div', { class: 'row-actions' }, button('Add module', () => openModuleEditor(app), { kind: 'secondary', iconName: 'plus' })),
     ritualsCard(),
+  );
+}
+
+function weekDeliverablesCard(app) {
+  const { state, today } = app;
+  const iso = toISO(today);
+  const checks = state.checks || {};
+  const weeklyKey = `review:weekly:${weekKey(today)}`;
+  const legacyWeeklyDate = checks['kickoff:k7'];
+  const weeklyDone = Boolean(
+    checks[weeklyKey] ||
+    (isISODate(legacyWeeklyDate) && weekKey(toDay(legacyWeeklyDate)) === weekKey(today)),
+  );
+  const firstWeekItems = CHECKLISTS.kickoff.items.filter((item) => ['k1', 'k4'].includes(item.id));
+  const weeklyItem = CHECKLISTS.kickoff.items.find((item) => item.id === 'k7');
+  const setCheck = (keys, checked) =>
+    app.update((s) => {
+      for (const key of keys) {
+        if (checked) s.checks[key] = iso;
+        else delete s.checks[key];
+      }
+    });
+
+  return card(
+    cardHeader('Week deliverables', null, 'First-week setup and this week’s review are managed here; roadmap objectives are below.'),
+    h(
+      'div',
+      { class: 'tasks' },
+      firstWeekItems.map((item) => {
+        const keys = item.id === 'k1' ? ['kickoff:k1', 'career:tracker'] : ['kickoff:k4', 'assessment:sql'];
+        return checkbox(keys.some((key) => !!checks[key]), (checked) => setCheck(keys, checked), item.text);
+      }),
+      checkbox(
+        weeklyDone,
+        (checked) => setCheck([weeklyKey, 'kickoff:k7'], checked),
+        weeklyItem.text,
+      ),
+    ),
   );
 }
 

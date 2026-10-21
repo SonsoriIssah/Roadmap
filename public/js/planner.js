@@ -3,7 +3,7 @@
 // tasks), so tomorrow's list continues where today's leaves off and anything
 // you skip simply rolls forward. Pure — no DOM or storage.
 
-import { toISO, toDay, isISODate, weekKey, weekdayIndex, fmtDay } from './dates.js';
+import { toISO, toDay, isISODate, weekKey, fmtDay } from './dates.js';
 import { resolveDay, classesOn, timetableOn } from './engine.js';
 import { CHECKLISTS, DEFAULT_SETTINGS } from './data/defaults.js';
 import { orderNew, dueProblems, reviewTask, reviewGap, stageOf, targetMinutes, STAGE_LABEL } from './problems.js';
@@ -152,7 +152,6 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   const problems = state.problems || [];
   const extra = (state.extra || {})[iso0] || {};
   const boost = Number(s.courseBoost) > 0 ? Number(s.courseBoost) : 1;
-  const maxPerDay = Math.max(1, Math.floor(Number(s.maxPerDay)) || 3);
 
   // --- Learning tracks: queues and pacing ---------------------------------
   const tracks = (state.tracks || [])
@@ -190,6 +189,26 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   for (const e of state.dsaLog || []) if (e.date === iso0 && e.prev && e.problemId) before.set(e.problemId, e.prev);
   const scheduledLater = new Map();
   const schedule = (d, p) => (scheduledLater.get(d) || scheduledLater.set(d, []).get(d)).push(p);
+  const restoreDroppedTech = (d, droppedTech) => {
+    for (const item of droppedTech) {
+      if (item.type === 'problem' && item.problemId) {
+        takenNew.delete(item.problemId);
+        const reviewTarget = d + reviewGap('solved');
+        if (scheduledLater.has(reviewTarget)) {
+          scheduledLater.set(reviewTarget, scheduledLater.get(reviewTarget).filter((p) => p.id !== item.problemId));
+        }
+      } else if (item.type === 'lesson' && item._group && item._track) {
+        const trackObj = tracks.find((tr) => tr.t.id === item._track.id);
+        if (trackObj) {
+          trackObj.queue.unshift(...item._group);
+          trackObj.rem += item.min || 0;
+          trackObj.finish = trackObj.prevFinish;
+        }
+      } else if (item.type === 'revisit' && item._src) {
+        overflow.unshift(item._src);
+      }
+    }
+  };
   for (const p of problems) {
     if (p.status === 'new' || !isISODate(p.nextReview)) continue;
     const d = toDay(p.nextReview);
@@ -198,22 +217,6 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   let overflow = [];
   const nextLabel = (p) => (isISODate(p.nextReview) ? `Review ${fmtDay(toDay(p.nextReview))}: ${reviewTask(p).step}` : '');
 
-  // --- First-week tasks ------------------------------------------------------
-  const kick = state.dismissed && state.dismissed.kickoff ? [] : CHECKLISTS.kickoff.items;
-  let kickQueue = kick.filter((i) => !checks[`kickoff:${i.id}`]);
-  const kickToday = kick.filter((i) => doneOn(checks[`kickoff:${i.id}`], iso0));
-
-  const scheduledMilestones = new Set();
-  if (checks['baseline:dsa'] || checks['kickoff:k2'] || ((state.progress || {})['W1']?.tasks?.objective)) {
-    scheduledMilestones.add('baseline:dsa');
-  }
-  if (checks['kickoff:k4'] || checks['assessment:sql']) {
-    scheduledMilestones.add('assessment:sql');
-  }
-  if (checks['kickoff:k1'] || checks['career:tracker']) {
-    scheduledMilestones.add('career:tracker');
-  }
-  
   const basicsOn = s.basicsRevisit !== false && BASICS.topics.length > 0;
   const basicsKeys = Object.entries(checks).filter(([k]) => k.startsWith('revise:') && k.includes(':basics:'));
   const basicsBase = basicsKeys.filter(([, v]) => v !== iso0).length;
@@ -289,8 +292,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     }
 
     const extraP = isToday ? Number(extra.problems) || 0 : 0;
-    const hasBaseline = !checks['baseline:dsa'] && !checks['kickoff:k2'] && !((state.progress || {})['W1']?.tasks?.objective) && (d === today);
-    const slots = (load.problems > 0 && !hasBaseline) ? Math.max(1, Math.min(load.problems, load.problems + load.revisits - reviews.length)) : 0;
+    const slots = load.problems > 0 ? Math.max(1, Math.min(load.problems, load.problems + load.revisits - reviews.length)) : 0;
     const quotaP = slots + extraP;
     const todayNew = isToday ? attemptedToday.slice() : [];
     if (quotaP > todayNew.length) {
@@ -319,127 +321,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       });
     }
 
-    // 4. Roadmap module step & DSA Baseline merging
-    const modProg = mod ? (state.progress || {})[mod.id] || {} : {};
-    const modTasks = modProg.tasks || {};
-    const modDates = modProg.taskDates || {};
-    let modTask = null;
-    let modDone = false;
-    if (isToday && modDates.exit === iso0) [modTask, modDone] = ['exit', true];
-    else if (isToday && modDates.objective === iso0 && !modTasks.exit) [modTask, modDone] = ['objective', true];
-    else if (!modTasks.objective) modTask = 'objective';
-    else if (!modTasks.exit) modTask = 'exit';
-
-    const isBaselineDone = Boolean(checks['baseline:dsa'] || checks['kickoff:k2'] || ((state.progress || {})['W1']?.tasks?.objective));
-    const isBaselineDoneToday = doneOn(checks['baseline:dsa'], iso) || doneOn(checks['kickoff:k2'], iso) || ((state.progress || {})['W1']?.taskDates?.objective === iso);
-
-    // Merge W1 objective and kickoff:k2 into a single unified 60-minute DSA baseline task.
-    // Preserves all relevant acceptance criteria from both definitions.
-    if ((!scheduledMilestones.has('baseline:dsa') && ((mod && mod.id === 'W1' && modTask === 'objective') || d === today)) || isBaselineDoneToday) {
-      pushItem(items, {
-        id: 'baseline:dsa',
-        key: 'baseline:dsa',
-        type: 'module',
-        category: 'technical',
-        isTechnical: true,
-        moduleId: 'W1',
-        task: 'objective',
-        milestone: 'W1',
-        scheduledDate: iso,
-        title: DSA_BASELINE_TITLE,
-        desc: DSA_BASELINE_DESC,
-        meta: 'W1 · Baseline assessment',
-        min: 60,
-        done: isBaselineDone && (isToday ? isBaselineDoneToday : true),
-      }, d);
-      scheduledMilestones.add('baseline:dsa');
-    } else if (load.module > 0 && mod && modTask && !(mod.id === 'W1' && modTask === 'objective')) {
-      const isTechMod = ['dsa', 'project', 'cs', 'interview', 'systems'].includes(mod.track);
-      pushItem(items, {
-        key: `module:${mod.id}:${modTask}`,
-        type: 'module',
-        category: isTechMod ? 'technical' : (mod.track || 'roadmap'),
-        isTechnical: isTechMod,
-        moduleId: mod.id,
-        task: modTask,
-        milestone: mod.id,
-        scheduledDate: iso,
-        title: `${mod.id} · ${mod.title}${modTask === 'exit' ? ' (exit task)' : ''}`,
-        desc: modTask === 'exit' ? mod.exit : mod.objective,
-        meta: mod.track === 'dsa' ? 'Your problems today count toward this' : '',
-        min: load.module,
-        done: modDone,
-      }, d);
-    }
-
-    // 5. Onboarding / Kickoff tasks (Distributed across specific dates)
-    const kickDismissed = Boolean(state.dismissed && state.dismissed.kickoff);
-    if (!kickDismissed) {
-      // 5a. SQL and database baseline assessment (k4)
-      const sqlDone = Boolean(checks['kickoff:k4'] || checks['assessment:sql']);
-      const sqlDoneToday = doneOn(checks['kickoff:k4'], iso) || doneOn(checks['assessment:sql'], iso);
-      if (sqlDoneToday || (!scheduledMilestones.has('assessment:sql') && (d === today + 1 || (d > today + 1 && isToday)))) {
-        pushItem(items, {
-          id: 'assessment:sql',
-          key: 'kickoff:k4',
-          type: 'module',
-          category: 'technical',
-          isTechnical: true,
-          milestone: 'First week',
-          scheduledDate: iso,
-          title: 'Test SQL and database fundamentals: joins, grouping, indexes, isolation.',
-          desc: 'Test SQL and database fundamentals: joins, grouping, indexes, isolation.',
-          meta: 'Baseline assessment',
-          min: 45,
-          done: sqlDone && (isToday ? sqlDoneToday : true),
-        }, d);
-        scheduledMilestones.add('assessment:sql');
-      }
-
-      // 5b. Weekly review and planning (k7): strictly scheduled on Sundays (end of week)
-      const weeklyReviewDone = Boolean(checks['kickoff:k7'] || checks[`review:weekly:${weekKey(d)}`]);
-      const weeklyReviewDoneToday = doneOn(checks['kickoff:k7'], iso) || doneOn(checks[`review:weekly:${weekKey(d)}`], iso);
-      if (weekdayIndex(d) === 6 || weeklyReviewDoneToday) {
-        pushItem(items, {
-          id: `review:weekly:${weekKey(d)}`,
-          key: 'kickoff:k7',
-          type: 'career',
-          category: 'career',
-          isTechnical: false,
-          milestone: 'First week',
-          recurrence: 'weekly',
-          scheduledDate: iso,
-          title: 'Review and plan: baseline, coursework load, applications. Pick three tasks for next week.',
-          desc: 'Review and plan: baseline, coursework load, applications. Pick three tasks for next week.',
-          meta: 'Weekly review',
-          min: 30,
-          done: weeklyReviewDone && (isToday ? weeklyReviewDoneToday : true),
-        }, d);
-      }
-
-      // 5c. Application tracker creation (k1)
-      const trackerDone = Boolean(checks['kickoff:k1'] || checks['career:tracker']);
-      const trackerDoneToday = doneOn(checks['kickoff:k1'], iso) || doneOn(checks['career:tracker'], iso);
-      if (trackerDoneToday || (!scheduledMilestones.has('career:tracker') && (d === today + 2 || (d > today + 2 && isToday)))) {
-        pushItem(items, {
-          id: 'career:tracker',
-          key: 'kickoff:k1',
-          type: 'career',
-          category: 'career',
-          isTechnical: false,
-          milestone: 'First week',
-          scheduledDate: iso,
-          title: 'Create the application tracker: every current application, deadline, location, eligibility and next action.',
-          desc: 'Create the application tracker: every current application, deadline, location, eligibility and next action.',
-          meta: 'Career setup',
-          min: 45,
-          done: trackerDone && (isToday ? trackerDoneToday : true),
-        }, d);
-        scheduledMilestones.add('career:tracker');
-      }
-    }
-
-    // 6. Coursework revision and university study
+    // 4. Coursework revision and university study
     // Strict scheduling rules (Section 10):
     // All university study activities fall within 2026-10-13 to 2027-02-13.
     // Christmas break (2026-12-19 to 2027-01-03) is left free from routine academic scheduling.
@@ -494,7 +376,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // 6c. Scheduled university study sessions & academic deadlines
+    // 4c. Scheduled university study sessions & academic deadlines
     if (inSem1 && state.academic && Array.isArray(state.academic.studyTasks)) {
       for (const t of state.academic.studyTasks) {
         if (t.date === iso) {
@@ -516,12 +398,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // 6d. Fundamentals revisit on Upsoma (rotates one topic a day, avoided on baseline days)
-    const hasBaselineOnDay = items.some((i) => {
-      const n = normalizeTaskKey(i.key, i.title);
-      return n === 'baseline:dsa' || n === 'assessment:sql';
-    });
-    if (basicsOn && r.mode !== 'off' && r.mode !== 'exam' && !hasBaselineOnDay) {
+    // 4d. Fundamentals revisit on Upsoma
+    if (basicsOn && r.mode !== 'off' && r.mode !== 'exam') {
       const n = BASICS.topics.length;
       const idx = isToday && basicsDoneToday ? Number(basicsDoneToday[0].split(':').pop()) : (basicsBase + (d - today)) % n;
       const t = BASICS.topics[idx];
@@ -546,7 +424,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // 7. Applications
+    // 5. Applications
     if (r.mode !== 'off') {
       for (const a of state.applications || []) {
         if (['rejected', 'offer'].includes(a.status) || !isISODate(a.nextActionDate) || !a.nextAction) continue;
@@ -559,8 +437,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // 8. Cap: at most 3 open items for the 'personal' activities category only.
-    // Do not apply this limit to academic studies, DSA, projects, career, or learning tasks.
+    // 6. Cap personal activities independently of school and career work.
     const maxPersonal = Math.max(1, Math.floor(Number(s.maxPersonalPerDay ?? s.maxPersonalTasks)) || 3);
     const personalItems = items.filter((i) => i.category === 'personal');
     if (personalItems.length > maxPersonal) {
@@ -579,7 +456,28 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // 9. Enforce extracurricular technical-task cap and time constraints.
+    // Keep today's non-school task list to three items. Coursework remains
+    // visible but does not use one of those slots.
+    if (isToday) {
+      const nonSchool = items
+        .map((item, idx) => ({ item, idx }))
+        .filter(({ item }) => item.category !== 'academic');
+      if (nonSchool.length > 3) {
+        const completed = nonSchool.filter(({ item }) => item.done);
+        const open = nonSchool
+          .filter(({ item }) => !item.done)
+          .sort((a, b) => rankOf(a.item) - rankOf(b.item) || a.idx - b.idx);
+        const kept = new Set(completed.slice(0, 3).map(({ item }) => item));
+        for (const { item } of open.slice(0, Math.max(0, 3 - kept.size))) kept.add(item);
+        const droppedTech = new Set(nonSchool.map(({ item }) => item).filter((item) => !kept.has(item) && (item.isTechnical || item.category === 'technical')));
+        restoreDroppedTech(d, droppedTech);
+        const filtered = items.filter((item) => item.category === 'academic' || kept.has(item));
+        items.length = 0;
+        items.push(...filtered);
+      }
+    }
+
+    // 7. Enforce extracurricular technical-task cap and time constraints.
     // Mentor rule:
     // - Normal day: maximum 3 extracurricular technical items (ceiling up to maxTechMin, default 180m).
     // - Genuinely free day (break): maximum 5 items ceiling (up to maxTechMin, default 300m) ONLY when the exception is enabled.
@@ -635,26 +533,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
 
       if (droppedTech.size > 0) {
-        // Return dropped tasks to their respective backlog queues
-        for (const item of droppedTech) {
-          if (item.type === 'problem' && item.problemId) {
-            takenNew.delete(item.problemId);
-            const reviewTarget = d + reviewGap('solved');
-            if (scheduledLater.has(reviewTarget)) {
-              const list = scheduledLater.get(reviewTarget);
-              scheduledLater.set(reviewTarget, list.filter((p) => p.id !== item.problemId));
-            }
-          } else if (item.type === 'lesson' && item._group && item._track) {
-            const trackObj = tracks.find((tr) => tr.t.id === item._track.id);
-            if (trackObj) {
-              trackObj.queue.unshift(...item._group);
-              trackObj.rem += (item.min || 0);
-              trackObj.finish = trackObj.prevFinish;
-            }
-          } else if (item.type === 'revisit' && item._src) {
-            overflow.unshift(item._src);
-          }
-        }
+        restoreDroppedTech(d, droppedTech);
         const filtered = items.filter((i) => !droppedTech.has(i));
         items.length = 0;
         items.push(...filtered);

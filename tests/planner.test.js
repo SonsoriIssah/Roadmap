@@ -47,8 +47,6 @@ const plan = (s, ctx, today, from = today, count = 1, opts = {}) => {
   return planDays(from, count, s, ctx, today, { fc, current: currentModule(s.modules, s.progress), ...opts });
 };
 
-const types = (day) => day.items.map((i) => i.type);
-
 // ---------------------------------------------------------------------------
 // Spreadsheet import
 // ---------------------------------------------------------------------------
@@ -216,20 +214,17 @@ test('lesson text editing round-trips', () => {
 // Daily plans
 // ---------------------------------------------------------------------------
 
-test('a free day before the semester is full: Java, four problems, four first-week tasks', () => {
+test('today keeps non-school work to three items and leaves week deliverables out', () => {
   const { s, ctx } = setup();
   const [day] = plan(s, ctx, d('2026-10-07')).days;
   assert.equal(day.mode, 'break');
-  assert.equal(day.items.filter((i) => i.type === 'problem').length, 4);
-  assert.equal(day.items.filter((i) => i.type === 'kickoff').length, 4);
-  assert.ok(day.items.some((i) => i.type === 'lesson' && i.title.startsWith('Java')));
+  assert.equal(day.items.filter((i) => i.category !== 'academic').length, 3);
+  assert.ok(!day.items.some((i) => ['module', 'kickoff'].includes(i.type) || i.recurrence === 'weekly'));
   assert.ok(!day.items.some((i) => i.type === 'revise')); // no lectures yet
-  assert.equal(types(day)[0], 'lesson'); // learning first, like your example
-  // The first week's tasks (4 verified tasks) are completed on the first day
+  // The non-school limit applies only to today, not the forecasted days.
   const days = plan(s, ctx, d('2026-10-07'), d('2026-10-07'), 3).days;
-  assert.equal(days[0].items.filter((i) => i.type === 'kickoff').length, 4);
-  assert.equal(days[1].items.filter((i) => i.type === 'kickoff').length, 0);
-  assert.equal(days[2].items.filter((i) => i.type === 'kickoff').length, 0);
+  assert.equal(days[0].items.filter((i) => i.category !== 'academic').length, 3);
+  assert.ok(days.slice(1).some((future) => future.items.length > 3));
 });
 
 test('lecture days list a revision item per course, with more Java on CSM 281 days', () => {
@@ -252,6 +247,8 @@ test('weekends rotate through courses; exams rotate three a day with no new prob
   const { s, ctx } = setup();
   const sat = plan(s, ctx, d('2026-10-24')).days[0];
   assert.equal(sat.items.filter((i) => i.type === 'revise').length, 2);
+  const sunday = plan(s, ctx, d('2026-10-25')).days[0];
+  assert.ok(!sunday.items.some((i) => i.recurrence === 'weekly'));
   assert.ok(!sat.items.some((i) => i.title === 'Check new openings and deadlines'));
   const exam = plan(s, ctx, d('2027-01-27')).days[0];
   assert.equal(exam.mode, 'exam');
@@ -285,6 +282,7 @@ test('missing days spreads the remaining Java over the days left', () => {
   const { s, ctx } = setup((st) => {
     st.settings.daily.normal.maxTech = 5;
     st.settings.daily.normal.maxTechMin = 300;
+    st.settings.daily.break.problems = 1;
   });
   const late = d('2026-10-14'); // a week in, nothing done
   const fin = plan(s, ctx, late, late, 1, { horizon: 120 }).trackFinish.java;
@@ -296,7 +294,7 @@ test('missing days spreads the remaining Java over the days left', () => {
 
 test("ticked items stay on today's list and tomorrow continues from there", () => {
   const today = d('2026-10-07');
-  const { s, ctx } = setup();
+  const { s, ctx } = setup((st) => { st.settings.daily.break.problems = 1; });
   const first = plan(s, ctx, today).days[0];
   const lesson = first.items.find((i) => i.type === 'lesson');
   const prob = first.items.find((i) => i.type === 'problem');
@@ -310,8 +308,8 @@ test("ticked items stay on today's list and tomorrow continues from there", () =
   const t = again[0];
   assert.ok(t.items.find((i) => i.key === lesson.key).done);
   assert.ok(t.items.find((i) => i.key === `problem:${prob.problemId}`).done);
-  assert.ok(t.items.find((i) => i.key === 'kickoff:k1').done);
-  assert.equal(t.items.filter((i) => i.type === 'problem').length, 4); // list doesn't grow or shrink
+  assert.ok(!t.items.some((i) => i.key === 'kickoff:k1'));
+  assert.equal(t.items.filter((i) => i.category !== 'academic').length, 3);
   const tomorrowLessons = again[1].items.filter((i) => i.type === 'lesson').flatMap((i) => i.lessonIds);
   assert.ok(!tomorrowLessons.some((id) => lesson.lessonIds.includes(id)));
 
@@ -329,7 +327,7 @@ test('reviews come first, then new problems fill the slots left; overflow rolls 
   });
   const [t, tm] = plan(s, ctx, today, today, 2).days;
   const dsa = (day) => day.items.filter((i) => i.type === 'revisit' || i.type === 'problem').map((i) => i.type);
-  assert.deepEqual(dsa(t), ['revisit', 'revisit', 'revisit', 'problem']);
+  assert.deepEqual(dsa(t), ['revisit', 'revisit', 'revisit']);
   assert.match(t.items.find((i) => i.type === 'revisit').title, /^Retry /);
   assert.match(t.items.find((i) => i.type === 'revisit').meta, /overdue since/);
   assert.deepEqual(dsa(tm), ['revisit', 'revisit', 'problem', 'problem']);
@@ -367,17 +365,15 @@ test('a problem ticked today shows when its review is, and that review appears l
   assert.ok(historyDay(today, s, ctx).items.some((i) => i.title === `Solve ${p.title}`));
 });
 
-test('the roadmap module step and application actions are on the list', () => {
+test('roadmap milestones and first-week deliverables are no longer daily tasks', () => {
   const today = d('2026-10-07');
   const { s, ctx } = setup((st) => {
     st.applications.push({ id: 'a1', company: 'Bloomberg', status: 'applied', nextAction: 'Email alumni for a referral', nextActionDate: '2026-10-05' });
   });
   const items = plan(s, ctx, today).days[0].items;
-  const mod = items.find((i) => i.type === 'module');
-  assert.equal(mod.moduleId, 'W1');
-  assert.equal(mod.task, 'objective');
-  const app = items.find((i) => i.type === 'career');
-  assert.match(app.meta, /overdue/);
+  assert.ok(!items.some((i) => i.type === 'module' || i.type === 'kickoff'));
+  assert.ok(!items.some((i) => i.type === 'career'));
+  assert.equal(items.filter((i) => i.category !== 'academic').length, 3);
 });
 
 test('version-1 saves upgrade without losing data', () => {
@@ -420,7 +416,7 @@ test('a pasted YouTube transcript yields its chapter titles and times', () => {
 });
 
 test("Java lessons are Mosh's chapters with exact timestamps and links", () => {
-  const { s, ctx } = setup();
+  const { s, ctx } = setup((st) => { st.settings.daily.break.problems = 1; });
   const java = s.tracks[0];
   assert.equal(java.lessons.filter((l) => l.video).length, 42);
   const first = plan(s, ctx, d('2026-10-07')).days[0].items.find((i) => i.type === 'lesson');
@@ -507,6 +503,8 @@ test('academic activities remain separate and are not capped by technical limit'
   assert.ok(academic.length >= 6, `Expected at least 6 academic items, got ${academic.length}`);
   const tech = day.items.filter((i) => i.isTechnical || i.category === 'technical');
   assert.ok(tech.length <= 3, `Expected technical tasks <= 3, got ${tech.length}`);
+  const nonSchool = day.items.filter((i) => i.category !== 'academic');
+  assert.ok(nonSchool.length <= 3, `Expected non-school items <= 3, got ${nonSchool.length}`);
 });
 
 test('generic recurring tasks are removed and Stanbic Bank is verified', async () => {
