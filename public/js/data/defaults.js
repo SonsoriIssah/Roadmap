@@ -42,14 +42,14 @@ export const DEFAULT_SETTINGS = {
   preExamDays: 7, // days before an exam period that count as "heavy" (0 = off)
   previewDate: null, // "pretend today is" for exploring future weeks
   daily: {
-    // Per day, by mode. learn = max minutes of lessons; lecture = minutes to
-    // revise each course you had a lecture in; rotate = courses revised in
-    // rotation on days without lectures (and every day before/during exams).
-    break: { problems: 4, revisits: 3, learn: 150, lecture: 0, rotate: 1, rotateMin: 45, module: 60, kickoff: 4 },
-    normal: { problems: 2, revisits: 2, learn: 60, lecture: 25, rotate: 2, rotateMin: 40, module: 30, kickoff: 2 },
-    heavy: { problems: 1, revisits: 1, learn: 20, lecture: 0, rotate: 2, rotateMin: 60, module: 0, kickoff: 0 },
-    exam: { problems: 0, revisits: 1, learn: 0, lecture: 0, rotate: 3, rotateMin: 90, module: 0, kickoff: 0 },
-    off: { problems: 0, revisits: 0, learn: 0, lecture: 0, rotate: 0, rotateMin: 0, module: 0, kickoff: 0 },
+    // Per day, by mode. maxTech = max extracurricular technical tasks (5 on break, 3 on normal, 1 on heavy/exam, 0 on off).
+    // maxTechMin = max technical minutes budget. learn = max minutes of lessons; lecture = minutes to revise each course;
+    // rotate = courses revised in rotation on days without lectures (and every day before/during exams).
+    break: { maxTech: 5, maxTechMin: 300, problems: 4, revisits: 3, learn: 150, lecture: 0, rotate: 1, rotateMin: 45, module: 60, kickoff: 4 },
+    normal: { maxTech: 3, maxTechMin: 180, problems: 2, revisits: 2, learn: 60, lecture: 25, rotate: 2, rotateMin: 40, module: 30, kickoff: 2 },
+    heavy: { maxTech: 1, maxTechMin: 45, problems: 0, revisits: 1, learn: 0, lecture: 0, rotate: 2, rotateMin: 60, module: 0, kickoff: 0 },
+    exam: { maxTech: 1, maxTechMin: 20, problems: 0, revisits: 1, learn: 0, lecture: 0, rotate: 3, rotateMin: 90, module: 0, kickoff: 0 },
+    off: { maxTech: 0, maxTechMin: 0, problems: 0, revisits: 0, learn: 0, lecture: 0, rotate: 0, rotateMin: 0, module: 0, kickoff: 0 },
   },
   courseBoost: 2, // extra learning on days you have a lecture in the same subject
   problemOrder: 'roadmap', // roadmap: current topic first | sheet: your sheet's priority and order
@@ -344,7 +344,7 @@ export const DEFAULT_MODULES = [
   m('W1', 'p1', 'dsa', 'Baseline', 'Solve two unseen DSA problems; record time, hints and complexity.', 'Write your starting scorecard.'),
   m('W2', 'p1', 'dsa', 'Python and debugging', 'Implement a small function with edge cases and debug a deliberately faulty version.', 'Review strings, lists, dictionaries and testing.'),
   m('W3', 'p1', 'dsa', 'Arrays and hashing', 'Practise frequency maps, sets and prefix sums.', 'Re-solve one Week 1 problem without notes.'),
-  m('W4', 'p1', 'project', 'Project audit', 'Trace one LedgerCore transfer end to end and identify unverified claims.', 'Write a one-page architecture diagram.'),
+  m('W4', 'p1', 'project', 'Scheduler: Core data model & persistence', 'Implement durable job persistence in PostgreSQL with atomic state machine (pending, running, completed, failed, dead_letter).', 'Verify atomic state transitions and idempotent submission with unit tests.'),
   m('W5', 'p1', 'dsa', 'Two pointers', 'Practise sorted arrays, pairs and in-place operations.', 'Redo one hashing problem.'),
   m('W6', 'p1', 'dsa', 'Sliding windows', 'Practise fixed and variable windows.', 'Explain the window invariant aloud.'),
   m('W7', 'p1', 'dsa', 'Stacks and queues', 'Implement stack/queue patterns and recognise monotonic-stack use cases.', 'Review complexity and boundary cases.'),
@@ -352,11 +352,11 @@ export const DEFAULT_MODULES = [
   m('W9', 'p2', 'dsa', 'Binary search', 'Practise boundary search and monotonic predicates.', 'Re-solve one sliding-window problem.'),
   m('W10', 'p2', 'dsa', 'Linked lists and recursion', 'Practise pointer changes, recursion bases and call-stack tracing.', 'Review stack and queue problems.'),
   m('W11', 'p2', 'cs', 'Database transactions', 'Study atomicity, isolation, locks and serialization failures.', "Write down LedgerCore's consistency guarantees.", { keywords: ['database', 'sql'] }),
-  m('W12', 'p2', 'project', 'Project test sprint', 'Add tests for duplicate requests, rollback and concurrent debits.', 'Run the full suite and record failures honestly.'),
+  m('W12', 'p2', 'project', 'Scheduler: Leases & worker crash recovery', 'Implement lease duration, worker heartbeats, and background expired-lease sweeper using FOR UPDATE SKIP LOCKED.', 'Simulate worker SIGKILL and verify automatic lease recovery without double-execution.'),
   m('W13', 'p2', 'dsa', 'Trees', 'Practise traversal, recursion and tree properties.', 'Re-solve two older problems.'),
   m('W14', 'p2', 'dsa', 'Heaps and intervals', 'Practise top-k, merging and interval overlaps.', 'Explain why the chosen data structure fits.'),
   m('W15', 'p2', 'dsa', 'Graphs', 'Practise BFS, DFS and visited-state correctness.', 'Review trees and queues.'),
-  m('W16', 'p2', 'project', 'Aggregation API reliability', 'Test duplicate messages, provider timeouts and worker restarts.', 'Document idempotency and recovery behaviour.'),
+  m('W16', 'p2', 'project', 'Rate Limiter: Distributed sliding window', 'Implement sliding window counter algorithm with atomic Redis Lua updates and HTTP middleware.', 'Run concurrency tests verifying exact rate enforcement and 429 responses under burst load.'),
   m('W17', 'p3', 'cs', 'Core networking', 'Study HTTP, DNS, TCP, TLS and connection lifecycles.', 'Explain one API request from client to database.', { keywords: ['network'] }),
   m('W18', 'p3', 'cs', 'Operating systems', 'Study processes, threads, memory and context switching.', 'Review concurrency terminology.', { keywords: ['operating system'] }),
   m('W19', 'p3', 'cs', 'Concurrency', 'Study races, locks, deadlocks and transaction conflicts.', 'Explain a race condition from a concrete example.', { keywords: ['operating system', 'concurren'] }),
@@ -367,7 +367,7 @@ export const DEFAULT_MODULES = [
   m('W24', 'p3', 'interview', 'Behavioural preparation', 'Draft truthful STAR stories for leadership, failure and teamwork.', 'Practise a concise project explanation.'),
   m('W25', 'p4', 'dsa', 'Dynamic programming introduction', 'Practise state definition, transitions and base cases.', 'Re-solve a graph or tree problem.'),
   m('W26', 'p4', 'interview', 'Timed assessments', 'Complete a realistic timed coding set.', 'Analyse accuracy, speed and avoidable errors.'),
-  m('W27', 'p4', 'project', 'Project interview defence', 'Explain architecture, schema, failure modes and trade-offs without notes.', 'Verify all resume metrics.', { keywords: ['system analysis', 'design'] }),
+  m('W27', 'p4', 'project', 'Project interview defence', 'Rehearse technical defense for Scheduler and Rate Limiter: explain architecture, failure scenarios, and trade-offs aloud.', 'Defend all design decisions, lease semantics, and benchmark methodologies without notes.', { keywords: ['system analysis', 'design'] }),
   m('W28', 'p4', 'career', 'Company-specific preparation', 'Choose two active applications and review their actual job requirements.', 'Tailor resumes and schedule mock interviews.'),
   m('W29', 'p4', 'dsa', 'Weakest DSA patterns', 'Use scorecard evidence to target recurring mistakes.', 'Revisit problems after a delay.'),
   m('W30', 'p4', 'cs', 'Database and performance', 'Study indexes, EXPLAIN plans and bottleneck measurement.', 'Record one defensible benchmark if useful.', { keywords: ['database'] }),
@@ -599,17 +599,14 @@ export const CHECKLISTS = {
     items: [
       { id: 'k1', text: 'Create the application tracker: every current application, deadline, location, eligibility and next action.' },
       { id: 'k2', text: 'Run the DSA baseline: two unseen problems, no solutions first. Record approach, complexity and mistakes.' },
-      { id: 'k3', text: 'Audit LedgerCore: trace a transfer from validation to commit (idempotency, isolation, retries, integrity).' },
       { id: 'k4', text: 'Test SQL and database fundamentals: joins, grouping, indexes, isolation.' },
-      { id: 'k5', text: 'Update your resume: add Ecobank accurately, verify metrics, qualify claims you cannot defend.' },
-      { id: 'k6', text: 'Explain LedgerCore aloud in five minutes, then answer duplicate-request and concurrency questions.' },
       { id: 'k7', text: 'Review and plan: baseline, coursework load, applications. Pick three tasks for next week.' },
     ],
   },
   resume: {
     title: 'Resume actions',
     items: [
-      { id: 'r1', text: 'Add the current Ecobank Personalisation Team internship with real responsibilities and technologies.' },
+      { id: 'r1', text: 'Add the current Stanbic Bank Personalisation Team internship with real responsibilities and technologies.' },
       { id: 'r2', text: 'Verify the LedgerCore 98.5% concurrency figure: define the workload and explain the other 1.5%.' },
       { id: 'r3', text: 'Make the aggregation failure injection reproducible; report sample size, duplicates and recovery.' },
       { id: 'r4', text: 'Show what GitHub Actions actually runs (tests, lint) instead of listing CI/CD as a keyword.' },
@@ -692,7 +689,7 @@ export const PLAYBOOK = {
   topActions: [
     'Establish your actual DSA baseline.',
     'Make LedgerCore technically defensible.',
-    'Update your resume with your real Ecobank experience.',
+    'Update your resume with your real Stanbic Bank experience.',
     'Apply continuously and resolve eligibility early.',
     'Protect your KNUST academic performance.',
   ],
@@ -702,7 +699,7 @@ export const PLAYBOOK = {
     'Use your mentor to practise technical explanations and get honest feedback.',
     'Request a referral only for a suitable role and when the person is comfortable.',
     'Track follow-ups; avoid repeated messages that add no new information.',
-    'At Ecobank, seek a small backend-oriented assignment or an intro to a services team.',
+    'At Stanbic Bank, seek a small backend-oriented assignment or an intro to a services team.',
   ],
   archetypes: [
     { id: 'A', name: 'Financial-services technology', priority: 'High', focus: 'DSA, clean coding, OOP, SQL, debugging, project walkthroughs and behavioural interviews. Add Java when relevant. Bloomberg and infrastructure teams: systems fundamentals and performance.' },
@@ -743,3 +740,167 @@ export const PLAYBOOK = {
     ['May – June', 'Prioritise confirmed interviews and urgent deadlines. Resolve internship date conflicts before accepting an offer.'],
   ],
 };
+
+// ---------------------------------------------------------------------------
+// Candidate & Reference Project Portfolio Specifications
+// ---------------------------------------------------------------------------
+export const PORTFOLIO_PROJECTS = {
+  // Flagship Project
+  scheduler: {
+    id: 'scheduler',
+    name: 'Distributed Task Scheduler',
+    tier: 'flagship',
+    status: 'planned_flagship',
+    span: 'W4, W12, W27 (Phase 1 Spring 2027)',
+    summary: 'High-reliability distributed task scheduling coordinator with leasing heartbeats, partitioned workers, and resilient failure recovery.',
+    architecture: {
+      overview: 'Master coordinator election with partitioned worker node pools and transactional state store.',
+      components: [
+        'Leader Coordinator: Elects active leader via heartbeat leasing or Raft consensus to coordinate schedule partitions.',
+        'Lease / Lock Manager: Issues monotonically increasing fencing tokens and time-bounded leases to prevent split-brain worker execution.',
+        'Worker Execution Pool: Pull-based concurrent workers executing tasks with periodic heartbeat renewal.',
+        'Durable State Store: PostgreSQL / etcd backed store maintaining task state transitions (PENDING -> CLAIMED -> RUNNING -> COMPLETED / FAILED).',
+        'Dead Letter Queue (DLQ): Isolates poisonous tasks exceeding maximum retry policies with exponential backoff.'
+      ]
+    },
+    concurrencyAndGuarantees: {
+      delivery: 'At-least-once task dispatch with idempotent execution semantics enforced via client-supplied idempotency keys.',
+      fencing: 'Monotonic fencing tokens validated at state persistence to prevent zombie workers from committing delayed output.',
+      isolation: 'Optimistic locking (version checks) on task state mutation.'
+    },
+    failureModes: [
+      'Worker crash during task execution: Heartbeat lease expires; coordinator marks task PENDING and reassigns to active worker.',
+      'Leader coordinator crash: Heartbeat lease times out; follower node initiates election and claims partition leadership.',
+      'Database connection failure: Task dispatch paused in-memory; worker nodes complete current batch without state corruption.'
+    ],
+    verificationPlan: [
+      'Chaos injection: Simulate network partition between worker and coordinator while worker is processing task (verify fencing token rejection).',
+      'Throughput & Latency: Measure scheduling latency under 10,000 concurrent scheduled tasks.',
+      'Crash recovery: Kill active leader under load and measure time-to-recovery (target < 3s election).'
+    ]
+  },
+
+  // Supporting Candidate 2
+  rateLimiter: {
+    id: 'rate-limiter',
+    name: 'High-Throughput Distributed Rate Limiter',
+    tier: 'supporting',
+    status: 'planned_supporting',
+    span: 'W16 (Winter/Spring 2027)',
+    summary: 'Multi-algorithm high-throughput rate limiter service supporting Token Bucket, Sliding Window Log, and Sliding Window Counter with sub-millisecond evaluation.',
+    architecture: {
+      overview: 'Low-latency reverse proxy / middleware layer backed by an in-memory local cache tier and distributed Redis cluster.',
+      components: [
+        'Ingress Interceptor: HTTP / gRPC middleware extracting client tenant keys, route weights, and tier limits.',
+        'Algorithm Engine: Configurable algorithm modules (Token Bucket for bursts, Sliding Window Log for precision, Sliding Window Counter for memory efficiency).',
+        'State Store / Sync: Distributed Redis cluster with atomic Lua scripts; optional local Bloom filter / LRU cache for hot tenants.',
+        'Degradation Policy Manager: Graceful fail-open vs fail-close configuration under Redis cluster partitions.'
+      ]
+    },
+    concurrencyAndGuarantees: {
+      synchronization: 'Atomic multi-key operations executed via single-threaded Redis Lua scripts to eliminate race conditions.',
+      consistency: 'Linearizable counter evaluations per tenant partition.',
+      boundedMemory: 'Sliding window counter compresses temporal logs into discrete sub-minute buckets to bound memory.'
+    },
+    failureModes: [
+      'Redis cluster failover: Middleware enters fallback fail-open mode with local thread-safe token bucket.',
+      'Thundering herd on quota renewal: Jittered refill windows prevent synchronized burst traffic.'
+    ],
+    verificationPlan: [
+      'Concurrent stress test: 100 concurrent threads hitting identical tenant quota; verify exactly allowed count passes and remainder receive HTTP 429.',
+      'Benchmark: k6/Locust benchmark measuring p99 latency overhead (< 2ms added latency at 50,000 RPS).'
+    ]
+  },
+
+  // Supporting Candidate 3
+  observability: {
+    id: 'observability',
+    name: 'Distributed Observability & Tracing Agent',
+    tier: 'candidate',
+    status: 'backlog_optional',
+    summary: 'In-process distributed tracing library and collector with W3C TraceContext propagation, non-blocking ring buffer, and memory-bounded batch flushing.',
+    architecture: {
+      overview: 'Lightweight client agent injecting/extracting span contexts, writing to a lockless ring buffer, flushed asynchronously to a central collector.',
+      components: [
+        'Trace Context Engine: Injects and parses W3C Traceparent headers across HTTP and RPC boundaries.',
+        'Lockless Ring Buffer: In-memory circular buffer for zero-allocation span recording on hot execution paths.',
+        'Batch Exporter: Asynchronous background thread flushing compressed span batches using backoff and batch size limits.',
+        'Collector Ingestion Service: High-throughput ingestion gateway persisting traces to TimescaleDB or ClickHouse.'
+      ]
+    },
+    concurrencyAndGuarantees: {
+      hotPath: 'Zero mutex contention on hot request paths via atomic CAS pointers in circular ring buffer.',
+      backpressure: 'Bounded buffer size with explicit drop counter to ensure application memory is never exhausted.'
+    },
+    failureModes: [
+      'Collector outage: Agent drops oldest spans, increments buffer overflow metric, and avoids blocking user threads.',
+      'Sudden traffic spike: Bounded batch exporter drops spans exceeding memory thresholds gracefully.'
+    ],
+    verificationPlan: [
+      'Microbenchmark: Measure CPU and memory allocation per span in application hot path (< 1 microsecond span generation).',
+      'Drop policy verification: Verify host application stability and no OutOfMemoryError when collector is disconnected under 20k spans/sec load.'
+    ]
+  },
+
+  // Deferred Candidates (Retained in backlog)
+  miniedge: {
+    id: 'miniedge',
+    name: 'MiniEdge L7 Reverse Proxy & Load Balancer',
+    tier: 'deferred',
+    status: 'backlog',
+    summary: 'Event-driven L7 reverse proxy with health checking, weighted round-robin / least-connections balancing, and circuit breaking.'
+  },
+  provisioningSaga: {
+    id: 'provisioning-saga',
+    name: 'Cloud Resource Provisioning & Workflow Engine',
+    tier: 'deferred',
+    status: 'backlog',
+    summary: 'Orchestrated Saga state machine managing long-running multi-step resource provisioning with idempotent compensating transactions.'
+  },
+  shardServe: {
+    id: 'shard-serve',
+    name: 'Shard & Serve Vector / Document Partitioning Engine',
+    tier: 'deferred',
+    status: 'backlog',
+    summary: 'Consistent-hashing partitioned document storage engine with virtual nodes, quorum replication, and scatter-gather query aggregation.'
+  },
+  paymentsRisk: {
+    id: 'payments-risk',
+    name: 'Real-Time Payments Risk Scoring Pipeline',
+    tier: 'deferred',
+    status: 'backlog',
+    summary: 'Streaming event pipeline evaluating sliding window transaction velocity, geographic anomalies, and risk heuristics under sub-50ms latency.'
+  },
+  eventDispatcher: {
+    id: 'event-dispatcher',
+    name: 'Multi-Region Distributed Event Dispatcher',
+    tier: 'deferred',
+    status: 'backlog',
+    summary: 'Cross-region message replication bus with monotonic partition sequence numbers, conflict resolution, and dead-letter queues.'
+  },
+
+  // Retained Reference Projects
+  ledgercore: {
+    id: 'ledgercore',
+    name: 'LedgerCore',
+    tier: 'reference',
+    status: 'completed_reference',
+    summary: 'Double-entry bookkeeping engine with SERIALIZABLE transaction isolation, idempotency keys, and concurrent debit validation.',
+    invariants: 'Total debits equal total credits across all accounts; no negative account balances; idempotent request deduplication.'
+  },
+  aggregationApi: {
+    id: 'aggregation-api',
+    name: 'Financial Aggregation API',
+    tier: 'reference',
+    status: 'completed_reference',
+    summary: 'Asynchronous financial transaction aggregation pipeline with message queuing, exponential backoff retries, and provider fault tolerance.'
+  },
+  studypair: {
+    id: 'studypair',
+    name: 'StudyPair',
+    tier: 'reference',
+    status: 'completed_reference',
+    summary: 'Peer study matching platform connecting students by course enrollment, topic mastery, and schedule availability.'
+  }
+};
+

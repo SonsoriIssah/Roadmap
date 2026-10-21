@@ -225,14 +225,18 @@ test('a free day before the semester is full: Java, four problems, four first-we
   assert.ok(day.items.some((i) => i.type === 'lesson' && i.title.startsWith('Java')));
   assert.ok(!day.items.some((i) => i.type === 'revise')); // no lectures yet
   assert.equal(types(day)[0], 'lesson'); // learning first, like your example
-  // The first week's tasks are finished in two days, not seven.
+  // The first week's tasks (4 verified tasks) are completed on the first day
   const days = plan(s, ctx, d('2026-10-07'), d('2026-10-07'), 3).days;
-  assert.equal(days[1].items.filter((i) => i.type === 'kickoff').length, 3);
+  assert.equal(days[0].items.filter((i) => i.type === 'kickoff').length, 4);
+  assert.equal(days[1].items.filter((i) => i.type === 'kickoff').length, 0);
   assert.equal(days[2].items.filter((i) => i.type === 'kickoff').length, 0);
 });
 
 test('lecture days list a revision item per course, with more Java on CSM 281 days', () => {
-  const { s, ctx } = setup();
+  const { s, ctx } = setup((st) => {
+    st.settings.daily.normal.maxTech = 5;
+    st.settings.daily.normal.maxTechMin = 300;
+  });
   const days = plan(s, ctx, d('2026-10-19'), d('2026-10-21'), 2).days; // Wed, Thu
   const [wed, thu] = days;
   const revise = (day) => day.items.filter((i) => i.type === 'revise').map((i) => i.title.split(' · ')[0]);
@@ -248,7 +252,7 @@ test('weekends rotate through courses; exams rotate three a day with no new prob
   const { s, ctx } = setup();
   const sat = plan(s, ctx, d('2026-10-24')).days[0];
   assert.equal(sat.items.filter((i) => i.type === 'revise').length, 2);
-  assert.ok(sat.items.some((i) => i.title === 'Check new openings and deadlines'));
+  assert.ok(!sat.items.some((i) => i.title === 'Check new openings and deadlines'));
   const exam = plan(s, ctx, d('2027-01-27')).days[0];
   assert.equal(exam.mode, 'exam');
   assert.equal(exam.items.filter((i) => i.type === 'revise').length, 3);
@@ -278,7 +282,10 @@ test('Java finishes inside its weeks, and adjusting the weeks moves the finish',
 });
 
 test('missing days spreads the remaining Java over the days left', () => {
-  const { s, ctx } = setup();
+  const { s, ctx } = setup((st) => {
+    st.settings.daily.normal.maxTech = 5;
+    st.settings.daily.normal.maxTechMin = 300;
+  });
   const late = d('2026-10-14'); // a week in, nothing done
   const fin = plan(s, ctx, late, late, 1, { horizon: 120 }).trackFinish.java;
   assert.ok(fin <= d('2026-10-27'), `finished ${toISO(fin)}`);
@@ -314,8 +321,10 @@ test("ticked items stay on today's list and tomorrow continues from there", () =
 });
 
 test('reviews come first, then new problems fill the slots left; overflow rolls forward', () => {
-  const today = d('2026-10-20'); // normal day: 2 new + 2 reviews → up to 3 reviews, at least 1 new
+  const today = d('2026-10-20'); // test DSA queue allocation formula with capacity for 4 items
   const { s, ctx } = setup((st) => {
+    st.settings.daily.normal.maxTech = 5;
+    st.settings.daily.normal.maxTechMin = 300;
     for (const p of st.problems.slice(0, 5)) Object.assign(p, applyOutcome(p, 'failed', today - 3));
   });
   const [t, tm] = plan(s, ctx, today, today, 2).days;
@@ -449,4 +458,70 @@ test('saves with the old Java placeholders switch to Mosh and keep ticks', () =>
   // Pasted chapters are never overwritten.
   const pasted = normalise({ version: 2, tracks: [{ id: 'java', name: 'Java', lessons: [{ id: 'v1', title: 'Intro', start: 0, end: 60, video: true }] }] });
   assert.equal(pasted.tracks[0].lessons[0].id, 'v1');
+});
+
+// ---------------------------------------------------------------------------
+// Extracurricular Technical Workload & Mentorship Cap Rules
+// ---------------------------------------------------------------------------
+
+test('normal teaching day caps extracurricular technical tasks at maximum 3', () => {
+  const { s, ctx } = setup();
+  // Monday 2026-10-19: normal teaching day
+  const day = plan(s, ctx, d('2026-10-19')).days[0];
+  const techItems = day.items.filter((i) => i.isTechnical || i.category === 'technical');
+  assert.ok(techItems.length <= 3, `Expected technical tasks <= 3, got ${techItems.length}`);
+});
+
+test('genuinely free day allows up to 5 extracurricular technical tasks ceiling', () => {
+  const { s, ctx } = setup();
+  // Break day before semester: 2026-10-07
+  const day = plan(s, ctx, d('2026-10-07')).days[0];
+  const techItems = day.items.filter((i) => i.isTechnical || i.category === 'technical');
+  assert.ok(techItems.length <= 5, `Expected break day technical tasks <= 5, got ${techItems.length}`);
+});
+
+test('technical items obey time constraint and drop tasks if duration budget is exceeded', () => {
+  const { s, ctx } = setup((st) => {
+    // Restrict normal day technical time budget to 60 minutes
+    st.settings.daily.normal.maxTechMin = 60;
+  });
+  const day = plan(s, ctx, d('2026-10-19')).days[0];
+  const techItems = day.items.filter((i) => i.isTechnical || i.category === 'technical');
+  const totalMin = techItems.reduce((sum, i) => sum + (i.min || 0), 0);
+  assert.ok(totalMin <= 60, `Expected total technical minutes <= 60, got ${totalMin}`);
+  assert.ok(techItems.length <= 3);
+});
+
+test('academic activities remain separate and are not capped by technical limit', () => {
+  const { s, ctx } = setup((st) => {
+    const iso = '2026-10-22'; // Thursday with 3 lecture revisions
+    st.academic.studyTasks = [
+      { id: 'acad-1', courseCode: 'CSM 273', title: 'Linear algebra review', date: iso, min: 45 },
+      { id: 'acad-2', courseCode: 'CSM 251', title: 'Diode circuit problems', date: iso, min: 45 },
+      { id: 'acad-3', courseCode: 'CSM 297', title: 'Database normalization', date: iso, min: 45 },
+    ];
+  });
+  const day = plan(s, ctx, d('2026-10-22')).days[0];
+  const academic = day.items.filter((i) => i.category === 'academic');
+  // 3 lecture revisions + 3 study sessions = 6 academic items
+  assert.ok(academic.length >= 6, `Expected at least 6 academic items, got ${academic.length}`);
+  const tech = day.items.filter((i) => i.isTechnical || i.category === 'technical');
+  assert.ok(tech.length <= 3, `Expected technical tasks <= 3, got ${tech.length}`);
+});
+
+test('generic recurring tasks are removed and Stanbic Bank is verified', async () => {
+  const { s, ctx } = setup();
+  const sat = plan(s, ctx, d('2026-10-24')).days[0];
+  assert.ok(!sat.items.some((i) => i.title === 'Check new openings and deadlines'));
+  assert.ok(!sat.items.some((i) => i.title === 'Update your resume'));
+  assert.ok(!sat.items.some((i) => i.title === 'Audit LedgerCore'));
+  assert.ok(!sat.items.some((i) => i.title === 'Explain LedgerCore aloud'));
+
+  const { CHECKLISTS, PLAYBOOK, PORTFOLIO_PROJECTS } = await import('../public/js/data/defaults.js');
+  assert.ok(CHECKLISTS.resume.items.some((i) => i.text.includes('Stanbic Bank')));
+  assert.ok(PLAYBOOK.topActions.some((a) => a.includes('Stanbic Bank')));
+  assert.ok(PLAYBOOK.networking.some((n) => n.includes('Stanbic Bank')));
+  assert.ok(PORTFOLIO_PROJECTS.scheduler);
+  assert.equal(PORTFOLIO_PROJECTS.scheduler.tier, 'flagship');
+  assert.equal(PORTFOLIO_PROJECTS.rateLimiter.tier, 'supporting');
 });

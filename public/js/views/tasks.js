@@ -112,10 +112,38 @@ export function toggleItem(app, item, done) {
       } else undoAttempt(app, item.problemId);
       break;
     case 'module':
+      if (item.key === 'baseline:dsa' || (item.moduleId === 'W1' && item.task === 'objective')) {
+        app.update((s) => {
+          if (done) {
+            s.checks['kickoff:k2'] = iso;
+            s.checks['baseline:dsa'] = iso;
+          } else {
+            delete s.checks['kickoff:k2'];
+            delete s.checks['baseline:dsa'];
+          }
+        });
+        setModuleTask(app, 'W1', 'objective', done);
+        if (done) toast('DSA baseline complete. Starting scorecard recorded.');
+        break;
+      }
       setModuleTask(app, item.moduleId, item.task, done);
       if (done) toast(item.task === 'exit' ? `${item.moduleId} complete. Forecast updated.` : 'Objective done. The exit task is next.');
       break;
     default:
+      if (item.key === 'baseline:dsa' || item.key === 'kickoff:k2') {
+        app.update((s) => {
+          if (done) {
+            s.checks['kickoff:k2'] = iso;
+            s.checks['baseline:dsa'] = iso;
+          } else {
+            delete s.checks['kickoff:k2'];
+            delete s.checks['baseline:dsa'];
+          }
+        });
+        setModuleTask(app, 'W1', 'objective', done);
+        if (done) toast('DSA baseline complete. Starting scorecard recorded.');
+        break;
+      }
       app.update((s) => {
         if (done) s.checks[item.key] = iso;
         else delete s.checks[item.key];

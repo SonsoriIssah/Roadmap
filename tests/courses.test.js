@@ -161,8 +161,12 @@ test('four or more academic activities can exist on the same day without being c
 });
 
 test('existing DSA, project, career and other roadmap tasks continue to work', () => {
-  const { s, ctx } = setup();
-  // Saturday 24 October 2026: has course rotation + career task + roadmap module
+  const { s, ctx } = setup((st) => {
+    st.applications = [
+      { id: 'app1', company: 'Goldman Sachs', role: 'Summer Analyst', nextAction: 'Submit application', nextActionDate: '2026-10-24', status: 'applied' }
+    ];
+  });
+  // Saturday 24 October 2026: has course rotation + application career task + roadmap module
   const sat = d('2026-10-24');
   const res = planDays(sat, 1, s, ctx, sat);
   const day = res.days[0];

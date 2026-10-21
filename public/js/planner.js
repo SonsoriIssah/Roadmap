@@ -42,6 +42,30 @@ export const XMAS_END = toDay('2027-01-03');
 export const isSem1StudyWindow = (day) => day >= SEM1_START && day <= SEM1_END;
 export const isXmasBreak = (day) => day >= XMAS_START && day <= XMAS_END;
 
+export function normalizeTaskKey(key, title = '') {
+  if (!key) return '';
+  if (key === 'baseline:dsa' || key === 'kickoff:k2' || key === 'module:W1:objective') return 'baseline:dsa';
+  if (key === 'assessment:sql' || key === 'kickoff:k4') return 'assessment:sql';
+  if (key === 'career:tracker' || key === 'kickoff:k1') return 'career:tracker';
+  if (key === 'kickoff:k7' || key.startsWith('review:weekly')) return 'review:weekly';
+  const t = (title || '').toLowerCase().trim();
+  if (t.includes('dsa baseline') || t.includes('solve two unseen dsa problems')) return 'baseline:dsa';
+  return key.trim().toLowerCase();
+}
+
+export const DSA_BASELINE_TITLE = 'Run the DSA baseline: solve two unseen problems; record approach, time, hints, complexity and mistakes';
+export const DSA_BASELINE_DESC = 'Solve two unseen problems, no solutions first. Record approach, time, hints, complexity and mistakes. Write your starting scorecard.';
+
+export function pushItem(dayItems, item, d) {
+  const norm = normalizeTaskKey(item.key, item.title);
+  if (dayItems.some((i) => normalizeTaskKey(i.key, i.title) === norm)) {
+    return false;
+  }
+  item.scheduledDate = item.scheduledDate || toISO(d);
+  dayItems.push(item);
+  return true;
+}
+
 /** Highest priority first. Lower number = kept first when a day is over the cap. */
 const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, academic: 3, career: 4, kickoff: 5, module: 6, personal: 7 };
 const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
@@ -71,7 +95,10 @@ function lessonItem(track, group, iso, lessonDone) {
     return {
       key: `lesson:${ids.join(',')}`,
       type: 'lesson',
-      category: 'learning',
+      category: 'technical',
+      isTechnical: true,
+      _group: group,
+      _track: track,
       lessonIds: ids,
       trackId: track.id,
       title: groupTitle(track, group),
@@ -85,7 +112,10 @@ function lessonItem(track, group, iso, lessonDone) {
   return {
     key: `lesson:${ids.join(',')}`,
     type: 'lesson',
-    category: 'learning',
+    category: 'technical',
+    isTechnical: true,
+    _group: group,
+    _track: track,
     lessonIds: ids,
     trackId: track.id,
     title: `${track.name}: ${group.map((l) => l.title).join(', ')}`,
@@ -172,6 +202,17 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   const kick = state.dismissed && state.dismissed.kickoff ? [] : CHECKLISTS.kickoff.items;
   let kickQueue = kick.filter((i) => !checks[`kickoff:${i.id}`]);
   const kickToday = kick.filter((i) => doneOn(checks[`kickoff:${i.id}`], iso0));
+
+  const scheduledMilestones = new Set();
+  if (checks['baseline:dsa'] || checks['kickoff:k2'] || ((state.progress || {})['W1']?.tasks?.objective)) {
+    scheduledMilestones.add('baseline:dsa');
+  }
+  if (checks['kickoff:k4'] || checks['assessment:sql']) {
+    scheduledMilestones.add('assessment:sql');
+  }
+  if (checks['kickoff:k1'] || checks['career:tracker']) {
+    scheduledMilestones.add('career:tracker');
+  }
   
   const basicsOn = s.basicsRevisit !== false && BASICS.topics.length > 0;
   const basicsKeys = Object.entries(checks).filter(([k]) => k.startsWith('revise:') && k.includes(':basics:'));
@@ -233,8 +274,10 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       items.push({
         key: `revisit:${p.id}`,
         type: 'revisit',
-        category: 'dsa',
+        category: 'technical',
+        isTechnical: true,
         problemId: p.id,
+        _src: src,
         title: task.title,
         desc: task.desc,
         meta: [STAGE_LABEL[stageOf(src)], p.pattern || p.topic, overdue ? `overdue since ${fmtDay(toDay(src.nextReview), { weekday: false })}` : '', p.projected ? 'expected' : ''].filter(Boolean).join(' · '),
@@ -246,7 +289,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     }
 
     const extraP = isToday ? Number(extra.problems) || 0 : 0;
-    const slots = load.problems > 0 ? Math.max(1, Math.min(load.problems, load.problems + load.revisits - reviews.length)) : 0;
+    const hasBaseline = !checks['baseline:dsa'] && !checks['kickoff:k2'] && !((state.progress || {})['W1']?.tasks?.objective) && (d === today);
+    const slots = (load.problems > 0 && !hasBaseline) ? Math.max(1, Math.min(load.problems, load.problems + load.revisits - reviews.length)) : 0;
     const quotaP = slots + extraP;
     const todayNew = isToday ? attemptedToday.slice() : [];
     if (quotaP > todayNew.length) {
@@ -263,7 +307,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       items.push({
         key: `problem:${p.id}`,
         type: 'problem',
-        category: 'dsa',
+        category: 'technical',
+        isTechnical: true,
         problemId: p.id,
         title: `Solve ${p.title}`,
         meta: [p.difficulty, p.pattern || p.topic, p.priority !== null && p.priority !== undefined ? `P${p.priority}` : ''].filter(Boolean).join(' · '),
@@ -274,27 +319,124 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       });
     }
 
-    // 4. Roadmap module step
-    if (load.module > 0 && mod) {
-      const prog = (state.progress || {})[mod.id] || {};
-      const tasks = prog.tasks || {};
-      const dates = prog.taskDates || {};
-      let task = null;
-      let done = false;
-      if (isToday && dates.exit === iso0) [task, done] = ['exit', true];
-      else if (isToday && dates.objective === iso0 && !tasks.exit) [task, done] = ['objective', true];
-      else if (!tasks.objective) task = 'objective';
-      else if (!tasks.exit) task = 'exit';
-      if (task) {
-        items.push({ key: `module:${mod.id}:${task}`, type: 'module', category: mod.track || 'project', moduleId: mod.id, task, title: `${mod.id} · ${mod.title}${task === 'exit' ? ' (exit task)' : ''}`, desc: task === 'exit' ? mod.exit : mod.objective, meta: mod.track === 'dsa' ? 'Your problems today count toward this' : '', min: load.module, done });
-      }
+    // 4. Roadmap module step & DSA Baseline merging
+    const modProg = mod ? (state.progress || {})[mod.id] || {} : {};
+    const modTasks = modProg.tasks || {};
+    const modDates = modProg.taskDates || {};
+    let modTask = null;
+    let modDone = false;
+    if (isToday && modDates.exit === iso0) [modTask, modDone] = ['exit', true];
+    else if (isToday && modDates.objective === iso0 && !modTasks.exit) [modTask, modDone] = ['objective', true];
+    else if (!modTasks.objective) modTask = 'objective';
+    else if (!modTasks.exit) modTask = 'exit';
+
+    const isBaselineDone = Boolean(checks['baseline:dsa'] || checks['kickoff:k2'] || ((state.progress || {})['W1']?.tasks?.objective));
+    const isBaselineDoneToday = doneOn(checks['baseline:dsa'], iso) || doneOn(checks['kickoff:k2'], iso) || ((state.progress || {})['W1']?.taskDates?.objective === iso);
+
+    // Merge W1 objective and kickoff:k2 into a single unified 60-minute DSA baseline task.
+    // Preserves all relevant acceptance criteria from both definitions.
+    if ((!scheduledMilestones.has('baseline:dsa') && ((mod && mod.id === 'W1' && modTask === 'objective') || d === today)) || isBaselineDoneToday) {
+      pushItem(items, {
+        id: 'baseline:dsa',
+        key: 'baseline:dsa',
+        type: 'module',
+        category: 'technical',
+        isTechnical: true,
+        moduleId: 'W1',
+        task: 'objective',
+        milestone: 'W1',
+        scheduledDate: iso,
+        title: DSA_BASELINE_TITLE,
+        desc: DSA_BASELINE_DESC,
+        meta: 'W1 · Baseline assessment',
+        min: 60,
+        done: isBaselineDone && (isToday ? isBaselineDoneToday : true),
+      }, d);
+      scheduledMilestones.add('baseline:dsa');
+    } else if (load.module > 0 && mod && modTask && !(mod.id === 'W1' && modTask === 'objective')) {
+      const isTechMod = ['dsa', 'project', 'cs', 'interview', 'systems'].includes(mod.track);
+      pushItem(items, {
+        key: `module:${mod.id}:${modTask}`,
+        type: 'module',
+        category: isTechMod ? 'technical' : (mod.track || 'roadmap'),
+        isTechnical: isTechMod,
+        moduleId: mod.id,
+        task: modTask,
+        milestone: mod.id,
+        scheduledDate: iso,
+        title: `${mod.id} · ${mod.title}${modTask === 'exit' ? ' (exit task)' : ''}`,
+        desc: modTask === 'exit' ? mod.exit : mod.objective,
+        meta: mod.track === 'dsa' ? 'Your problems today count toward this' : '',
+        min: load.module,
+        done: modDone,
+      }, d);
     }
 
-    // 5. First-week tasks
-    if (load.kickoff > 0 || (isToday && kickToday.length)) {
-      const chosen = isToday ? [...kickToday] : [];
-      while (kickQueue.length && chosen.length < load.kickoff + (isToday ? kickToday.length : 0)) chosen.push(kickQueue.shift());
-      for (const i of chosen) items.push({ key: `kickoff:${i.id}`, type: 'kickoff', category: 'kickoff', title: i.text, meta: 'First-week task', min: 45, done: doneOn(checks[`kickoff:${i.id}`], iso) });
+    // 5. Onboarding / Kickoff tasks (Distributed across specific dates)
+    const kickDismissed = Boolean(state.dismissed && state.dismissed.kickoff);
+    if (!kickDismissed) {
+      // 5a. SQL and database baseline assessment (k4)
+      const sqlDone = Boolean(checks['kickoff:k4'] || checks['assessment:sql']);
+      const sqlDoneToday = doneOn(checks['kickoff:k4'], iso) || doneOn(checks['assessment:sql'], iso);
+      if (sqlDoneToday || (!scheduledMilestones.has('assessment:sql') && (d === today + 1 || (d > today + 1 && isToday)))) {
+        pushItem(items, {
+          id: 'assessment:sql',
+          key: 'kickoff:k4',
+          type: 'module',
+          category: 'technical',
+          isTechnical: true,
+          milestone: 'First week',
+          scheduledDate: iso,
+          title: 'Test SQL and database fundamentals: joins, grouping, indexes, isolation.',
+          desc: 'Test SQL and database fundamentals: joins, grouping, indexes, isolation.',
+          meta: 'Baseline assessment',
+          min: 45,
+          done: sqlDone && (isToday ? sqlDoneToday : true),
+        }, d);
+        scheduledMilestones.add('assessment:sql');
+      }
+
+      // 5b. Weekly review and planning (k7): strictly scheduled on Sundays (end of week)
+      const weeklyReviewDone = Boolean(checks['kickoff:k7'] || checks[`review:weekly:${weekKey(d)}`]);
+      const weeklyReviewDoneToday = doneOn(checks['kickoff:k7'], iso) || doneOn(checks[`review:weekly:${weekKey(d)}`], iso);
+      if (weekdayIndex(d) === 6 || weeklyReviewDoneToday) {
+        pushItem(items, {
+          id: `review:weekly:${weekKey(d)}`,
+          key: 'kickoff:k7',
+          type: 'career',
+          category: 'career',
+          isTechnical: false,
+          milestone: 'First week',
+          recurrence: 'weekly',
+          scheduledDate: iso,
+          title: 'Review and plan: baseline, coursework load, applications. Pick three tasks for next week.',
+          desc: 'Review and plan: baseline, coursework load, applications. Pick three tasks for next week.',
+          meta: 'Weekly review',
+          min: 30,
+          done: weeklyReviewDone && (isToday ? weeklyReviewDoneToday : true),
+        }, d);
+      }
+
+      // 5c. Application tracker creation (k1)
+      const trackerDone = Boolean(checks['kickoff:k1'] || checks['career:tracker']);
+      const trackerDoneToday = doneOn(checks['kickoff:k1'], iso) || doneOn(checks['career:tracker'], iso);
+      if (trackerDoneToday || (!scheduledMilestones.has('career:tracker') && (d === today + 2 || (d > today + 2 && isToday)))) {
+        pushItem(items, {
+          id: 'career:tracker',
+          key: 'kickoff:k1',
+          type: 'career',
+          category: 'career',
+          isTechnical: false,
+          milestone: 'First week',
+          scheduledDate: iso,
+          title: 'Create the application tracker: every current application, deadline, location, eligibility and next action.',
+          desc: 'Create the application tracker: every current application, deadline, location, eligibility and next action.',
+          meta: 'Career setup',
+          min: 45,
+          done: trackerDone && (isToday ? trackerDoneToday : true),
+        }, d);
+        scheduledMilestones.add('career:tracker');
+      }
     }
 
     // 6. Coursework revision and university study
@@ -312,17 +454,19 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         seen.add(c.code);
         lectured.push(c);
         const javaish = isCourseDay([c], trackKeys);
-        items.push({
+        pushItem(items, {
           key: `revise:${iso}:${c.code}`,
           type: 'revise',
           category: 'academic',
+          isTechnical: false,
           courseCode: c.code,
+          scheduledDate: iso,
           title: `Revise ${c.code} · ${c.title.replace(/\s*\(combined\)\s*$/i, '')}`,
           desc: javaish ? "Rewrite today's lecture examples in code, then add one variation of your own." : "Go over today's notes and write three questions an exam could ask.",
           meta: 'Coursework',
           min: load.lecture,
           done: doneOn(checks[`revise:${iso}:${c.code}`], iso),
-        });
+        }, d);
       }
     }
     if (inSem1 && !inXmas && load.rotate > 0 && !lectured.length) {
@@ -333,17 +477,19 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         for (let k = 0; k < n; k++) {
           const c = courses[(((d * n + k) % courses.length) + courses.length) % courses.length];
           const desc = r.mode === 'exam' ? 'Past questions, then a one-page summary from memory.' : examLike ? 'Exam prep: summary notes and past questions.' : 'Review the week: rewrite the key points and examples.';
-          items.push({
+          pushItem(items, {
             key: `revise:${iso}:${c.code}`,
             type: 'revise',
             category: 'academic',
+            isTechnical: false,
             courseCode: c.code,
+            scheduledDate: iso,
             title: `Revise ${c.code} · ${c.title}`,
             desc,
             meta: r.mode === 'exam' ? 'Exam prep' : 'Revision',
             min: load.rotateMin,
             done: doneOn(checks[`revise:${iso}:${c.code}`], iso),
-          });
+          }, d);
         }
       }
     }
@@ -352,34 +498,42 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     if (inSem1 && state.academic && Array.isArray(state.academic.studyTasks)) {
       for (const t of state.academic.studyTasks) {
         if (t.date === iso) {
-          items.push({
+          pushItem(items, {
             key: `academic:${t.id}`,
             type: 'academic',
             category: 'academic',
+            isTechnical: false,
             taskId: t.id,
             courseCode: t.courseCode || '',
+            scheduledDate: iso,
             title: t.title,
             desc: t.desc || '',
             meta: [t.courseCode, t.topic || t.meta || 'Study session'].filter(Boolean).join(' · '),
             min: Number(t.min) || 45,
             done: doneOn(checks[`academic:${t.id}`], iso),
-          });
+          }, d);
         }
       }
     }
 
-    // 6d. Fundamentals revisit on Upsoma (rotates one topic a day)
-    if (basicsOn && r.mode !== 'off' && r.mode !== 'exam') {
+    // 6d. Fundamentals revisit on Upsoma (rotates one topic a day, avoided on baseline days)
+    const hasBaselineOnDay = items.some((i) => {
+      const n = normalizeTaskKey(i.key, i.title);
+      return n === 'baseline:dsa' || n === 'assessment:sql';
+    });
+    if (basicsOn && r.mode !== 'off' && r.mode !== 'exam' && !hasBaselineOnDay) {
       const n = BASICS.topics.length;
       const idx = isToday && basicsDoneToday ? Number(basicsDoneToday[0].split(':').pop()) : (basicsBase + (d - today)) % n;
       const t = BASICS.topics[idx];
       if (t) {
         const key = `revise:${iso}:basics:${idx}`;
-        items.push({
+        pushItem(items, {
           key,
           type: 'basics',
-          category: 'personal',
+          category: 'technical',
+          isTechnical: true,
           basics: true,
+          scheduledDate: iso,
           title: `${t.name}: Revisit this topic`,
           desc: t.area === 'python'
             ? 'Revisit it on Upsoma, then close the tab and write a short example from memory.'
@@ -388,9 +542,10 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
           url: BASICS.url,
           min: 30,
           done: doneOn(checks[key], iso),
-        });
+        }, d);
       }
     }
+
     // 7. Applications
     if (r.mode !== 'off') {
       for (const a of state.applications || []) {
@@ -399,12 +554,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         const key = `app:${a.id}:${a.nextActionDate}`;
         const doneDate = checks[key];
         if (isToday ? ad <= d && (!doneDate || doneOn(doneDate, iso)) : ad === d && !doneDate) {
-          items.push({ key, type: 'career', category: 'career', appId: a.id, title: `${a.nextAction}`, meta: [a.company, a.role].filter(Boolean).join(' · ') + (ad < d ? ' · overdue' : ''), min: 20, done: doneOn(doneDate, iso) });
+          pushItem(items, { key, type: 'career', category: 'career', isTechnical: false, appId: a.id, scheduledDate: iso, title: `${a.nextAction}`, meta: [a.company, a.role].filter(Boolean).join(' · ') + (ad < d ? ' · overdue' : ''), min: 20, done: doneOn(doneDate, iso) }, d);
         }
-      }
-      if (weekdayIndex(d) === 5 && r.mode !== 'exam') {
-        const key = `career:${weekKey(d)}`;
-        items.push({ key, type: 'career', category: 'career', title: 'Check new openings and deadlines', meta: 'Careers pages, then update the tracker', min: 30, done: doneOn(checks[key], iso) });
       }
     }
 
@@ -428,6 +579,88 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
+    // 9. Enforce extracurricular technical-task cap and time constraints.
+    // Mentor rule:
+    // - Normal day: maximum 3 extracurricular technical items (ceiling up to maxTechMin, default 180m).
+    // - Genuinely free day (break): maximum 5 items ceiling (up to maxTechMin, default 300m) ONLY when the exception is enabled.
+    // - Heavy coursework / pre-exam: max 1 item, up to 45m.
+    // - Exam period: max 1 item deliberate override, up to 20m.
+    // - Rest day (off): 0 items (strict rest, recovery, and reset).
+    // Academic work is separate and NOT included in this cap.
+    const allowFreeDayMax5 = s.allowFreeDayMax5 !== false && s.freeDayException !== false;
+    let maxTech = load.maxTech !== undefined
+      ? load.maxTech
+      : (r.mode === 'break' ? (allowFreeDayMax5 ? 5 : 3) : r.mode === 'normal' ? 3 : (r.mode === 'heavy' || r.mode === 'exam') ? 1 : 0);
+    if (r.mode === 'break' && !allowFreeDayMax5 && maxTech > 3) {
+      maxTech = 3;
+    }
+    const maxTechMin = load.maxTechMin !== undefined ? load.maxTechMin : (r.mode === 'break' ? 300 : r.mode === 'normal' ? 180 : r.mode === 'heavy' ? 45 : r.mode === 'exam' ? 20 : 0);
+
+    const techItems = items.filter((i) => i.isTechnical || i.category === 'technical');
+    if (techItems.length > 0) {
+      const doneTech = techItems.filter((i) => i.done);
+      const doneTechMin = doneTech.reduce((sum, i) => sum + (i.min || 0), 0);
+      let allowedSlots = Math.max(0, maxTech - doneTech.length);
+      let allowedMin = Math.max(0, maxTechMin - doneTechMin);
+
+      // Prioritize: revisit (protect spaced repetition recall) -> lesson (curriculum learning) -> module (project/systems & baseline) -> problem (active DSA) -> basics
+      const rankOrder = { revisit: 0, lesson: 1, module: 2, problem: 3, basics: 4 };
+      const openTech = techItems
+        .map((item, idx) => ({ item, idx }))
+        .filter((x) => !x.item.done)
+        .sort((a, b) => {
+          const rA = rankOrder[a.item.type] ?? 10;
+          const rB = rankOrder[b.item.type] ?? 10;
+          return rA !== rB ? rA - rB : a.idx - b.idx;
+        });
+
+      const keptTech = new Set(doneTech);
+      const droppedTech = new Set();
+      const seenTracks = new Set();
+
+      for (const { item } of openTech) {
+        const itemMin = Number(item.min) || 0;
+        const isExtraTrackLesson = item.type === 'lesson' && item.trackId && seenTracks.has(item.trackId);
+        const slotsNeeded = isExtraTrackLesson ? 0 : 1;
+        if (allowedSlots >= slotsNeeded && itemMin <= allowedMin) {
+          keptTech.add(item);
+          allowedSlots -= slotsNeeded;
+          allowedMin -= itemMin;
+          if (item.type === 'lesson' && item.trackId) {
+            seenTracks.add(item.trackId);
+          }
+        } else {
+          droppedTech.add(item);
+        }
+      }
+
+      if (droppedTech.size > 0) {
+        // Return dropped tasks to their respective backlog queues
+        for (const item of droppedTech) {
+          if (item.type === 'problem' && item.problemId) {
+            takenNew.delete(item.problemId);
+            const reviewTarget = d + reviewGap('solved');
+            if (scheduledLater.has(reviewTarget)) {
+              const list = scheduledLater.get(reviewTarget);
+              scheduledLater.set(reviewTarget, list.filter((p) => p.id !== item.problemId));
+            }
+          } else if (item.type === 'lesson' && item._group && item._track) {
+            const trackObj = tracks.find((tr) => tr.t.id === item._track.id);
+            if (trackObj) {
+              trackObj.queue.unshift(...item._group);
+              trackObj.rem += (item.min || 0);
+              trackObj.finish = trackObj.prevFinish;
+            }
+          } else if (item.type === 'revisit' && item._src) {
+            overflow.unshift(item._src);
+          }
+        }
+        const filtered = items.filter((i) => !droppedTech.has(i));
+        items.length = 0;
+        items.push(...filtered);
+      }
+    }
+
     if (d >= from && d < from + count) {
       days.push({ day: d, mode: r.mode, resolved: r, classes, items, minutes: items.reduce((sum, i) => sum + (i.min || 0), 0) });
     }
@@ -446,48 +679,86 @@ export function historyDay(day, state, ctx) {
   const items = [];
   for (const t of state.tracks || []) {
     const done = (t.lessons || []).filter((l) => (state.lessonDone || {})[l.id] === iso);
-    for (const g of groupLessons(done)) items.push(lessonItem(t, g, iso, state.lessonDone || {}));
+    for (const g of groupLessons(done)) pushItem(items, lessonItem(t, g, iso, state.lessonDone || {}), day);
   }
   const byId = new Map((state.problems || []).map((p) => [p.id, p]));
   for (const e of state.dsaLog || []) {
     if (e.date !== iso || !e.problemId) continue;
     const p = byId.get(e.problemId) || { title: e.title, url: '' };
     const label = { alone: 'solved on your own', clean: 'done', over: 'over target time', hints: 'needed hints', failed: "couldn't solve" }[e.outcome] || '';
-    if (e.kind === 'first') items.push({ key: `problem:${e.problemId}`, type: 'problem', problemId: e.problemId, title: `Solve ${p.title}`, meta: label, url: p.url, done: true });
-    else items.push({ key: `revisit:${e.problemId}`, type: 'revisit', problemId: e.problemId, title: e.prev ? reviewTask(e.prev).title : `Review ${p.title}`, meta: label, url: p.url, done: true });
+    if (e.kind === 'first') pushItem(items, { key: `problem:${e.problemId}`, type: 'problem', category: 'technical', isTechnical: true, problemId: e.problemId, title: `Solve ${p.title}`, meta: label, url: p.url, done: true, scheduledDate: iso }, day);
+    else pushItem(items, { key: `revisit:${e.problemId}`, type: 'revisit', category: 'technical', isTechnical: true, problemId: e.problemId, title: e.prev ? reviewTask(e.prev).title : `Review ${p.title}`, meta: label, url: p.url, done: true, scheduledDate: iso }, day);
   }
   for (const [mid, prog] of Object.entries(state.progress || {})) {
     for (const task of ['objective', 'exit']) {
       if ((prog.taskDates || {})[task] === iso) {
+        if (mid === 'W1' && task === 'objective') {
+          pushItem(items, {
+            id: 'baseline:dsa',
+            key: 'baseline:dsa',
+            type: 'module',
+            category: 'technical',
+            isTechnical: true,
+            moduleId: 'W1',
+            task: 'objective',
+            title: DSA_BASELINE_TITLE,
+            desc: DSA_BASELINE_DESC,
+            done: true,
+            scheduledDate: iso,
+          }, day);
+          continue;
+        }
         const mod = (state.modules || []).find((m) => m.id === mid);
-        if (mod) items.push({ key: `module:${mid}:${task}`, type: 'module', moduleId: mid, task, title: `${mod.id} · ${mod.title}${task === 'exit' ? ' (exit task)' : ''}`, desc: task === 'exit' ? mod.exit : mod.objective, done: true });
+        if (mod) {
+          const isTechMod = ['dsa', 'project', 'cs', 'interview', 'systems'].includes(mod.track);
+          pushItem(items, { key: `module:${mid}:${task}`, type: 'module', category: isTechMod ? 'technical' : (mod.track || 'roadmap'), isTechnical: isTechMod, moduleId: mid, task, title: `${mod.id} · ${mod.title}${task === 'exit' ? ' (exit task)' : ''}`, desc: task === 'exit' ? mod.exit : mod.objective, done: true, scheduledDate: iso }, day);
+        }
       }
     }
   }
   for (const [key, v] of Object.entries(state.checks || {})) {
     if (v !== iso) continue;
-    if (key.startsWith('kickoff:')) {
+    if (key === 'baseline:dsa' || key === 'kickoff:k2') {
+      pushItem(items, {
+        id: 'baseline:dsa',
+        key: 'baseline:dsa',
+        type: 'module',
+        category: 'technical',
+        isTechnical: true,
+        moduleId: 'W1',
+        task: 'objective',
+        title: DSA_BASELINE_TITLE,
+        desc: DSA_BASELINE_DESC,
+        done: true,
+        scheduledDate: iso,
+      }, day);
+    } else if (key.startsWith('kickoff:')) {
       const i = CHECKLISTS.kickoff.items.find((x) => `kickoff:${x.id}` === key);
-      if (i) items.push({ key, type: 'kickoff', title: i.text, done: true });
+      if (i) {
+        const isTech = i.id === 'k2' || i.id === 'k4';
+        pushItem(items, { key, type: 'kickoff', category: isTech ? 'technical' : 'career', isTechnical: isTech, title: i.text, done: true, scheduledDate: iso }, day);
+      }
     } else if (key.startsWith(`revise:${iso}:`)) {
       const code = key.split(':').slice(2).join(':');
       const bm = code.match(/^basics:(\d+)$/);
       const bt = bm && BASICS.topics[Number(bm[1])];
-      items.push({ key, type: bt ? 'basics' : 'revise', category: bt ? 'personal' : 'academic', title: bt ? `${bt.name}: Revisit this topic` : `Revise ${code}`, done: true });
+      pushItem(items, { key, type: bt ? 'basics' : 'revise', category: bt ? 'technical' : 'academic', isTechnical: Boolean(bt), title: bt ? `${bt.name}: Revisit this topic` : `Revise ${code}`, done: true, scheduledDate: iso }, day);
     } else if (key.startsWith('academic:')) {
       const taskId = key.split(':')[1];
       const task = ((state.academic && state.academic.studyTasks) || []).find((t) => t.id === taskId);
-      items.push({
+      pushItem(items, {
         key,
         type: 'academic',
         category: 'academic',
+        isTechnical: false,
         title: task ? task.title : 'Academic study task',
         desc: task ? task.desc : '',
         meta: task ? task.courseCode : 'Academics',
         done: true,
-      });
+        scheduledDate: iso,
+      }, day);
     } else if (key.startsWith('career:') || key.startsWith('app:')) {
-      items.push({ key, type: 'career', title: key.startsWith('career:') ? 'Checked new openings and deadlines' : 'Application next action', done: true });
+      pushItem(items, { key, type: 'career', category: 'career', isTechnical: false, title: key.startsWith('career:') ? 'Checked new openings and deadlines' : 'Application next action', done: true, scheduledDate: iso }, day);
     }
   }
   return { day, mode: resolveDay(day, ctx).mode, items, minutes: 0, past: true, classes: classesOn(day, ctx) };
