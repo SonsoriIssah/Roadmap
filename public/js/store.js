@@ -180,6 +180,11 @@ export function migrate(raw) {
       p.stageGuessed = p.status === 'solved' && !/^\d{4}-\d{2}-\d{2}$/.test(String(p.lastAt));
     }
   }
+  if (v < 5) {
+    // The plan now aims at the applications that open in July 2027: move the
+    // old 30 June target unless you had already picked your own date.
+    if (isObj(out.settings) && out.settings.targetEnd === '2027-06-30') out.settings.targetEnd = '2027-07-31';
+  }
   if (!Array.isArray(out.courses) || !out.courses.length) {
     out.courses = clone(DEFAULT_COURSES);
   }

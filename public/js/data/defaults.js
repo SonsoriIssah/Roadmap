@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 4;
+export const DATA_VERSION = 5;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.
@@ -36,7 +36,7 @@ export const KIND_ORDER = ['teaching', 'midsem', 'exam', 'break', 'semester', 'a
 export const DEFAULT_SETTINGS = {
   theme: 'system', // system | light | dark
   planStart: '2026-10-05',
-  targetEnd: '2027-06-30',
+  targetEnd: '2027-07-31', // ready before the July 2027 application cycle opens
   pace: { normal: 1, heavy: 0.4, exam: 0, break: 2, off: 0 },
   defaultMode: 'normal', // mode for days not covered by any calendar period
   preExamDays: 7, // days before an exam period that count as "heavy" (0 = off)
@@ -310,7 +310,7 @@ export const PHASES = {
   p1: { name: 'Foundation and diagnostics', span: 'M1–2', exit: 'Diagnostic scores recorded, flagship chosen, first project tests added, resume updated.' },
   p2: { name: 'Engineering depth', span: 'M3–4', exit: 'Reproducible project tests, documented architecture, measurable DSA improvement.' },
   p3: { name: 'Interview readiness', span: 'M5–6', exit: 'Multiple mock interviews completed, weak patterns documented, project walkthrough rehearsed.' },
-  p4: { name: 'Recruitment execution', span: 'M7–9', exit: 'Applications tracked, interview weaknesses addressed, no unnecessary project rebuilds.' },
+  p4: { name: 'Recruitment execution', span: 'M7–10', exit: 'Mediums comfortable by April, interview weaknesses addressed, applications ready when the July 2027 cycle opens.' },
 };
 
 export const TRACKS = {
@@ -579,7 +579,12 @@ export const DSA_PATTERNS = [
   'SQL', 'Other',
 ];
 
-export const APP_STATUSES = ['researching', 'applied', 'OA', 'interview', 'rejected', 'offer'];
+// "Comfortable with Mediums": of your last 10 first attempts at unseen Mediums,
+// 7 solved on your own in 25 minutes or less, by the end of April — leaving
+// May to July for interview practice before the July 2027 applications.
+export const DSA_READINESS = { difficulty: 'Medium', window: 10, target: 7, by: '2027-04-30' };
+
+export const APP_STATUSES =['researching', 'applied', 'OA', 'interview', 'rejected', 'offer'];
 
 export const ELIGIBILITY_CHECKS = [
   { id: 'grad', text: 'Accepts a student graduating in May 2029' },
@@ -734,10 +739,10 @@ export const PLAYBOOK = {
     ['Hudson River Trading', 'D', 'Algorithms, programming depth, concurrency and C++ or performance engineering where relevant'],
   ],
   recruitment: [
-    ['October', 'Review live applications (NVIDIA Ignite, Google, banking technology). Confirm eligibility and deadlines; submit roles that are already open.'],
-    ['November – January', 'Check careers pages regularly, prepare for assessments, request referrals where appropriate, follow up professionally.'],
-    ['February – April', 'Continue with roles still accepting candidates. Reallocate time immediately when interviews are scheduled.'],
-    ['May – June', 'Prioritise confirmed interviews and urgent deadlines. Resolve internship date conflicts before accepting an offer.'],
+    ['October – April', 'Build skills, not applications: DSA through every topic, projects built and defended. Note when each target company opened last year and which programmes accept a May 2029 graduate.'],
+    ['February – April', 'Talk to KNUST alumni and former interns at target firms. Line up referrals for roles you will be eligible for in July.'],
+    ['May – July', 'Interview practice: timed unseen Mediums, online-assessment practice, weekly mocks, STAR stories. Tailor resumes per company and set reminders for each opening date.'],
+    ['July – October 2027', 'Applications open: apply in the first weeks, since many roles fill on a rolling basis. Move straight to interview prep when an assessment or interview arrives.'],
   ],
 };
 

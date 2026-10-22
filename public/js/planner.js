@@ -6,7 +6,7 @@
 import { toISO, toDay, isISODate, weekKey, fmtDay } from './dates.js';
 import { resolveDay, classesOn, timetableOn } from './engine.js';
 import { CHECKLISTS, DEFAULT_SETTINGS } from './data/defaults.js';
-import { orderNew, dueProblems, reviewTask, reviewGap, stageOf, targetMinutes, STAGE_LABEL } from './problems.js';
+import { orderNew, dueProblems, reviewTask, reviewGap, stageOf, targetMinutes, applyOutcome, STAGE_LABEL } from './problems.js';
 import { lessonMinutes, trackWindow, remainingMinutes, isCourseDay, fmtTimestamp, videoLink } from './learn.js';
 import { BASICS } from './data/basics.js';
 
@@ -69,6 +69,21 @@ export function pushItem(dayItems, item, d) {
 /** Highest priority first. Lower number = kept first when a day is over the cap. */
 const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, academic: 3, career: 4, kickoff: 5, module: 6, personal: 7 };
 const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
+
+/**
+ * Keep one slot for a new problem: when reviews (or anything ranked above it)
+ * would fill every slot, the first open problem takes the last one. Skipped
+ * when a new problem is already done that day or there is only one slot.
+ */
+function reserveNewProblem(open, slots, items) {
+  if (slots < 2 || items.some((i) => i.type === 'problem' && i.done)) return open;
+  const at = open.findIndex((x) => x.item.type === 'problem');
+  if (at < slots) return open;
+  const out = open.slice();
+  const [p] = out.splice(at, 1);
+  out.splice(slots - 1, 0, p);
+  return out;
+}
 /** Module the forecast places on a day (falls back to the current one). */
 function moduleOn(day, today, modules, fc, current) {
   if (day <= today || !fc) return current;
@@ -464,11 +479,14 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         .filter(({ item }) => item.category !== 'academic');
       if (nonSchool.length > 3) {
         const completed = nonSchool.filter(({ item }) => item.done);
-        const open = nonSchool
-          .filter(({ item }) => !item.done)
-          .sort((a, b) => rankOf(a.item) - rankOf(b.item) || a.idx - b.idx);
         const kept = new Set(completed.slice(0, 3).map(({ item }) => item));
-        for (const { item } of open.slice(0, Math.max(0, 3 - kept.size))) kept.add(item);
+        const free = Math.max(0, 3 - kept.size);
+        const open = reserveNewProblem(
+          nonSchool.filter(({ item }) => !item.done).sort((a, b) => rankOf(a.item) - rankOf(b.item) || a.idx - b.idx),
+          free,
+          items,
+        );
+        for (const { item } of open.slice(0, free)) kept.add(item);
         const droppedTech = new Set(nonSchool.map(({ item }) => item).filter((item) => !kept.has(item) && (item.isTechnical || item.category === 'technical')));
         restoreDroppedTech(d, droppedTech);
         const filtered = items.filter((item) => item.category === 'academic' || kept.has(item));
@@ -501,16 +519,21 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       let allowedSlots = Math.max(0, maxTech - doneTech.length);
       let allowedMin = Math.max(0, maxTechMin - doneTechMin);
 
-      // Prioritize: revisit (protect spaced repetition recall) -> lesson (curriculum learning) -> module (project/systems & baseline) -> problem (active DSA) -> basics
-      const rankOrder = { revisit: 0, lesson: 1, module: 2, problem: 3, basics: 4 };
-      const openTech = techItems
-        .map((item, idx) => ({ item, idx }))
-        .filter((x) => !x.item.done)
-        .sort((a, b) => {
-          const rA = rankOrder[a.item.type] ?? 10;
-          const rB = rankOrder[b.item.type] ?? 10;
-          return rA !== rB ? rA - rB : a.idx - b.idx;
-        });
+      // Prioritize: revisit (protect spaced repetition recall) -> lesson (curriculum learning) -> problem (active DSA) -> module (project/systems & baseline) -> basics,
+      // with one slot kept for a new problem so reviews never crowd out new DSA entirely.
+      const rankOrder = { revisit: 0, lesson: 1, problem: 2, module: 3, basics: 4 };
+      const openTech = reserveNewProblem(
+        techItems
+          .map((item, idx) => ({ item, idx }))
+          .filter((x) => !x.item.done)
+          .sort((a, b) => {
+            const rA = rankOrder[a.item.type] ?? 10;
+            const rB = rankOrder[b.item.type] ?? 10;
+            return rA !== rB ? rA - rB : a.idx - b.idx;
+          }),
+        allowedSlots,
+        items,
+      );
 
       const keptTech = new Set(doneTech);
       const droppedTech = new Set();
@@ -538,6 +561,14 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         items.length = 0;
         items.push(...filtered);
       }
+    }
+
+    // Expect each review on the list to be done on its day, so the next step of
+    // the ladder (and the one after) shows up on later days too.
+    for (const i of items) {
+      if (i.type !== 'revisit' || i.done || !i._src) continue;
+      const next = applyOutcome(i._src, 'clean', d);
+      schedule(toDay(next.nextReview), { ...next, projected: true });
     }
 
     if (d >= from && d < from + count) {

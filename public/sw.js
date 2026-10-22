@@ -3,7 +3,7 @@
 // (Vercel runs it on every deploy), so each deploy gets a new cache.
 
 // <precache>
-const VERSION = '541f59c8ce30';
+const VERSION = '151bcaf89b1c';
 const PRECACHE = [
   '/',
   '/css/app.css',

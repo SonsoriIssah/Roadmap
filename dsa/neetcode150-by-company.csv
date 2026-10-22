@@ -1,0 +1,151 @@
+Problem,Link,Pattern,Difficulty,Target companies asking,Asked at
+Contains Duplicate,https://leetcode.com/problems/contains-duplicate/,Arrays & Hashing,Easy,3,"Palantir, Google, Amazon"
+Valid Anagram,https://leetcode.com/problems/valid-anagram/,Arrays & Hashing,Easy,5,"Bloomberg, Microsoft, Google, Amazon, Meta"
+Two Sum,https://leetcode.com/problems/two-sum/,Arrays & Hashing,Easy,13,"Goldman Sachs, JPMorgan, Bloomberg, Morgan Stanley, Citi, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Databricks, Jane Street"
+Group Anagrams,https://leetcode.com/problems/group-anagrams/,Arrays & Hashing,Medium,10,"Goldman Sachs, JPMorgan, Bloomberg, Morgan Stanley, Microsoft, Google, Amazon, Meta, NVIDIA, Apple"
+Top K Frequent Elements,https://leetcode.com/problems/top-k-frequent-elements/,Arrays & Hashing,Medium,9,"Goldman Sachs, JPMorgan, Bloomberg, Morgan Stanley, Google, Amazon, Meta, NVIDIA, Apple"
+Product of Array Except Self,https://leetcode.com/problems/product-of-array-except-self/,Arrays & Hashing,Medium,7,"Bloomberg, Microsoft, Google, Amazon, NVIDIA, Apple, Uber"
+Valid Sudoku,https://leetcode.com/problems/valid-sudoku/,Arrays & Hashing,Medium,2,"Apple, Uber"
+Encode and Decode Strings,https://leetcode.com/problems/encode-and-decode-strings/,Arrays & Hashing,Medium,0,
+Longest Consecutive Sequence,https://leetcode.com/problems/longest-consecutive-sequence/,Arrays & Hashing,Medium,6,"Bloomberg, Morgan Stanley, Google, Amazon, NVIDIA, Apple"
+Valid Palindrome,https://leetcode.com/problems/valid-palindrome/,Two Pointers,Easy,5,"Bank of America, Microsoft, Google, Meta, Apple"
+Two Sum II Input Array Is Sorted,https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/,Two Pointers,Medium,1,Google
+3Sum,https://leetcode.com/problems/3sum/,Two Pointers,Medium,10,"Goldman Sachs, Bloomberg, Morgan Stanley, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Cloudflare"
+Container With Most Water,https://leetcode.com/problems/container-with-most-water/,Two Pointers,Medium,9,"Goldman Sachs, Bloomberg, Morgan Stanley, Microsoft, Google, Amazon, Meta, NVIDIA, Apple"
+Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Two Pointers,Hard,9,"Goldman Sachs, JPMorgan, Bloomberg, Microsoft, Google, Amazon, Meta, NVIDIA, Jane Street"
+Best Time to Buy And Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Sliding Window,Easy,14,"Goldman Sachs, JPMorgan, Bloomberg, Bank of America, Morgan Stanley, Citi, Palantir, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Capital One"
+Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Sliding Window,Medium,11,"Goldman Sachs, JPMorgan, Bloomberg, Morgan Stanley, Citi, Microsoft, Google, Amazon, Meta, NVIDIA, Apple"
+Longest Repeating Character Replacement,https://leetcode.com/problems/longest-repeating-character-replacement/,Sliding Window,Medium,2,"Microsoft, Google"
+Permutation In String,https://leetcode.com/problems/permutation-in-string/,Sliding Window,Medium,2,"Databricks, Revolut"
+Minimum Window Substring,https://leetcode.com/problems/minimum-window-substring/,Sliding Window,Hard,2,"Goldman Sachs, Microsoft"
+Sliding Window Maximum,https://leetcode.com/problems/sliding-window-maximum/,Sliding Window,Hard,3,"JPMorgan, Amazon, NVIDIA"
+Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Stack,Easy,11,"Goldman Sachs, Bloomberg, Bank of America, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Two Sigma, Jane Street"
+Min Stack,https://leetcode.com/problems/min-stack/,Stack,Medium,5,"Bloomberg, Morgan Stanley, Amazon, NVIDIA, Apple"
+Evaluate Reverse Polish Notation,https://leetcode.com/problems/evaluate-reverse-polish-notation/,Stack,Medium,1,Citi
+Generate Parentheses,https://leetcode.com/problems/generate-parentheses/,Stack,Medium,7,"Bloomberg, Morgan Stanley, Microsoft, Google, Amazon, Meta, Apple"
+Daily Temperatures,https://leetcode.com/problems/daily-temperatures/,Stack,Medium,4,"Goldman Sachs, Morgan Stanley, Palantir, NVIDIA"
+Car Fleet,https://leetcode.com/problems/car-fleet/,Stack,Medium,0,
+Largest Rectangle In Histogram,https://leetcode.com/problems/largest-rectangle-in-histogram/,Stack,Hard,3,"Google, Capital One, Uber"
+Binary Search,https://leetcode.com/problems/binary-search/,Binary Search,Easy,2,"Bloomberg, Google"
+Search a 2D Matrix,https://leetcode.com/problems/search-a-2d-matrix/,Binary Search,Medium,1,Goldman Sachs
+Koko Eating Bananas,https://leetcode.com/problems/koko-eating-bananas/,Binary Search,Medium,6,"Goldman Sachs, Bloomberg, Microsoft, Google, Amazon, NVIDIA"
+Find Minimum In Rotated Sorted Array,https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/,Binary Search,Medium,2,"Goldman Sachs, Uber"
+Search In Rotated Sorted Array,https://leetcode.com/problems/search-in-rotated-sorted-array/,Binary Search,Medium,7,"Goldman Sachs, Bloomberg, Microsoft, Google, Amazon, Meta, NVIDIA"
+Time Based Key Value Store,https://leetcode.com/problems/time-based-key-value-store/,Binary Search,Medium,4,"Palantir, Apple, Databricks, Uber"
+Median of Two Sorted Arrays,https://leetcode.com/problems/median-of-two-sorted-arrays/,Binary Search,Hard,7,"Goldman Sachs, Bloomberg, Microsoft, Google, Amazon, Meta, Apple"
+Reverse Linked List,https://leetcode.com/problems/reverse-linked-list/,Linked List,Easy,4,"Morgan Stanley, Microsoft, Google, Apple"
+Merge Two Sorted Lists,https://leetcode.com/problems/merge-two-sorted-lists/,Linked List,Easy,8,"Goldman Sachs, Bloomberg, Microsoft, Google, Amazon, Meta, Apple, Revolut"
+Reorder List,https://leetcode.com/problems/reorder-list/,Linked List,Medium,3,"Bloomberg, Morgan Stanley, Amazon"
+Remove Nth Node From End of List,https://leetcode.com/problems/remove-nth-node-from-end-of-list/,Linked List,Medium,2,"Morgan Stanley, Microsoft"
+Copy List With Random Pointer,https://leetcode.com/problems/copy-list-with-random-pointer/,Linked List,Medium,5,"Morgan Stanley, Microsoft, Amazon, Meta, NVIDIA"
+Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Linked List,Medium,9,"Goldman Sachs, Bloomberg, Microsoft, Google, Amazon, Meta, NVIDIA, Jane Street, Capital One"
+Linked List Cycle,https://leetcode.com/problems/linked-list-cycle/,Linked List,Easy,1,NVIDIA
+Find The Duplicate Number,https://leetcode.com/problems/find-the-duplicate-number/,Linked List,Medium,1,NVIDIA
+LRU Cache,https://leetcode.com/problems/lru-cache/,Linked List,Medium,15,"Goldman Sachs, JPMorgan, Bloomberg, Morgan Stanley, Palantir, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Jane Street, Capital One, Uber, Cloudflare"
+Merge K Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/,Linked List,Hard,9,"Bloomberg, Palantir, Microsoft, Amazon, Meta, NVIDIA, Apple, Two Sigma, Cloudflare"
+Reverse Nodes In K Group,https://leetcode.com/problems/reverse-nodes-in-k-group/,Linked List,Hard,0,
+Invert Binary Tree,https://leetcode.com/problems/invert-binary-tree/,Trees,Easy,0,
+Maximum Depth of Binary Tree,https://leetcode.com/problems/maximum-depth-of-binary-tree/,Trees,Easy,0,
+Diameter of Binary Tree,https://leetcode.com/problems/diameter-of-binary-tree/,Trees,Easy,1,Meta
+Balanced Binary Tree,https://leetcode.com/problems/balanced-binary-tree/,Trees,Easy,0,
+Same Tree,https://leetcode.com/problems/same-tree/,Trees,Easy,0,
+Subtree of Another Tree,https://leetcode.com/problems/subtree-of-another-tree/,Trees,Easy,0,
+Lowest Common Ancestor of a Binary Search Tree,https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/,Trees,Medium,0,
+Binary Tree Level Order Traversal,https://leetcode.com/problems/binary-tree-level-order-traversal/,Trees,Medium,0,
+Binary Tree Right Side View,https://leetcode.com/problems/binary-tree-right-side-view/,Trees,Medium,1,Meta
+Count Good Nodes In Binary Tree,https://leetcode.com/problems/count-good-nodes-in-binary-tree/,Trees,Medium,0,
+Validate Binary Search Tree,https://leetcode.com/problems/validate-binary-search-tree/,Trees,Medium,1,Bloomberg
+Kth Smallest Element In a Bst,https://leetcode.com/problems/kth-smallest-element-in-a-bst/,Trees,Medium,1,Uber
+Construct Binary Tree From Preorder And Inorder Traversal,https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/,Trees,Medium,0,
+Binary Tree Maximum Path Sum,https://leetcode.com/problems/binary-tree-maximum-path-sum/,Trees,Hard,1,Goldman Sachs
+Serialize And Deserialize Binary Tree,https://leetcode.com/problems/serialize-and-deserialize-binary-tree/,Trees,Hard,1,Microsoft
+Implement Trie Prefix Tree,https://leetcode.com/problems/implement-trie-prefix-tree/,Tries,Medium,0,
+Design Add And Search Words Data Structure,https://leetcode.com/problems/design-add-and-search-words-data-structure/,Tries,Medium,0,
+Word Search II,https://leetcode.com/problems/word-search-ii/,Tries,Hard,2,"Two Sigma, Uber"
+Kth Largest Element In a Stream,https://leetcode.com/problems/kth-largest-element-in-a-stream/,Heap / Priority Queue,Easy,0,
+Last Stone Weight,https://leetcode.com/problems/last-stone-weight/,Heap / Priority Queue,Easy,1,NVIDIA
+K Closest Points to Origin,https://leetcode.com/problems/k-closest-points-to-origin/,Heap / Priority Queue,Medium,1,Meta
+Kth Largest Element In An Array,https://leetcode.com/problems/kth-largest-element-in-an-array/,Heap / Priority Queue,Medium,5,"Goldman Sachs, Morgan Stanley, Microsoft, Google, Meta"
+Task Scheduler,https://leetcode.com/problems/task-scheduler/,Heap / Priority Queue,Medium,2,"Amazon, Uber"
+Design Twitter,https://leetcode.com/problems/design-twitter/,Heap / Priority Queue,Medium,0,
+Find Median From Data Stream,https://leetcode.com/problems/find-median-from-data-stream/,Heap / Priority Queue,Hard,2,"Microsoft, Apple"
+Subsets,https://leetcode.com/problems/subsets/,Backtracking,Medium,3,"Microsoft, Google, Amazon"
+Combination Sum,https://leetcode.com/problems/combination-sum/,Backtracking,Medium,0,
+Permutations,https://leetcode.com/problems/permutations/,Backtracking,Medium,3,"Goldman Sachs, Google, Apple"
+Subsets II,https://leetcode.com/problems/subsets-ii/,Backtracking,Medium,0,
+Combination Sum II,https://leetcode.com/problems/combination-sum-ii/,Backtracking,Medium,0,
+Word Search,https://leetcode.com/problems/word-search/,Backtracking,Medium,5,"Goldman Sachs, Bloomberg, Morgan Stanley, Amazon, Uber"
+Palindrome Partitioning,https://leetcode.com/problems/palindrome-partitioning/,Backtracking,Medium,0,
+Letter Combinations of a Phone Number,https://leetcode.com/problems/letter-combinations-of-a-phone-number/,Backtracking,Medium,4,"Morgan Stanley, Microsoft, Amazon, Apple"
+N Queens,https://leetcode.com/problems/n-queens/,Backtracking,Hard,3,"Microsoft, Google, Amazon"
+Number of Islands,https://leetcode.com/problems/number-of-islands/,Graphs,Medium,14,"Goldman Sachs, Bloomberg, Morgan Stanley, Palantir, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Two Sigma, Capital One, Uber, Cloudflare"
+Clone Graph,https://leetcode.com/problems/clone-graph/,Graphs,Medium,2,"Meta, NVIDIA"
+Max Area of Island,https://leetcode.com/problems/max-area-of-island/,Graphs,Medium,1,Goldman Sachs
+Pacific Atlantic Water Flow,https://leetcode.com/problems/pacific-atlantic-water-flow/,Graphs,Medium,0,
+Surrounded Regions,https://leetcode.com/problems/surrounded-regions/,Graphs,Medium,0,
+Rotting Oranges,https://leetcode.com/problems/rotting-oranges/,Graphs,Medium,7,"Goldman Sachs, Bloomberg, Microsoft, Amazon, NVIDIA, Databricks, Uber"
+Walls And Gates,https://leetcode.com/problems/walls-and-gates/,Graphs,Medium,0,
+Course Schedule,https://leetcode.com/problems/course-schedule/,Graphs,Medium,9,"Goldman Sachs, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Uber, Cloudflare"
+Course Schedule II,https://leetcode.com/problems/course-schedule-ii/,Graphs,Medium,4,"Palantir, Microsoft, Apple, Uber"
+Redundant Connection,https://leetcode.com/problems/redundant-connection/,Graphs,Medium,0,
+Number of Connected Components In An Undirected Graph,https://leetcode.com/problems/number-of-connected-components-in-an-undirected-graph/,Graphs,Medium,0,
+Graph Valid Tree,https://leetcode.com/problems/graph-valid-tree/,Graphs,Medium,0,
+Word Ladder,https://leetcode.com/problems/word-ladder/,Graphs,Hard,3,"Bloomberg, Amazon, Apple"
+Reconstruct Itinerary,https://leetcode.com/problems/reconstruct-itinerary/,Advanced Graphs,Hard,0,
+Min Cost to Connect All Points,https://leetcode.com/problems/min-cost-to-connect-all-points/,Advanced Graphs,Medium,1,Uber
+Network Delay Time,https://leetcode.com/problems/network-delay-time/,Advanced Graphs,Medium,1,NVIDIA
+Swim In Rising Water,https://leetcode.com/problems/swim-in-rising-water/,Advanced Graphs,Hard,0,
+Alien Dictionary,https://leetcode.com/problems/alien-dictionary/,Advanced Graphs,Hard,1,Uber
+Cheapest Flights Within K Stops,https://leetcode.com/problems/cheapest-flights-within-k-stops/,Advanced Graphs,Medium,2,"Stripe, Uber"
+Climbing Stairs,https://leetcode.com/problems/climbing-stairs/,1-D Dynamic Programming,Easy,5,"Bloomberg, Microsoft, Google, Amazon, Meta"
+Min Cost Climbing Stairs,https://leetcode.com/problems/min-cost-climbing-stairs/,1-D Dynamic Programming,Easy,0,
+House Robber,https://leetcode.com/problems/house-robber/,1-D Dynamic Programming,Medium,5,"Morgan Stanley, Google, Amazon, NVIDIA, Databricks"
+House Robber II,https://leetcode.com/problems/house-robber-ii/,1-D Dynamic Programming,Medium,1,Databricks
+Longest Palindromic Substring,https://leetcode.com/problems/longest-palindromic-substring/,1-D Dynamic Programming,Medium,11,"Goldman Sachs, Bloomberg, Morgan Stanley, Palantir, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Uber"
+Palindromic Substrings,https://leetcode.com/problems/palindromic-substrings/,1-D Dynamic Programming,Medium,2,"Meta, Capital One"
+Decode Ways,https://leetcode.com/problems/decode-ways/,1-D Dynamic Programming,Medium,2,"Goldman Sachs, Morgan Stanley"
+Coin Change,https://leetcode.com/problems/coin-change/,1-D Dynamic Programming,Medium,4,"Goldman Sachs, Bloomberg, Morgan Stanley, Uber"
+Maximum Product Subarray,https://leetcode.com/problems/maximum-product-subarray/,1-D Dynamic Programming,Medium,2,"Bloomberg, Morgan Stanley"
+Word Break,https://leetcode.com/problems/word-break/,1-D Dynamic Programming,Medium,3,"Bloomberg, Apple, Uber"
+Longest Increasing Subsequence,https://leetcode.com/problems/longest-increasing-subsequence/,1-D Dynamic Programming,Medium,3,"Morgan Stanley, NVIDIA, Revolut"
+Partition Equal Subset Sum,https://leetcode.com/problems/partition-equal-subset-sum/,1-D Dynamic Programming,Medium,0,
+Unique Paths,https://leetcode.com/problems/unique-paths/,2-D Dynamic Programming,Medium,2,"Goldman Sachs, Amazon"
+Longest Common Subsequence,https://leetcode.com/problems/longest-common-subsequence/,2-D Dynamic Programming,Medium,2,"Morgan Stanley, Apple"
+Best Time to Buy And Sell Stock With Cooldown,https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/,2-D Dynamic Programming,Medium,1,Apple
+Coin Change II,https://leetcode.com/problems/coin-change-ii/,2-D Dynamic Programming,Medium,1,Morgan Stanley
+Target Sum,https://leetcode.com/problems/target-sum/,2-D Dynamic Programming,Medium,0,
+Interleaving String,https://leetcode.com/problems/interleaving-string/,2-D Dynamic Programming,Medium,0,
+Longest Increasing Path In a Matrix,https://leetcode.com/problems/longest-increasing-path-in-a-matrix/,2-D Dynamic Programming,Hard,0,
+Distinct Subsequences,https://leetcode.com/problems/distinct-subsequences/,2-D Dynamic Programming,Hard,0,
+Edit Distance,https://leetcode.com/problems/edit-distance/,2-D Dynamic Programming,Medium,0,
+Burst Balloons,https://leetcode.com/problems/burst-balloons/,2-D Dynamic Programming,Hard,0,
+Regular Expression Matching,https://leetcode.com/problems/regular-expression-matching/,2-D Dynamic Programming,Hard,1,Apple
+Maximum Subarray,https://leetcode.com/problems/maximum-subarray/,Greedy,Medium,8,"Goldman Sachs, Bloomberg, Morgan Stanley, Microsoft, Google, Amazon, NVIDIA, Apple"
+Jump Game,https://leetcode.com/problems/jump-game/,Greedy,Medium,4,"Morgan Stanley, Microsoft, Google, Amazon"
+Jump Game II,https://leetcode.com/problems/jump-game-ii/,Greedy,Medium,1,Amazon
+Gas Station,https://leetcode.com/problems/gas-station/,Greedy,Medium,3,"Goldman Sachs, Microsoft, Apple"
+Hand of Straights,https://leetcode.com/problems/hand-of-straights/,Greedy,Medium,0,
+Merge Triplets to Form Target Triplet,https://leetcode.com/problems/merge-triplets-to-form-target-triplet/,Greedy,Medium,0,
+Partition Labels,https://leetcode.com/problems/partition-labels/,Greedy,Medium,0,
+Valid Parenthesis String,https://leetcode.com/problems/valid-parenthesis-string/,Greedy,Medium,1,JPMorgan
+Insert Interval,https://leetcode.com/problems/insert-interval/,Intervals,Medium,1,Uber
+Merge Intervals,https://leetcode.com/problems/merge-intervals/,Intervals,Medium,14,"Goldman Sachs, JPMorgan, Bloomberg, Morgan Stanley, Palantir, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Databricks, Stripe, Capital One"
+Non Overlapping Intervals,https://leetcode.com/problems/non-overlapping-intervals/,Intervals,Medium,0,
+Meeting Rooms,https://leetcode.com/problems/meeting-rooms/,Intervals,Easy,1,Apple
+Meeting Rooms II,https://leetcode.com/problems/meeting-rooms-ii/,Intervals,Medium,8,"JPMorgan, Bloomberg, Morgan Stanley, Microsoft, Google, Apple, Two Sigma, Uber"
+Minimum Interval to Include Each Query,https://leetcode.com/problems/minimum-interval-to-include-each-query/,Intervals,Hard,0,
+Rotate Image,https://leetcode.com/problems/rotate-image/,Math & Geometry,Medium,7,"JPMorgan, Citi, Amazon, Meta, NVIDIA, Apple, Capital One"
+Spiral Matrix,https://leetcode.com/problems/spiral-matrix/,Math & Geometry,Medium,11,"Bloomberg, Morgan Stanley, Microsoft, Google, Amazon, Meta, NVIDIA, Apple, Databricks, Capital One, Uber"
+Set Matrix Zeroes,https://leetcode.com/problems/set-matrix-zeroes/,Math & Geometry,Medium,2,"JPMorgan, Meta"
+Happy Number,https://leetcode.com/problems/happy-number/,Math & Geometry,Easy,3,"Microsoft, Google, Apple"
+Plus One,https://leetcode.com/problems/plus-one/,Math & Geometry,Easy,2,"Bloomberg, Google"
+"Pow(x, n)",https://leetcode.com/problems/powx-n/,Math & Geometry,Medium,2,"Bloomberg, Meta"
+Multiply Strings,https://leetcode.com/problems/multiply-strings/,Math & Geometry,Medium,1,Two Sigma
+Detect Squares,https://leetcode.com/problems/detect-squares/,Math & Geometry,Medium,0,
+Single Number,https://leetcode.com/problems/single-number/,Bit Manipulation,Easy,5,"Bloomberg, Palantir, Microsoft, Google, Amazon"
+Number of 1 Bits,https://leetcode.com/problems/number-of-1-bits/,Bit Manipulation,Easy,0,
+Counting Bits,https://leetcode.com/problems/counting-bits/,Bit Manipulation,Easy,0,
+Reverse Bits,https://leetcode.com/problems/reverse-bits/,Bit Manipulation,Easy,1,NVIDIA
+Missing Number,https://leetcode.com/problems/missing-number/,Bit Manipulation,Easy,2,"NVIDIA, Revolut"
+Sum of Two Integers,https://leetcode.com/problems/sum-of-two-integers/,Bit Manipulation,Medium,0,
+Reverse Integer,https://leetcode.com/problems/reverse-integer/,Bit Manipulation,Medium,4,"Bloomberg, Microsoft, Google, Apple"

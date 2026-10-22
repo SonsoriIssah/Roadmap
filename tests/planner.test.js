@@ -8,7 +8,7 @@ import { defaultState, normalise, migrate } from '../public/js/store.js';
 import { readXlsx, parseCSV, decodeEntities } from '../public/js/xlsx.js';
 import {
   detectTable, candidateSheets, rowsToProblems, mergeProblems, orderNew, mapStatus, mapDate, mapPriority,
-  applyOutcome, reviewGap, reviewTask, upcomingReviews, mapStage, dueProblems, problemsToCSV, slugify,
+  applyOutcome, reviewGap, reviewTask, upcomingReviews, mapStage, dueProblems, problemsToCSV, slugify, readiness,
 } from '../public/js/problems.js';
 import { parseChapters, importChapters, videoLink, lessonsToText, parseLessonsText, lessonMinutes, fmtTimestamp } from '../public/js/learn.js';
 import { planDays, historyDay, semesterCourses } from '../public/js/planner.js';
@@ -149,7 +149,11 @@ test("reviews follow your tracker's ladder and gaps", () => {
   q = applyOutcome(q, 'clean', d(q.nextReview));
   assert.deepEqual([q.stage, q.interval], ['mastered', 21]);
   q = applyOutcome(q, 'clean', d(q.nextReview));
-  assert.deepEqual([q.stage, q.interval], ['mastered', 21]); // mastered keeps coming back
+  assert.deepEqual([q.stage, q.interval], ['mastered', 45]); // mastered comes back less often each time
+  q = applyOutcome(q, 'clean', d(q.nextReview));
+  assert.deepEqual([q.stage, q.interval], ['mastered', 90]);
+  q = applyOutcome(q, 'clean', d(q.nextReview));
+  assert.deepEqual([q.stage, q.interval], ['mastered', 90]); // then stays at 90 days
   assert.deepEqual([applyOutcome(q, 'hints', today).stage, applyOutcome(q, 'hints', today).interval], ['hint', 2]);
   const failed = applyOutcome(p, 'failed', today);
   assert.deepEqual([failed.stage, failed.status, failed.nextReview], ['attempted', 'attempted', '2026-10-08']);
@@ -318,7 +322,7 @@ test("ticked items stay on today's list and tomorrow continues from there", () =
   assert.ok(past.items.some((i) => i.type === 'problem'));
 });
 
-test('reviews come first, then new problems fill the slots left; overflow rolls forward', () => {
+test('reviews come first, one slot is kept for a new problem; overflow rolls forward', () => {
   const today = d('2026-10-20'); // test DSA queue allocation formula with capacity for 4 items
   const { s, ctx } = setup((st) => {
     st.settings.daily.normal.maxTech = 5;
@@ -327,10 +331,10 @@ test('reviews come first, then new problems fill the slots left; overflow rolls 
   });
   const [t, tm] = plan(s, ctx, today, today, 2).days;
   const dsa = (day) => day.items.filter((i) => i.type === 'revisit' || i.type === 'problem').map((i) => i.type);
-  assert.deepEqual(dsa(t), ['revisit', 'revisit', 'revisit']);
+  assert.deepEqual(dsa(t), ['revisit', 'revisit', 'problem']); // today's list holds 3: the new problem keeps its slot
   assert.match(t.items.find((i) => i.type === 'revisit').title, /^Retry /);
   assert.match(t.items.find((i) => i.type === 'revisit').meta, /overdue since/);
-  assert.deepEqual(dsa(tm), ['revisit', 'revisit', 'problem', 'problem']);
+  assert.deepEqual(dsa(tm), ['revisit', 'revisit', 'revisit', 'problem']); // the 3 reviews left over from today come first
 });
 
 test('a problem ticked today shows when its review is, and that review appears later', () => {
@@ -386,7 +390,7 @@ test('version-1 saves upgrade without losing data', () => {
     progress: { W1: { status: 'done' } },
   };
   const s = normalise(old);
-  assert.equal(s.version, 4);
+  assert.equal(s.version, 5);
   assert.equal(s.settings.theme, 'dark');
   assert.equal(s.settings.studyStart, undefined);
   assert.ok(s.calendar.some((e) => e.id === 'c-pre'));
@@ -397,6 +401,40 @@ test('version-1 saves upgrade without losing data', () => {
   assert.equal(s.tracks[0].id, 'java');
   assert.equal(s.progress.W1.status, 'done');
   assert.equal(migrate({ version: 2, a: 1 }).a, 1);
+});
+
+test('version-4 saves move the old 30 June target to the July 2027 cycle, but keep a date you chose', () => {
+  assert.equal(migrate({ version: 4, settings: { targetEnd: '2027-06-30' } }).settings.targetEnd, '2027-07-31');
+  assert.equal(migrate({ version: 4, settings: { targetEnd: '2027-05-15' } }).settings.targetEnd, '2027-05-15');
+});
+
+test('Medium readiness counts recent first attempts solved alone within 25 minutes', () => {
+  const problems = [{ id: 'm', difficulty: 'Medium' }, { id: 'e', difficulty: 'Easy' }];
+  const first = (problemId, date, outcome, minutes) => ({ kind: 'first', problemId, date, outcome, minutes });
+  const log = [
+    first('m', '2026-11-01', 'alone', 20), // pass
+    first('m', '2026-11-02', 'alone', 40), // too slow
+    first('m', '2026-11-03', 'hints', 15), // needed hints
+    first('m', '2026-11-04', 'alone', 0), // ticked without a time
+    first('e', '2026-11-05', 'alone', 10), // not a Medium
+    { kind: 'revisit', problemId: 'm', date: '2026-11-06', outcome: 'clean', minutes: 10 }, // reviews don't count
+  ];
+  assert.deepEqual(readiness(log, problems), { attempts: 4, passed: 1, untimed: 1, window: 10, maxMin: 25 });
+  const many = Array.from({ length: 12 }, (_, i) => first('m', `2026-12-${String(i + 10)}`, 'alone', i < 2 ? 50 : 20));
+  assert.equal(readiness(many, problems).passed, 10); // only the latest 10 count, so the two slow early ones drop out
+});
+
+test('a review on a future day books the next step of the ladder after it', () => {
+  const today = d('2026-10-20');
+  const { s, ctx } = setup((st) => {
+    const p = st.problems[0];
+    Object.assign(p, applyOutcome(p, 'alone', today - 3)); // first review (reimplement) due today
+  });
+  const p = s.problems[0];
+  const days = plan(s, ctx, today, today, 30).days;
+  const steps = days.filter((day) => day.items.some((i) => i.key === `revisit:${p.id}`)).map((day) => toISO(day.day));
+  assert.ok(steps.length >= 3, `expected the review ladder to continue, got ${steps.join(', ')}`);
+  assert.equal(steps[0], toISO(today));
 });
 
 // ---------------------------------------------------------------------------

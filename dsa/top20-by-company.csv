@@ -1,0 +1,389 @@
+Company,Rank,Problem,Link,Difficulty,Frequency,In NeetCode 150
+Goldman Sachs,1,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Hard,100,yes
+Goldman Sachs,2,Median of Two Sorted Arrays,https://leetcode.com/problems/median-of-two-sorted-arrays/,Hard,89,yes
+Goldman Sachs,3,Sell Diminishing-Valued Colored Balls,https://leetcode.com/problems/sell-diminishing-valued-colored-balls/,Medium,87.6,no
+Goldman Sachs,4,String Compression,https://leetcode.com/problems/string-compression/,Medium,84.5,no
+Goldman Sachs,5,Longest Palindromic Subsequence,https://leetcode.com/problems/longest-palindromic-subsequence/,Medium,81.1,no
+Goldman Sachs,6,Minimum Path Sum,https://leetcode.com/problems/minimum-path-sum/,Medium,78.9,no
+Goldman Sachs,7,Container With Most Water,https://leetcode.com/problems/container-with-most-water/,Medium,75.5,yes
+Goldman Sachs,8,High Five,https://leetcode.com/problems/high-five/,Easy,75.5,no
+Goldman Sachs,9,Count Paths That Can Form a Palindrome in a Tree,https://leetcode.com/problems/count-paths-that-can-form-a-palindrome-in-a-tree/,Hard,68.3,no
+Goldman Sachs,10,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,66.5,yes
+Goldman Sachs,11,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,66.5,yes
+Goldman Sachs,12,Fraction to Recurring Decimal,https://leetcode.com/problems/fraction-to-recurring-decimal/,Medium,66.5,no
+Goldman Sachs,13,First Unique Character in a String,https://leetcode.com/problems/first-unique-character-in-a-string/,Easy,66.5,no
+Goldman Sachs,14,Remove All Adjacent Duplicates in String II,https://leetcode.com/problems/remove-all-adjacent-duplicates-in-string-ii/,Medium,66.5,no
+Goldman Sachs,15,Minimum Initial Energy to Finish Tasks,https://leetcode.com/problems/minimum-initial-energy-to-finish-tasks/,Hard,65,no
+Goldman Sachs,16,Domino and Tromino Tiling,https://leetcode.com/problems/domino-and-tromino-tiling/,Medium,64.4,no
+Goldman Sachs,17,Make Lexicographically Smallest Array by Swapping Elements,https://leetcode.com/problems/make-lexicographically-smallest-array-by-swapping-elements/,Medium,64.4,no
+Goldman Sachs,18,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,62.5,yes
+Goldman Sachs,19,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,62.5,yes
+Goldman Sachs,20,Find the Winner of the Circular Game,https://leetcode.com/problems/find-the-winner-of-the-circular-game/,Medium,62.5,no
+JPMorgan,1,Two Sum,https://leetcode.com/problems/two-sum/,Easy,100,yes
+JPMorgan,2,Rotate Image,https://leetcode.com/problems/rotate-image/,Medium,100,yes
+JPMorgan,3,Group Anagrams,https://leetcode.com/problems/group-anagrams/,Medium,100,yes
+JPMorgan,4,Meeting Rooms II,https://leetcode.com/problems/meeting-rooms-ii/,Medium,100,yes
+JPMorgan,5,Count Binary Substrings,https://leetcode.com/problems/count-binary-substrings/,Easy,100,no
+JPMorgan,6,Construct String With Repeat Limit,https://leetcode.com/problems/construct-string-with-repeat-limit/,Medium,95.9,no
+JPMorgan,7,Divide Players Into Teams of Equal Skill,https://leetcode.com/problems/divide-players-into-teams-of-equal-skill/,Medium,95.9,no
+JPMorgan,8,Sliding Window Maximum,https://leetcode.com/problems/sliding-window-maximum/,Hard,91.1,yes
+JPMorgan,9,Maximum Product of Two Elements in an Array,https://leetcode.com/problems/maximum-product-of-two-elements-in-an-array/,Easy,87.5,no
+JPMorgan,10,Minimum Processing Time,https://leetcode.com/problems/minimum-processing-time/,Medium,80.2,no
+JPMorgan,11,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,77.7,yes
+JPMorgan,12,Subarray Sum Equals K,https://leetcode.com/problems/subarray-sum-equals-k/,Medium,77.7,no
+JPMorgan,13,Get Equal Substrings Within Budget,https://leetcode.com/problems/get-equal-substrings-within-budget/,Medium,77.7,no
+JPMorgan,14,Maximum Units on a Truck,https://leetcode.com/problems/maximum-units-on-a-truck/,Easy,77.7,no
+JPMorgan,15,Find Resultant Array After Removing Anagrams,https://leetcode.com/problems/find-resultant-array-after-removing-anagrams/,Easy,75,no
+JPMorgan,16,Rearrange Array to Maximize Prefix Score,https://leetcode.com/problems/rearrange-array-to-maximize-prefix-score/,Medium,75,no
+JPMorgan,17,Maximum Sum of Distinct Subarrays With Length K,https://leetcode.com/problems/maximum-sum-of-distinct-subarrays-with-length-k/,Medium,67.4,no
+JPMorgan,18,Minimum Number of Changes to Make Binary String Beautiful,https://leetcode.com/problems/minimum-number-of-changes-to-make-binary-string-beautiful/,Medium,67.4,no
+JPMorgan,19,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Hard,67,yes
+JPMorgan,20,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,67,yes
+Bloomberg,1,Insert Delete GetRandom O(1),https://leetcode.com/problems/insert-delete-getrandom-o1/,Medium,100,no
+Bloomberg,2,Two Sum,https://leetcode.com/problems/two-sum/,Easy,95.7,yes
+Bloomberg,3,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,95.7,yes
+Bloomberg,4,Word Search,https://leetcode.com/problems/word-search/,Medium,90.4,yes
+Bloomberg,5,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Easy,89,yes
+Bloomberg,6,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,89,yes
+Bloomberg,7,Decode String,https://leetcode.com/problems/decode-string/,Medium,89,no
+Bloomberg,8,Flatten a Multilevel Doubly Linked List,https://leetcode.com/problems/flatten-a-multilevel-doubly-linked-list/,Medium,89,no
+Bloomberg,9,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,86,yes
+Bloomberg,10,Invalid Transactions,https://leetcode.com/problems/invalid-transactions/,Medium,85.2,no
+Bloomberg,11,Design Underground System,https://leetcode.com/problems/design-underground-system/,Medium,84.4,no
+Bloomberg,12,Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Medium,80.7,yes
+Bloomberg,13,Median of Two Sorted Arrays,https://leetcode.com/problems/median-of-two-sorted-arrays/,Hard,80.7,yes
+Bloomberg,14,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,79.7,yes
+Bloomberg,15,Meeting Rooms II,https://leetcode.com/problems/meeting-rooms-ii/,Medium,78.6,yes
+Bloomberg,16,Number of Ships in a Rectangle,https://leetcode.com/problems/number-of-ships-in-a-rectangle/,Hard,77.4,no
+Bloomberg,17,Word Break II,https://leetcode.com/problems/word-break-ii/,Hard,76.3,no
+Bloomberg,18,Container With Most Water,https://leetcode.com/problems/container-with-most-water/,Medium,75,yes
+Bloomberg,19,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy,75,no
+Bloomberg,20,3Sum,https://leetcode.com/problems/3sum/,Medium,75,yes
+Bank of America,1,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Easy,100,yes
+Bank of America,2,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,92.6,yes
+Bank of America,3,Valid Palindrome,https://leetcode.com/problems/valid-palindrome/,Easy,87.5,yes
+Bank of America,4,Pascal's Triangle,https://leetcode.com/problems/pascals-triangle/,Easy,82,no
+Morgan Stanley,1,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,100,yes
+Morgan Stanley,2,Best Team With No Conflicts,https://leetcode.com/problems/best-team-with-no-conflicts/,Medium,93,no
+Morgan Stanley,3,Minimum Cost to Move Chips to The Same Position,https://leetcode.com/problems/minimum-cost-to-move-chips-to-the-same-position/,Easy,90.9,no
+Morgan Stanley,4,Find The Original Array of Prefix Xor,https://leetcode.com/problems/find-the-original-array-of-prefix-xor/,Medium,90.9,no
+Morgan Stanley,5,Find the Longest Valid Obstacle Course at Each Position,https://leetcode.com/problems/find-the-longest-valid-obstacle-course-at-each-position/,Hard,88.6,no
+Morgan Stanley,6,Minimum Number of Lines to Cover Points,https://leetcode.com/problems/minimum-number-of-lines-to-cover-points/,Medium,88.6,no
+Morgan Stanley,7,Find Subarrays With Equal Sum,https://leetcode.com/problems/find-subarrays-with-equal-sum/,Easy,88.6,no
+Morgan Stanley,8,The Employee That Worked on the Longest Task,https://leetcode.com/problems/the-employee-that-worked-on-the-longest-task/,Easy,88.6,no
+Morgan Stanley,9,Two Sum,https://leetcode.com/problems/two-sum/,Easy,83.2,yes
+Morgan Stanley,10,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,76.3,yes
+Morgan Stanley,11,Delete and Earn,https://leetcode.com/problems/delete-and-earn/,Medium,76.3,no
+Morgan Stanley,12,Count Subarrays With Fixed Bounds,https://leetcode.com/problems/count-subarrays-with-fixed-bounds/,Hard,76.3,no
+Morgan Stanley,13,Palindrome Number,https://leetcode.com/problems/palindrome-number/,Easy,66.5,no
+Morgan Stanley,14,Sort Colors,https://leetcode.com/problems/sort-colors/,Medium,66.5,no
+Morgan Stanley,15,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,66.5,yes
+Morgan Stanley,16,First Unique Character in a String,https://leetcode.com/problems/first-unique-character-in-a-string/,Easy,66.5,no
+Morgan Stanley,17,First Missing Positive,https://leetcode.com/problems/first-missing-positive/,Hard,62.5,no
+Morgan Stanley,18,Minimum Number of Refueling Stops,https://leetcode.com/problems/minimum-number-of-refueling-stops/,Hard,62.5,no
+Morgan Stanley,19,3Sum,https://leetcode.com/problems/3sum/,Medium,59.6,yes
+Morgan Stanley,20,Remove Nth Node From End of List,https://leetcode.com/problems/remove-nth-node-from-end-of-list/,Medium,59.6,yes
+Citi,1,Two Sum,https://leetcode.com/problems/two-sum/,Easy,100,yes
+Citi,2,Find Pivot Index,https://leetcode.com/problems/find-pivot-index/,Easy,100,no
+Citi,3,Number of Visible People in a Queue,https://leetcode.com/problems/number-of-visible-people-in-a-queue/,Hard,100,no
+Citi,4,Rotate Image,https://leetcode.com/problems/rotate-image/,Medium,77.6,yes
+Citi,5,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,77.6,yes
+Citi,6,Evaluate Reverse Polish Notation,https://leetcode.com/problems/evaluate-reverse-polish-notation/,Medium,77.6,yes
+Citi,7,Minimum Size Subarray Sum,https://leetcode.com/problems/minimum-size-subarray-sum/,Medium,77.6,no
+Citi,8,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,77.2,yes
+Palantir,1,Find Beautiful Indices in the Given Array I,https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-i/,Medium,100,no
+Palantir,2,Find Beautiful Indices in the Given Array II,https://leetcode.com/problems/find-beautiful-indices-in-the-given-array-ii/,Hard,79.1,no
+Palantir,3,Minimum Time Difference,https://leetcode.com/problems/minimum-time-difference/,Medium,72.2,no
+Palantir,4,Contains Duplicate II,https://leetcode.com/problems/contains-duplicate-ii/,Easy,69.1,no
+Palantir,5,Single Number,https://leetcode.com/problems/single-number/,Easy,67.4,yes
+Palantir,6,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,67.4,yes
+Palantir,7,Contains Duplicate,https://leetcode.com/problems/contains-duplicate/,Easy,67.4,yes
+Palantir,8,Contains Duplicate III,https://leetcode.com/problems/contains-duplicate-iii/,Hard,67.4,no
+Palantir,9,Range Sum Query - Immutable,https://leetcode.com/problems/range-sum-query-immutable/,Easy,67.4,no
+Palantir,10,Maximum Size Subarray Sum Equals k,https://leetcode.com/problems/maximum-size-subarray-sum-equals-k/,Medium,67.4,no
+Palantir,11,Check If It Is a Straight Line,https://leetcode.com/problems/check-if-it-is-a-straight-line/,Easy,67.4,no
+Palantir,12,Selling Pieces of Wood,https://leetcode.com/problems/selling-pieces-of-wood/,Hard,67.4,no
+Palantir,13,Minimum Cost Path with Edge Reversals,https://leetcode.com/problems/minimum-cost-path-with-edge-reversals/,Medium,63.3,no
+Palantir,14,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/,Hard,58.1,yes
+Palantir,15,Smallest String With Swaps,https://leetcode.com/problems/smallest-string-with-swaps/,Medium,58.1,no
+Palantir,16,Shortest Word Distance II,https://leetcode.com/problems/shortest-word-distance-ii/,Medium,54.8,no
+Palantir,17,Shortest Word Distance III,https://leetcode.com/problems/shortest-word-distance-iii/,Medium,54.8,no
+Palantir,18,Integer to English Words,https://leetcode.com/problems/integer-to-english-words/,Hard,54.8,no
+Palantir,19,String Compression,https://leetcode.com/problems/string-compression/,Medium,54.8,no
+Palantir,20,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,50.8,yes
+Microsoft,1,Two Sum,https://leetcode.com/problems/two-sum/,Easy,100,yes
+Microsoft,2,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,81.7,yes
+Microsoft,3,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,80.5,yes
+Microsoft,4,Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Medium,79.8,yes
+Microsoft,5,Longest Palindromic Substring,https://leetcode.com/problems/longest-palindromic-substring/,Medium,79.8,yes
+Microsoft,6,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Hard,76.2,yes
+Microsoft,7,Maximum Subarray,https://leetcode.com/problems/maximum-subarray/,Medium,76.2,yes
+Microsoft,8,Subarray Sum Equals K,https://leetcode.com/problems/subarray-sum-equals-k/,Medium,73.7,no
+Microsoft,9,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy,71.9,no
+Microsoft,10,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,71.9,yes
+Microsoft,11,Container With Most Water,https://leetcode.com/problems/container-with-most-water/,Medium,70.9,yes
+Microsoft,12,Product of Array Except Self,https://leetcode.com/problems/product-of-array-except-self/,Medium,68.8,yes
+Microsoft,13,Remove Duplicates from Sorted Array,https://leetcode.com/problems/remove-duplicates-from-sorted-array/,Easy,67.6,no
+Microsoft,14,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,67.6,yes
+Microsoft,15,Minimum Edge Reversals So Every Node Is Reachable,https://leetcode.com/problems/minimum-edge-reversals-so-every-node-is-reachable/,Hard,67.6,no
+Microsoft,16,Palindrome Number,https://leetcode.com/problems/palindrome-number/,Easy,66.4,no
+Microsoft,17,Group Anagrams,https://leetcode.com/problems/group-anagrams/,Medium,66.4,yes
+Microsoft,18,Climbing Stairs,https://leetcode.com/problems/climbing-stairs/,Easy,66.4,yes
+Microsoft,19,Design Authentication Manager,https://leetcode.com/problems/design-authentication-manager/,Medium,66.4,no
+Microsoft,20,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,65.1,yes
+Google,1,Two Sum,https://leetcode.com/problems/two-sum/,Easy,100,yes
+Google,2,Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Medium,75.2,yes
+Google,3,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy,73,no
+Google,4,Median of Two Sorted Arrays,https://leetcode.com/problems/median-of-two-sorted-arrays/,Hard,69.3,yes
+Google,5,Palindrome Number,https://leetcode.com/problems/palindrome-number/,Easy,68.8,no
+Google,6,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,68.8,yes
+Google,7,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,68.2,yes
+Google,8,Container With Most Water,https://leetcode.com/problems/container-with-most-water/,Medium,68.2,yes
+Google,9,Concatenation of Array,https://leetcode.com/problems/concatenation-of-array/,Easy,64.9,no
+Google,10,Longest Palindromic Substring,https://leetcode.com/problems/longest-palindromic-substring/,Medium,64.2,yes
+Google,11,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Hard,63.5,yes
+Google,12,Reverse Integer,https://leetcode.com/problems/reverse-integer/,Medium,62.8,yes
+Google,13,Roman to Integer,https://leetcode.com/problems/roman-to-integer/,Easy,62.8,no
+Google,14,3Sum,https://leetcode.com/problems/3sum/,Medium,62.8,yes
+Google,15,Subarray Sum Equals K,https://leetcode.com/problems/subarray-sum-equals-k/,Medium,62.8,no
+Google,16,Longest Consecutive Sequence,https://leetcode.com/problems/longest-consecutive-sequence/,Medium,62.4,yes
+Google,17,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Easy,62,yes
+Google,18,Remove Duplicates from Sorted Array,https://leetcode.com/problems/remove-duplicates-from-sorted-array/,Easy,61.6,no
+Google,19,Combine Two Tables,https://leetcode.com/problems/combine-two-tables/,Easy,61.2,no
+Google,20,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,60.8,yes
+Amazon,1,Two Sum,https://leetcode.com/problems/two-sum/,Easy,100,yes
+Amazon,2,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,82.8,yes
+Amazon,3,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,82.2,yes
+Amazon,4,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Hard,81.5,yes
+Amazon,5,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,77,yes
+Amazon,6,Container With Most Water,https://leetcode.com/problems/container-with-most-water/,Medium,75.2,yes
+Amazon,7,Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Medium,74.3,yes
+Amazon,8,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,74.3,yes
+Amazon,9,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy,72.2,no
+Amazon,10,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/,Hard,72.2,yes
+Amazon,11,Median of Two Sorted Arrays,https://leetcode.com/problems/median-of-two-sorted-arrays/,Hard,71.1,yes
+Amazon,12,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,71.1,yes
+Amazon,13,3Sum,https://leetcode.com/problems/3sum/,Medium,69.9,yes
+Amazon,14,Koko Eating Bananas,https://leetcode.com/problems/koko-eating-bananas/,Medium,69.9,yes
+Amazon,15,Group Anagrams,https://leetcode.com/problems/group-anagrams/,Medium,69.3,yes
+Amazon,16,Subarray Sum Equals K,https://leetcode.com/problems/subarray-sum-equals-k/,Medium,69.3,no
+Amazon,17,Longest Palindromic Substring,https://leetcode.com/problems/longest-palindromic-substring/,Medium,68,yes
+Amazon,18,Longest Consecutive Sequence,https://leetcode.com/problems/longest-consecutive-sequence/,Medium,68,yes
+Amazon,19,Generate Parentheses,https://leetcode.com/problems/generate-parentheses/,Medium,67.4,yes
+Amazon,20,Letter Combinations of a Phone Number,https://leetcode.com/problems/letter-combinations-of-a-phone-number/,Medium,65.9,yes
+Meta,1,Valid Word Abbreviation,https://leetcode.com/problems/valid-word-abbreviation/,Easy,100,no
+Meta,2,Two Sum,https://leetcode.com/problems/two-sum/,Easy,96.7,yes
+Meta,3,Minimum Remove to Make Valid Parentheses,https://leetcode.com/problems/minimum-remove-to-make-valid-parentheses/,Medium,95.5,no
+Meta,4,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,93.3,yes
+Meta,5,Valid Palindrome II,https://leetcode.com/problems/valid-palindrome-ii/,Easy,90.9,no
+Meta,6,Kth Largest Element in an Array,https://leetcode.com/problems/kth-largest-element-in-an-array/,Medium,86.3,yes
+Meta,7,Subarray Sum Equals K,https://leetcode.com/problems/subarray-sum-equals-k/,Medium,85.7,no
+Meta,8,Diameter of Binary Tree,https://leetcode.com/problems/diameter-of-binary-tree/,Easy,85,yes
+Meta,9,Binary Tree Right Side View,https://leetcode.com/problems/binary-tree-right-side-view/,Medium,84.4,yes
+Meta,10,Binary Tree Vertical Order Traversal,https://leetcode.com/problems/binary-tree-vertical-order-traversal/,Medium,82.2,no
+Meta,11,Nested List Weight Sum,https://leetcode.com/problems/nested-list-weight-sum/,Medium,81.4,no
+Meta,12,Lowest Common Ancestor of a Binary Tree,https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree/,Medium,80.7,no
+Meta,13,Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Medium,79,yes
+Meta,14,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Easy,78.1,yes
+Meta,15,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,77.2,yes
+Meta,16,Find Peak Element,https://leetcode.com/problems/find-peak-element/,Medium,76.2,no
+Meta,17,Valid Palindrome,https://leetcode.com/problems/valid-palindrome/,Easy,75.2,yes
+Meta,18,Top K Frequent Elements,https://leetcode.com/problems/top-k-frequent-elements/,Medium,75.2,yes
+Meta,19,Making A Large Island,https://leetcode.com/problems/making-a-large-island/,Hard,75.2,no
+Meta,20,Median of Two Sorted Arrays,https://leetcode.com/problems/median-of-two-sorted-arrays/,Hard,74.2,yes
+NVIDIA,1,Longest Substring Without Repeating Characters,https://leetcode.com/problems/longest-substring-without-repeating-characters/,Medium,100,yes
+NVIDIA,2,Search in Rotated Sorted Array,https://leetcode.com/problems/search-in-rotated-sorted-array/,Medium,100,yes
+NVIDIA,3,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,100,yes
+NVIDIA,4,Maximize Greatness of an Array,https://leetcode.com/problems/maximize-greatness-of-an-array/,Medium,100,no
+NVIDIA,5,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Easy,95.7,yes
+NVIDIA,6,Special Binary String,https://leetcode.com/problems/special-binary-string/,Hard,90.7,no
+NVIDIA,7,Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Medium,87.5,yes
+NVIDIA,8,Rotate List,https://leetcode.com/problems/rotate-list/,Medium,87.5,no
+NVIDIA,9,Koko Eating Bananas,https://leetcode.com/problems/koko-eating-bananas/,Medium,85,yes
+NVIDIA,10,Two Sum,https://leetcode.com/problems/two-sum/,Easy,84.5,yes
+NVIDIA,11,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Hard,84.5,yes
+NVIDIA,12,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy,84.5,yes
+NVIDIA,13,Break a Palindrome,https://leetcode.com/problems/break-a-palindrome/,Medium,78.8,no
+NVIDIA,14,3Sum,https://leetcode.com/problems/3sum/,Medium,76.6,yes
+NVIDIA,15,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/,Hard,76.6,yes
+NVIDIA,16,Sort Colors,https://leetcode.com/problems/sort-colors/,Medium,76.6,no
+NVIDIA,17,Merge Sorted Array,https://leetcode.com/problems/merge-sorted-array/,Easy,76.6,no
+NVIDIA,18,House Robber,https://leetcode.com/problems/house-robber/,Medium,76.6,yes
+NVIDIA,19,4Sum,https://leetcode.com/problems/4sum/,Medium,75,no
+NVIDIA,20,Group Anagrams,https://leetcode.com/problems/group-anagrams/,Medium,75,yes
+Apple,1,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,100,yes
+Apple,2,Minimum Cost to Hire K Workers,https://leetcode.com/problems/minimum-cost-to-hire-k-workers/,Hard,100,no
+Apple,3,Design Hit Counter,https://leetcode.com/problems/design-hit-counter/,Medium,84.5,no
+Apple,4,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,82.8,yes
+Apple,5,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,81,yes
+Apple,6,Reverse Linked List,https://leetcode.com/problems/reverse-linked-list/,Easy,81,yes
+Apple,7,Course Schedule II,https://leetcode.com/problems/course-schedule-ii/,Medium,79.1,yes
+Apple,8,Two Sum,https://leetcode.com/problems/two-sum/,Easy,76.9,yes
+Apple,9,Maximum Subarray,https://leetcode.com/problems/maximum-subarray/,Medium,76.9,yes
+Apple,10,Meeting Rooms II,https://leetcode.com/problems/meeting-rooms-ii/,Medium,76.9,yes
+Apple,11,Merge Sorted Array,https://leetcode.com/problems/merge-sorted-array/,Easy,75,no
+Apple,12,Word Break,https://leetcode.com/problems/word-break/,Medium,75,yes
+Apple,13,Find Servers That Handled Most Number of Requests,https://leetcode.com/problems/find-servers-that-handled-most-number-of-requests/,Hard,75,no
+Apple,14,Calculate Score After Performing Instructions,https://leetcode.com/problems/calculate-score-after-performing-instructions/,Medium,75,no
+Apple,15,Subarray Product Less Than K,https://leetcode.com/problems/subarray-product-less-than-k/,Medium,71.9,no
+Apple,16,Last Stone Weight II,https://leetcode.com/problems/last-stone-weight-ii/,Medium,69.3,no
+Apple,17,Snapshot Array,https://leetcode.com/problems/snapshot-array/,Medium,68.9,no
+Apple,18,Reverse Integer,https://leetcode.com/problems/reverse-integer/,Medium,65.5,yes
+Apple,19,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/,Hard,65.5,yes
+Apple,20,Find First and Last Position of Element in Sorted Array,https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/,Medium,65.5,no
+Databricks,1,Design Hit Counter,https://leetcode.com/problems/design-hit-counter/,Medium,100,no
+Databricks,2,IP to CIDR,https://leetcode.com/problems/ip-to-cidr/,Medium,98.4,no
+Databricks,3,Design Tic-Tac-Toe,https://leetcode.com/problems/design-tic-tac-toe/,Medium,94.4,no
+Databricks,4,House Robber,https://leetcode.com/problems/house-robber/,Medium,87,yes
+Databricks,5,Time Based Key-Value Store,https://leetcode.com/problems/time-based-key-value-store/,Medium,83.7,yes
+Databricks,6,Step-By-Step Directions From a Binary Tree Node to Another,https://leetcode.com/problems/step-by-step-directions-from-a-binary-tree-node-to-another/,Medium,83.7,no
+Databricks,7,Find All Anagrams in a String,https://leetcode.com/problems/find-all-anagrams-in-a-string/,Medium,82.9,no
+Databricks,8,House Robber II,https://leetcode.com/problems/house-robber-ii/,Medium,81.4,yes
+Databricks,9,Closest Leaf in a Binary Tree,https://leetcode.com/problems/closest-leaf-in-a-binary-tree/,Medium,65.7,no
+Databricks,10,Snapshot Array,https://leetcode.com/problems/snapshot-array/,Medium,65.7,no
+Databricks,11,Longest Palindrome by Concatenating Two Letter Words,https://leetcode.com/problems/longest-palindrome-by-concatenating-two-letter-words/,Medium,65.7,no
+Databricks,12,RLE Iterator,https://leetcode.com/problems/rle-iterator/,Medium,63.8,no
+Databricks,13,Smallest Range Covering Elements from K Lists,https://leetcode.com/problems/smallest-range-covering-elements-from-k-lists/,Hard,62.5,no
+Databricks,14,Minimum Absolute Difference Between Elements With Constraint,https://leetcode.com/problems/minimum-absolute-difference-between-elements-with-constraint/,Medium,62.5,no
+Databricks,15,Number of Recent Calls,https://leetcode.com/problems/number-of-recent-calls/,Easy,61.6,no
+Databricks,16,Shortest Path in a Grid with Obstacles Elimination,https://leetcode.com/problems/shortest-path-in-a-grid-with-obstacles-elimination/,Hard,61.6,no
+Databricks,17,Text Justification,https://leetcode.com/problems/text-justification/,Hard,56.2,no
+Databricks,18,Split Message Based on Limit,https://leetcode.com/problems/split-message-based-on-limit/,Hard,56.2,no
+Databricks,19,Permutation in String,https://leetcode.com/problems/permutation-in-string/,Medium,52.7,yes
+Databricks,20,Unique Paths III,https://leetcode.com/problems/unique-paths-iii/,Hard,52.7,no
+Stripe,1,Minimum Penalty for a Shop,https://leetcode.com/problems/minimum-penalty-for-a-shop/,Medium,100,no
+Stripe,2,Evaluate Division,https://leetcode.com/problems/evaluate-division/,Medium,85.4,no
+Stripe,3,Calculate Amount Paid in Taxes,https://leetcode.com/problems/calculate-amount-paid-in-taxes/,Easy,85.4,no
+Stripe,4,Brace Expansion,https://leetcode.com/problems/brace-expansion/,Medium,79.4,no
+Stripe,5,Invalid Transactions,https://leetcode.com/problems/invalid-transactions/,Medium,79.4,no
+Stripe,6,Cheapest Flights Within K Stops,https://leetcode.com/problems/cheapest-flights-within-k-stops/,Medium,75.5,yes
+Stripe,7,Remove Covered Intervals,https://leetcode.com/problems/remove-covered-intervals/,Medium,62.6,no
+Stripe,8,Merge Intervals,https://leetcode.com/problems/merge-intervals/,Medium,58.8,yes
+Stripe,9,One Edit Distance,https://leetcode.com/problems/one-edit-distance/,Medium,56.3,no
+Stripe,10,Alert Using Same Key-Card Three or More Times in a One Hour Period,https://leetcode.com/problems/alert-using-same-key-card-three-or-more-times-in-a-one-hour-period/,Medium,56.3,no
+Stripe,11,Simple Bank System,https://leetcode.com/problems/simple-bank-system/,Medium,56.3,no
+Stripe,12,Parallel Courses III,https://leetcode.com/problems/parallel-courses-iii/,Hard,56.3,no
+Stripe,13,Number of Black Blocks,https://leetcode.com/problems/number-of-black-blocks/,Medium,56.3,no
+Stripe,14,Optimal Account Balancing,https://leetcode.com/problems/optimal-account-balancing/,Hard,50,no
+Two Sigma,1,Random Pick with Weight,https://leetcode.com/problems/random-pick-with-weight/,Medium,100,no
+Two Sigma,2,Minimum Operations to Reduce an Integer to 0,https://leetcode.com/problems/minimum-operations-to-reduce-an-integer-to-0/,Medium,100,no
+Two Sigma,3,Number of Provinces,https://leetcode.com/problems/number-of-provinces/,Medium,94.4,no
+Two Sigma,4,Maximum Subarray Sum with One Deletion,https://leetcode.com/problems/maximum-subarray-sum-with-one-deletion/,Medium,94.4,no
+Two Sigma,5,Wildcard Matching,https://leetcode.com/problems/wildcard-matching/,Hard,92.2,no
+Two Sigma,6,Game of Life,https://leetcode.com/problems/game-of-life/,Medium,92.2,no
+Two Sigma,7,Power of Four,https://leetcode.com/problems/power-of-four/,Easy,92.2,no
+Two Sigma,8,Intersection of Two Arrays,https://leetcode.com/problems/intersection-of-two-arrays/,Easy,92.2,no
+Two Sigma,9,Maximum Sum Circular Subarray,https://leetcode.com/problems/maximum-sum-circular-subarray/,Medium,92.2,no
+Two Sigma,10,Longest String Chain,https://leetcode.com/problems/longest-string-chain/,Medium,92.2,no
+Two Sigma,11,Multiply Strings,https://leetcode.com/problems/multiply-strings/,Medium,87.1,yes
+Two Sigma,12,Word Search II,https://leetcode.com/problems/word-search-ii/,Hard,80.4,yes
+Two Sigma,13,Parallel Courses III,https://leetcode.com/problems/parallel-courses-iii/,Hard,80.4,no
+Two Sigma,14,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Easy,64.5,yes
+Two Sigma,15,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/,Hard,64.5,yes
+Two Sigma,16,Minimum Space Wasted From Packaging,https://leetcode.com/problems/minimum-space-wasted-from-packaging/,Hard,64.5,no
+Two Sigma,17,Design Memory Allocator,https://leetcode.com/problems/design-memory-allocator/,Medium,64.5,no
+Two Sigma,18,Design HashMap,https://leetcode.com/problems/design-hashmap/,Easy,62.5,no
+Two Sigma,19,Number of Orders in the Backlog,https://leetcode.com/problems/number-of-orders-in-the-backlog/,Medium,57.7,no
+Two Sigma,20,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,55.2,yes
+Jane Street,1,Walking Robot Simulation,https://leetcode.com/problems/walking-robot-simulation/,Medium,100,no
+Jane Street,2,Count Common Words With One Occurrence,https://leetcode.com/problems/count-common-words-with-one-occurrence/,Easy,100,no
+Jane Street,3,Minimum Time to Make Array Sum At Most x,https://leetcode.com/problems/minimum-time-to-make-array-sum-at-most-x/,Hard,98,no
+Jane Street,4,Design a Text Editor,https://leetcode.com/problems/design-a-text-editor/,Hard,74.8,no
+Jane Street,5,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,68.2,yes
+Jane Street,6,Teemo Attacking,https://leetcode.com/problems/teemo-attacking/,Easy,68.2,no
+Jane Street,7,Add Two Integers,https://leetcode.com/problems/add-two-integers/,Easy,68.2,no
+Jane Street,8,Trapping Rain Water,https://leetcode.com/problems/trapping-rain-water/,Hard,62.5,yes
+Jane Street,9,Evaluate Division,https://leetcode.com/problems/evaluate-division/,Medium,62.5,no
+Jane Street,10,Two Sum,https://leetcode.com/problems/two-sum/,Easy,58.9,yes
+Jane Street,11,Add Two Numbers,https://leetcode.com/problems/add-two-numbers/,Medium,58.9,yes
+Jane Street,12,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy,58.9,no
+Jane Street,13,Valid Parentheses,https://leetcode.com/problems/valid-parentheses/,Easy,58.9,yes
+Jane Street,14,Add Strings,https://leetcode.com/problems/add-strings/,Easy,58.9,no
+Jane Street,15,Stream of Characters,https://leetcode.com/problems/stream-of-characters/,Hard,58.9,no
+Jane Street,16,Number of Orders in the Backlog,https://leetcode.com/problems/number-of-orders-in-the-backlog/,Medium,58.9,no
+Capital One,1,Text Justification,https://leetcode.com/problems/text-justification/,Hard,100,no
+Capital One,2,Restore the Array From Adjacent Pairs,https://leetcode.com/problems/restore-the-array-from-adjacent-pairs/,Medium,100,no
+Capital One,3,Simple Bank System,https://leetcode.com/problems/simple-bank-system/,Medium,91.8,no
+Capital One,4,Number of Adjacent Elements With the Same Color,https://leetcode.com/problems/number-of-adjacent-elements-with-the-same-color/,Medium,91.8,no
+Capital One,5,Candy Crush,https://leetcode.com/problems/candy-crush/,Medium,89.1,no
+Capital One,6,Minimum Operations to Write the Letter Y on a Grid,https://leetcode.com/problems/minimum-operations-to-write-the-letter-y-on-a-grid/,Medium,87.5,no
+Capital One,7,Block Placement Queries,https://leetcode.com/problems/block-placement-queries/,Hard,87.5,no
+Capital One,8,Design Memory Allocator,https://leetcode.com/problems/design-memory-allocator/,Medium,86.1,no
+Capital One,9,Find the Length of the Longest Common Prefix,https://leetcode.com/problems/find-the-length-of-the-longest-common-prefix/,Medium,82.7,no
+Capital One,10,Rotating the Box,https://leetcode.com/problems/rotating-the-box/,Medium,75,no
+Capital One,11,Count Operations to Obtain Zero,https://leetcode.com/problems/count-operations-to-obtain-zero/,Easy,75,no
+Capital One,12,Number of Black Blocks,https://leetcode.com/problems/number-of-black-blocks/,Medium,75,no
+Capital One,13,Count Prefix and Suffix Pairs II,https://leetcode.com/problems/count-prefix-and-suffix-pairs-ii/,Hard,75,no
+Capital One,14,Count Positions on Street With Required Brightness,https://leetcode.com/problems/count-positions-on-street-with-required-brightness/,Medium,74,no
+Capital One,15,Alternating Groups II,https://leetcode.com/problems/alternating-groups-ii/,Medium,67.7,no
+Capital One,16,Binary Tree Paths,https://leetcode.com/problems/binary-tree-paths/,Easy,67.3,no
+Capital One,17,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,67.1,yes
+Capital One,18,Minimum Absolute Difference Between Elements With Constraint,https://leetcode.com/problems/minimum-absolute-difference-between-elements-with-constraint/,Medium,67.1,no
+Capital One,19,Distribute Elements Into Two Arrays II,https://leetcode.com/problems/distribute-elements-into-two-arrays-ii/,Hard,67.1,no
+Capital One,20,Simplify Path,https://leetcode.com/problems/simplify-path/,Medium,62.5,no
+Uber,1,Product of Array Except Self,https://leetcode.com/problems/product-of-array-except-self/,Medium,100,yes
+Uber,2,Count Paths That Can Form a Palindrome in a Tree,https://leetcode.com/problems/count-paths-that-can-form-a-palindrome-in-a-tree/,Hard,100,no
+Uber,3,Alien Dictionary,https://leetcode.com/problems/alien-dictionary/,Hard,97.1,yes
+Uber,4,Minimum Edge Reversals So Every Node Is Reachable,https://leetcode.com/problems/minimum-edge-reversals-so-every-node-is-reachable/,Hard,97.1,no
+Uber,5,Number of Islands II,https://leetcode.com/problems/number-of-islands-ii/,Hard,94.9,no
+Uber,6,First Unique Number,https://leetcode.com/problems/first-unique-number/,Medium,94.9,no
+Uber,7,Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit,https://leetcode.com/problems/longest-continuous-subarray-with-absolute-diff-less-than-or-equal-to-limit/,Medium,92.4,no
+Uber,8,Construct Quad Tree,https://leetcode.com/problems/construct-quad-tree/,Medium,89.7,no
+Uber,9,Bus Routes,https://leetcode.com/problems/bus-routes/,Hard,89.7,no
+Uber,10,Rotating the Box,https://leetcode.com/problems/rotating-the-box/,Medium,87.5,no
+Uber,11,Block Placement Queries,https://leetcode.com/problems/block-placement-queries/,Hard,87.5,no
+Uber,12,Design Hit Counter,https://leetcode.com/problems/design-hit-counter/,Medium,84.9,no
+Uber,13,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,81.1,yes
+Uber,14,Squares of a Sorted Array,https://leetcode.com/problems/squares-of-a-sorted-array/,Easy,81.1,no
+Uber,15,The Earliest Moment When Everyone Become Friends,https://leetcode.com/problems/the-earliest-moment-when-everyone-become-friends/,Medium,81.1,no
+Uber,16,Word Search,https://leetcode.com/problems/word-search/,Medium,76.5,yes
+Uber,17,Leftmost Column with at Least a One,https://leetcode.com/problems/leftmost-column-with-at-least-a-one/,Medium,76.5,no
+Uber,18,Coin Change,https://leetcode.com/problems/coin-change/,Medium,75,yes
+Uber,19,The Maze,https://leetcode.com/problems/the-maze/,Medium,75,no
+Uber,20,The Maze II,https://leetcode.com/problems/the-maze-ii/,Medium,75,no
+Cloudflare,1,Design Circular Queue,https://leetcode.com/problems/design-circular-queue/,Medium,100,no
+Cloudflare,2,Reaching Points,https://leetcode.com/problems/reaching-points/,Hard,85,no
+Cloudflare,3,3Sum,https://leetcode.com/problems/3sum/,Medium,83.6,yes
+Cloudflare,4,Design a Stack With Increment Operation,https://leetcode.com/problems/design-a-stack-with-increment-operation/,Medium,82.1,no
+Cloudflare,5,4Sum,https://leetcode.com/problems/4sum/,Medium,74.5,no
+Cloudflare,6,LRU Cache,https://leetcode.com/problems/lru-cache/,Medium,72,yes
+Cloudflare,7,Merge k Sorted Lists,https://leetcode.com/problems/merge-k-sorted-lists/,Hard,65.6,yes
+Cloudflare,8,Number of Islands,https://leetcode.com/problems/number-of-islands/,Medium,65.6,yes
+Cloudflare,9,Logger Rate Limiter,https://leetcode.com/problems/logger-rate-limiter/,Easy,61.4,no
+Cloudflare,10,Design Hit Counter,https://leetcode.com/problems/design-hit-counter/,Medium,61.4,no
+Cloudflare,11,Course Schedule,https://leetcode.com/problems/course-schedule/,Medium,56,yes
+Cloudflare,12,Game of Life,https://leetcode.com/problems/game-of-life/,Medium,50,no
+Cloudflare,13,Fizz Buzz,https://leetcode.com/problems/fizz-buzz/,Easy,50,no
+Hudson River Trading,1,Convert Integer to the Sum of Two No-Zero Integers,https://leetcode.com/problems/convert-integer-to-the-sum-of-two-no-zero-integers/,Easy,100,no
+Hudson River Trading,2,Detect Pattern of Length M Repeated K or More Times,https://leetcode.com/problems/detect-pattern-of-length-m-repeated-k-or-more-times/,Easy,100,no
+Hudson River Trading,3,Maximum Score From Grid Operations,https://leetcode.com/problems/maximum-score-from-grid-operations/,Hard,100,no
+Hudson River Trading,4,Maximum 69 Number,https://leetcode.com/problems/maximum-69-number/,Easy,97.8,no
+Hudson River Trading,5,Number of Steps to Reduce a Number to Zero,https://leetcode.com/problems/number-of-steps-to-reduce-a-number-to-zero/,Easy,97.8,no
+Hudson River Trading,6,Longest Path With Different Adjacent Characters,https://leetcode.com/problems/longest-path-with-different-adjacent-characters/,Hard,97.8,no
+Hudson River Trading,7,Maximum Total Importance of Roads,https://leetcode.com/problems/maximum-total-importance-of-roads/,Medium,97.8,no
+Hudson River Trading,8,Add Edges to Make Degrees of All Nodes Even,https://leetcode.com/problems/add-edges-to-make-degrees-of-all-nodes-even/,Hard,97.8,no
+Hudson River Trading,9,Count Unguarded Cells in the Grid,https://leetcode.com/problems/count-unguarded-cells-in-the-grid/,Medium,97.1,no
+Hudson River Trading,10,Largest Combination With Bitwise AND Greater Than Zero,https://leetcode.com/problems/largest-combination-with-bitwise-and-greater-than-zero/,Medium,97.1,no
+Hudson River Trading,11,Apply Operations to Make All Array Elements Equal to Zero,https://leetcode.com/problems/apply-operations-to-make-all-array-elements-equal-to-zero/,Medium,97.1,no
+Hudson River Trading,12,Block Placement Queries,https://leetcode.com/problems/block-placement-queries/,Hard,72.7,no
+Hudson River Trading,13,Text Justification,https://leetcode.com/problems/text-justification/,Hard,62.6,no
+Hudson River Trading,14,Shortest Word Distance,https://leetcode.com/problems/shortest-word-distance/,Easy,62.6,no
+Hudson River Trading,15,Design Memory Allocator,https://leetcode.com/problems/design-memory-allocator/,Medium,62.6,no
+Hudson River Trading,16,Remove Comments,https://leetcode.com/problems/remove-comments/,Medium,62.5,no
+Hudson River Trading,17,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy,60.6,no
+Revolut,1,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy,100,no
+Revolut,2,Perfect Squares,https://leetcode.com/problems/perfect-squares/,Medium,92.1,no
+Revolut,3,Reverse Linked List II,https://leetcode.com/problems/reverse-linked-list-ii/,Medium,84.7,no
+Revolut,4,Binary Tree Paths,https://leetcode.com/problems/binary-tree-paths/,Easy,84.7,no
+Revolut,5,Find All Anagrams in a String,https://leetcode.com/problems/find-all-anagrams-in-a-string/,Medium,84.7,no
+Revolut,6,Longest Increasing Subsequence,https://leetcode.com/problems/longest-increasing-subsequence/,Medium,83.9,yes
+Revolut,7,Remove Duplicates from Sorted List,https://leetcode.com/problems/remove-duplicates-from-sorted-list/,Easy,75,no
+Revolut,8,Missing Number,https://leetcode.com/problems/missing-number/,Easy,73.4,yes
+Revolut,9,Random Pick with Weight,https://leetcode.com/problems/random-pick-with-weight/,Medium,73.4,no
+Revolut,10,Restaurant Growth,https://leetcode.com/problems/restaurant-growth/,Medium,73.4,no
+Revolut,11,Subarray Product Less Than K,https://leetcode.com/problems/subarray-product-less-than-k/,Medium,67.9,no
+Revolut,12,Encode and Decode TinyURL,https://leetcode.com/problems/encode-and-decode-tinyurl/,Medium,64.5,no
+Revolut,13,Simple Bank System,https://leetcode.com/problems/simple-bank-system/,Medium,64.5,no
+Revolut,14,Merge Two Sorted Lists,https://leetcode.com/problems/merge-two-sorted-lists/,Easy,62.5,yes
+Revolut,15,Binary Tree Level Order Traversal II,https://leetcode.com/problems/binary-tree-level-order-traversal-ii/,Medium,62.5,no
+Revolut,16,Permutation in String,https://leetcode.com/problems/permutation-in-string/,Medium,62.5,yes

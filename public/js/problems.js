@@ -298,8 +298,12 @@ export function targetMinutes(p) {
   return TARGET_MIN[p.difficulty] || 25;
 }
 
-export function reviewGap(stage, { confidence = null, overTarget = false } = {}) {
-  if (stage === 'mastered') return 21;
+// Mastered problems come back less often each time they hold up: 21, then 45,
+// then every 90 days, so a growing bank doesn't crowd out new problems.
+export const MASTERED_GAPS = [21, 45, 90];
+
+export function reviewGap(stage, { confidence = null, overTarget = false, prevInterval = null } = {}) {
+  if (stage === 'mastered') return MASTERED_GAPS.find((g) => g > (Number(prevInterval) || 0)) ?? MASTERED_GAPS[MASTERED_GAPS.length - 1];
   if (stage === 'attempted') return 1;
   if (stage === 'hint') return 2;
   if (confidence && confidence <= 2) return 2;
@@ -350,7 +354,8 @@ export function applyOutcome(p, outcome, day, { confidence = null, minutes = nul
     stage = prevStage === 'new' ? 'solved' : prevStage;
     overTarget = true;
   } else stage = prevStage === 'new' ? 'solved' : NEXT_STAGE[prevStage];
-  const gap = reviewGap(stage, { confidence, overTarget });
+  // Only a clean review of an already-mastered problem stretches the gap.
+  const gap = reviewGap(stage, { confidence, overTarget, prevInterval: prevStage === 'mastered' ? p.interval : null });
   const iso = toISO(day);
   return {
     ...p,
@@ -383,7 +388,7 @@ export function reviewTask(p) {
     case 'timed':
       return { title: `Explain ${p.title} aloud, then code it`, step: 'explain aloud, then code it', short: 'explained and coded it', desc: 'Pattern, approach, complexity and edge cases, out loud. Then it counts as Mastered.', min: 20 };
     default:
-      return { title: `Review ${p.title} from memory`, step: 'review from memory', short: 'solved from memory', desc: 'Spaced review — mastered problems come back every 21 days.', min: 15 };
+      return { title: `Review ${p.title} from memory`, step: 'review from memory', short: 'solved from memory', desc: 'Spaced review — mastered problems come back after 21 days, then 45, then every 90.', min: 15 };
   }
 }
 
@@ -413,6 +418,23 @@ export function patternStats(problems) {
   return Object.values(stats)
     .map((s) => ({ ...s, rate: s.total ? s.solved / s.total : 0 }))
     .sort((a, b) => b.attempted - a.attempted || a.rate - b.rate || b.total - a.total);
+}
+
+/**
+ * Medium readiness: of your most recent first attempts at unseen problems of
+ * this difficulty, how many you solved on your own within the time limit.
+ * Attempts ticked without minutes count against you, so time them.
+ */
+export function readiness(log = [], problems = [], { difficulty = 'Medium', window = 10, maxMin = TARGET_MIN.Medium } = {}) {
+  const byId = new Map(problems.map((p) => [p.id, p]));
+  const diffOf = (e) => (e.prev && e.prev.difficulty) || (byId.get(e.problemId) || {}).difficulty;
+  const recent = log
+    .filter((e) => e.kind === 'first' && diffOf(e) === difficulty)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .slice(-window);
+  const untimed = recent.filter((e) => e.outcome === 'alone' && !(Number(e.minutes) > 0)).length;
+  const passed = recent.filter((e) => e.outcome === 'alone' && Number(e.minutes) > 0 && Number(e.minutes) <= maxMin).length;
+  return { attempts: recent.length, passed, untimed, window, maxMin };
 }
 
 /** CSV you can paste back into your sheet. */

@@ -4,8 +4,9 @@
 > **Student Profile**: 1st-Year Computer Science Student, Kwame Nkrumah University of Science and Technology (KNUST), Kumasi, Ghana  
 > **Graduation Class**: Expected May 2029 (Undergraduate)  
 > **Target Academic Standing**: First Class Honours / 85+ Semester CWA  
-> **Primary Career Goal**: 2027 Software Engineering Summer Internship (Focus: Backend & Systems Engineering)  
-> **Active Planning Horizon**: October 5, 2026 – June 30, 2027 (9 Months / 39 Weeks)  
+> **Primary Career Goal**: Be fully prepared for the software engineering internship applications that open from July 2027 (Focus: Backend & Systems Engineering). This season's open roles are not the target.  
+> **DSA Target**: Comfortable with Mediums by April 30, 2027: 7 of your last 10 unseen Mediums solved alone in 25 minutes or less (tracked in the app under Track → Problems).  
+> **Active Planning Horizon**: October 5, 2026 – July 31, 2027 (10 Months / 43 Weeks)  
 > **Workspace Location**: `c:\Users\HP\Roadmap`  
 > **Core Applications**: [Phone Web App / PWA](file:///c:/Users/HP/Roadmap/README.md) & [2027 Recruiting Tracker](file:///c:/Users/HP/Roadmap/2027_software_engineering_recruiting_tracker.xlsx)
 
@@ -76,7 +77,7 @@ DSA mastery is built on structured revisit intervals rather than raw volume. Whe
    [Explain Aloud]     --> Articulate time/space complexity & trade-offs verbally
           │
           ▼
-   [Mastered]          --> Re-appears in review queue every 21 days for retention
+   [Mastered]          --> Re-appears after 21 days, then 45, then every 90 days for retention
 ```
 
 #### Adaptive Scheduling on Review Feedback:
@@ -85,7 +86,8 @@ DSA mastery is built on structured revisit intervals rather than raw volume. Whe
 - **Medium confidence (score 3)**: Re-scheduled in **5 days**.
 - **High confidence (score 4)**: Re-scheduled in **10 days**.
 - **Complete mastery (score 5)**: Re-scheduled in **14 days**.
-- **Daily execution order**: Overdue reviews come first, followed by due reviews, followed by new pattern problems.
+- **Daily execution order**: Overdue reviews come first, followed by due reviews, followed by new pattern problems. One slot is always kept for a new problem, so reviews never push new DSA off the list entirely.
+- **Why mastered gaps grow**: With a fixed 21-day gap, 60+ mastered problems would fill most daily slots on their own and stall new problems at about 60 by April. Growing gaps (21 → 45 → 90) keep the ladder moving.
 
 ### 2.4 Weekly Scorecard System
 
@@ -383,7 +385,7 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 | **DSA & Algorithms** | • **W25 (Dynamic Programming)**: 1D DP, memoization vs tabulation, knapsack, LCS.<br>• Re-solve previously failed problems from blank without notes. |
 | **Interview Readiness** | • **W26 (Timed Assessments)**: Simulate realistic 60-90 min online assessments (HackerRank/Codesignal style).<br>• **W27 (Project Interview Defense)**: Defend LedgerCore and Aggregation API aloud without notes.<br>  *Be ready to answer: "What happens when a transaction aborts during high load?"* |
 | **Recruitment** | • Review live applications and interviews scheduled for Q2. Reallocate daily hours to active interview prep if an invite arrives. |
-| **Month-End Milestone** | *Defended flagship project architecture without notes; DP base cases and transitions internalized.* |
+| **Month-End Milestone** | *Defended flagship project architecture without notes; DP base cases and transitions internalized; every DSA topic covered and Medium readiness at 7/10 (unseen Mediums solved alone in ≤ 25 min).* |
 
 ---
 
@@ -402,15 +404,26 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 ---
 
 ### Month 9: June 2027 — Semester 2 Finals, Retrospective & Launch
-- **Academic Context**: Teaching concludes June 4. Exams: June 7 – 25. Target plan finish: June 30, 2027. Long vacation begins June 27.
-- **Strategic Phase**: *Phase 4 — Recruitment Execution & Hand-off*
+- **Academic Context**: Teaching concludes June 4. Exams: June 7 – 25. Long vacation begins June 27.
+- **Strategic Phase**: *Phase 4 — Recruitment Execution*
 
 | Area | Focus & Concrete Deliverables |
 | :--- | :--- |
 | **Academics** | • **W33/W34 (Exam Mode)**: Protect your CWA. Career work throttled down to maintain recall only. Focus on KNUST semester exams. |
-| **Career Finalization** | • **W38 (Portfolio Polish)**: Verify all GitHub READMEs, tests, and documentation are clean, public, and reproducible.<br>• **W39 (Retrospective)**: Final review of scorecard progress, interview feedback, and offer evaluations. |
-| **Transition to Internship** | • Finalize contracts, background checks, visa/work authorization paperwork, and onboarding prerequisites. |
-| **Month-End Milestone** | *Exams completed; portfolio battle-tested; ready to step into your software engineering internship.* |
+| **Career Finalization** | • **W38 (Portfolio Polish)**: Verify all GitHub READMEs, tests, and documentation are clean, public, and reproducible. |
+| **Month-End Milestone** | *Exams completed; portfolio battle-tested.* |
+
+---
+
+### Month 10: July 2027 — Application-Ready
+- **Academic Context**: Long vacation (June 27 – September 20): full Break capacity. Target plan finish: July 31, 2027.
+- **Strategic Phase**: *Phase 4 — Recruitment Execution*
+
+| Area | Focus & Concrete Deliverables |
+| :--- | :--- |
+| **DSA & Interviews** | • Timed sets of unseen, company-tagged Mediums (see `dsa/company-extras.csv` and `dsa/top20-by-company.csv`).<br>• Online-assessment practice and one mock a week. Refresh the company lists using the last-3-months data. |
+| **Applications** | • Set a reminder for each target company's opening date from its live posting. Apply in the first weeks, since many roles fill on a rolling basis.<br>• **W39 (Retrospective)**: Review scorecard progress and readiness against the April baseline. |
+| **Month-End Milestone** | *Mediums timed, projects defended, resumes tailored, and applications going out as each cycle opens.* |
 
 ---
 

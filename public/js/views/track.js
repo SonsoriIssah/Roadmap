@@ -1,8 +1,8 @@
 import { h, card, cardHeader, button, iconButton, chip, segmented, field, textarea, icon, empty, checkbox, progressBar } from '../ui.js';
-import { SCORE_AREAS, CHECKLISTS, APP_STATUSES } from '../data/defaults.js';
+import { SCORE_AREAS, CHECKLISTS, APP_STATUSES, DSA_READINESS } from '../data/defaults.js';
 import { fmtDay, fmtRange, fmtMonth, weekStart, weekKey, toDay, toISO, isISODate, relDays, monthKey } from '../dates.js';
 import { decisionHints, scoreTotal, dateConflicts } from '../engine.js';
-import { dueProblems, upcomingReviews, patternStats, orderNew, problemsToCSV, reviewTask, stageOf, STAGE_LABEL } from '../problems.js';
+import { dueProblems, upcomingReviews, patternStats, orderNew, problemsToCSV, reviewTask, stageOf, readiness, STAGE_LABEL } from '../problems.js';
 import { banner, openAppEditor, eligibilityCount, statusTone } from './common.js';
 import { openProblemImport, openManualProblem } from './tasks.js';
 import { renderCoursesTab } from './courses.js';
@@ -146,9 +146,10 @@ function problemsTab(app) {
         : h('p', { class: 'small' }, 'Your daily list picks problems from here: the roadmap topic first, then your sheet’s priority (P0 → P1 → P2) and order. Solved problems come back for spaced revisits.'),
       h('div', { class: 'row-actions wrap' }, button('Add one problem', () => openManualProblem(app), { kind: 'ghost', size: 'sm', iconName: 'plus' }), bank.length ? button('Export progress CSV', exportCsv, { kind: 'ghost', size: 'sm', iconName: 'download' }) : null),
     ),
+    bank.length ? readinessCard(app) : null,
     guessed ? banner('info', 'Re-import your sheet once', 'Reviews now follow your tracker’s ladder (Solved → Reimplemented → Timed → Mastered). Re-import so each problem’s exact stage comes across; what you ticked in the app is kept.', [button('Re-import', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' })]) : null,
     card(
-      h('p', { class: 'small' }, h('strong', null, 'How reviews work: '), 'tick a problem on your daily list and it counts as solved — its next review is booked straight away (3 days later: reimplement from blank). Each review moves it up your ladder: timed redo → explain aloud → Mastered (every 21 days). Use “How did it go?” for hints, failed attempts or confidence.'),
+      h('p', { class: 'small' }, h('strong', null, 'How reviews work: '), 'tick a problem on your daily list and it counts as solved — its next review is booked straight away (3 days later: reimplement from blank). Each review moves it up your ladder: timed redo → explain aloud → Mastered (back after 21 days, then 45, then every 90). Use “How did it go?” for hints, failed attempts or confidence.'),
     ),
     bank.length
       ? card(
@@ -200,6 +201,28 @@ function problemsTab(app) {
           ),
         )
       : null,
+  );
+}
+
+function readinessCard(app) {
+  const R = DSA_READINESS;
+  const r = readiness(app.state.dsaLog, app.state.problems, { difficulty: R.difficulty, window: R.window });
+  const by = toDay(R.by);
+  const met = r.attempts >= R.window && r.passed >= R.target;
+  const status = met ? chip('On target', { tone: 'good' }) : chip(`By ${fmtDay(by, { weekday: false })}`, { tone: 'info' });
+  return card(
+    cardHeader(`${R.difficulty} readiness`, status, `Last ${R.window} unseen ${R.difficulty}s: solved alone in ${r.maxMin} min or less`),
+    h('div', { class: 'stats' }, stat(`${r.passed}/${r.attempts || 0}`, 'passed'), stat(`${R.target}/${R.window}`, 'target'), stat(by >= app.today ? relDays(by, app.today) : 'passed', 'deadline')),
+    progressBar(r.passed / R.target, `${R.difficulty} readiness`),
+    h(
+      'p',
+      { class: 'small muted' },
+      r.attempts < R.window
+        ? `Counts once you've done ${R.window} first attempts at ${R.difficulty}s (${r.attempts} so far). `
+        : '',
+      r.untimed ? `${r.untimed} of these ${r.untimed === 1 ? 'was' : 'were'} ticked without minutes and ${r.untimed === 1 ? "doesn't" : "don't"} count — use “How did it go?” and enter the time. ` : 'Use “How did it go?” on a new problem to log your minutes. ',
+      'Reviews of problems you have seen before are not counted.',
+    ),
   );
 }
 
