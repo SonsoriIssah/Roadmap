@@ -3,7 +3,7 @@
 
 import {
   DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_COURSES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
-  JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, moshLessons,
+  JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, CSM281, moshLessons,
 } from './data/defaults.js';
 
 export const STORAGE_KEY = 'roadmap.state.v1';
@@ -184,6 +184,18 @@ export function migrate(raw) {
     // The plan now aims at the applications that open in July 2027: move the
     // old 30 June target unless you had already picked your own date.
     if (isObj(out.settings) && out.settings.targetEnd === '2027-06-30') out.settings.targetEnd = '2027-07-31';
+  }
+  if (v < 6) {
+    // CSM 281's official weekly scheme arrived: fill in the outline while it
+    // is still the empty placeholder, and add the Files lesson it needs.
+    if (Array.isArray(out.courses)) {
+      const i = out.courses.findIndex((c) => c && c.code === 'CSM 281');
+      if (i >= 0 && !(out.courses[i].topics || []).length) out.courses[i] = clone(CSM281);
+    }
+    const java = Array.isArray(out.tracks) ? out.tracks.find((t) => t && t.id === 'java') : null;
+    const lessons = java && Array.isArray(java.lessons) ? java.lessons : [];
+    const at = lessons.findIndex((l) => l && l.id === 'j13');
+    if (at >= 0 && !lessons.some((l) => l && l.id === 'j13f')) lessons.splice(at + 1, 0, clone(JAVA_STUDY_LESSONS.find((l) => l.id === 'j13f')));
   }
   if (!Array.isArray(out.courses) || !out.courses.length) {
     out.courses = clone(DEFAULT_COURSES);

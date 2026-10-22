@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 5;
+export const DATA_VERSION = 6;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.
@@ -125,6 +125,91 @@ export const DEFAULT_TIMETABLES = [
 // KNUST First-Year Semester 1 Courses (8 courses, 17 credits total).
 // Target: 85 semester average.
 // ---------------------------------------------------------------------------
+// CSM 281 follows the lecturer's weekly scheme. The Java track keeps its own
+// pace; each topic lists the track lessons that cover it and the calendar
+// event (by id) it must be covered before, so the app can check the plan.
+export const CSM281 = {
+  code: 'CSM 281',
+  title: 'Object-Oriented Programming with Java',
+  credits: 3,
+  outlinePending: false,
+  topicUnit: 'topics',
+  trackId: 'java',
+  topics: [
+    {
+      id: 'csm281-1',
+      title: 'Overview of Java as an object-oriented language',
+      desc: 'Key unique features, the Java language environment, keywords and the components of an OOP language.',
+      duration: 'Week 1 · Ch 1',
+      lessons: ['mo1', 'mo2', 'mo3', 'mo4', 'mo5', 'mo6', 'mo7'],
+      dueBy: 'c-mid1',
+    },
+    {
+      id: 'csm281-2',
+      title: 'Identifiers, variables, constants, data types and operators',
+      desc: 'Arithmetic, relational and logical operators; type conversion and type cast operators.',
+      duration: 'Weeks 2–3 · Ch 1–2',
+      lessons: ['mo8', 'mo9', 'mo10', 'mo11', 'mo12', 'mo13', 'mo14', 'mo17', 'mo18', 'mo19', 'mo20', 'mo21', 'mo22', 'mo26', 'mo28', 'mo29'],
+      dueBy: 'c-mid1',
+    },
+    {
+      id: 'csm281-3',
+      title: 'Control structures',
+      desc: 'If and if…else, switch, while, do…while, for and nested loops.',
+      duration: 'Weeks 4–5 · Ch 2–3',
+      lessons: ['mo27', 'mo30', 'mo31', 'mo32', 'mo33', 'mo34', 'mo35', 'mo36', 'mo37', 'mo38', 'mo39', 'mo42'],
+      dueBy: 'c-mid1',
+    },
+    {
+      id: 'csm281-4',
+      title: 'Arrays',
+      desc: 'Declaration and initialisation; one-dimensional and multidimensional arrays.',
+      duration: 'Week 6 · Ch 4',
+      lessons: ['mo15', 'mo16'],
+      dueBy: 'c-mid1',
+    },
+    {
+      id: 'csm281-5',
+      title: 'Methods',
+      desc: 'Declaration and definition, scope rules, calling a method, parameters and parameter passing.',
+      duration: 'Week 8 · Ch 5',
+      lessons: ['j7'],
+      dueBy: 'c-exam1',
+    },
+    {
+      id: 'csm281-6',
+      title: 'Handling exceptions',
+      desc: 'Exception types: checked and unchecked exceptions.',
+      duration: 'Week 9 · Ch 6',
+      lessons: ['j13'],
+      dueBy: 'c-exam1',
+    },
+    {
+      id: 'csm281-7',
+      title: 'Files',
+      desc: 'Creating files and storing data in files.',
+      duration: 'Week 10 · Ch 7',
+      lessons: ['j13f'],
+      dueBy: 'c-exam1',
+    },
+    {
+      id: 'csm281-8',
+      title: 'Object-oriented concepts',
+      desc: 'Objects and classes, encapsulation, inheritance and polymorphism.',
+      duration: 'Weeks 11–12 · Ch 8',
+      lessons: ['j8', 'j9', 'j10', 'j11'],
+      dueBy: 'c-exam1',
+    },
+  ],
+  resources: [
+    {
+      title: 'Programming with Mosh: Java Tutorial for Beginners',
+      url: 'https://www.youtube.com/watch?v=eIrMbAQSU34',
+    },
+  ],
+  notes: 'Official weekly scheme (key text: Java How To Program; venue: Aboagye Menyeh Complex, SF 7). Week 7 is the mid-semester exam. Topics from weeks 1–6 are due before the mid-semester exams and weeks 8–12 before the first-semester exams. The Java track keeps its own pace; this only checks that it covers each topic in time.',
+};
+
 export const DEFAULT_COURSES = [
   {
     code: 'CSM 251',
@@ -238,24 +323,7 @@ export const DEFAULT_COURSES = [
     resources: [],
     notes: '10 comprehensive topics covering vectors, matrices, algorithms and numerical methods.',
   },
-  {
-    code: 'CSM 281',
-    title: 'Object-Oriented Programming with Java',
-    credits: 3,
-    outlinePending: true,
-    topicUnit: 'lessons (roadmap)',
-    topicCount: 58,
-    topicCountConfirmed: false,
-    trackId: 'java',
-    topics: [],
-    resources: [
-      {
-        title: 'Programming with Mosh: Java Tutorial for Beginners',
-        url: 'https://www.youtube.com/watch?v=eIrMbAQSU34',
-      },
-    ],
-    notes: 'Reusing existing Java roadmap curriculum (58 lessons: 42 Mosh video chapters + 16 study lessons). Official KNUST syllabus outline pending confirmation.',
-  },
+  CSM281,
   {
     code: 'CSM 291',
     title: 'System Analysis and Design I',
@@ -462,6 +530,7 @@ export const JAVA_STUDY_LESSONS = [
   L('j11', 'Polymorphism and abstract classes', 45, 'Store Shapes in a List<Shape> and total their areas polymorphically.'),
   L('j12', 'Interfaces, default methods, Comparable vs Comparator', 45, 'Sort Students by GPA (descending), then by name.'),
   L('j13', 'Exceptions: try/catch/finally, checked vs unchecked, custom, try-with-resources', 45, 'Throw an InsufficientFundsException from BankAccount.withdraw.'),
+  L('j13f', 'Files: create, write and read text files (Files, BufferedReader/Writer, try-with-resources)', 40, 'Save BankAccount transactions to a CSV file and load them back when the program starts.'),
   L('j14', 'Collections I: List, ArrayList, LinkedList, iterating', 40, 'Remove duplicates from an ArrayList while keeping order.'),
   L('j15', 'Collections II: HashMap, HashSet, TreeMap; the equals/hashCode contract', 50, 'Solve Two Sum and Valid Anagram in Java with HashMap.'),
   L('j16', 'Stack, Queue and Deque (ArrayDeque); PriorityQueue', 40, 'Solve Valid Parentheses in Java with ArrayDeque.'),

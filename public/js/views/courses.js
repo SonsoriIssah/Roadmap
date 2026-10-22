@@ -1,6 +1,66 @@
 import { h, card, cardHeader, button, iconButton, chip, segmented, field, input, select, textarea, openSheet, toast, icon, progressBar } from '../ui.js';
 import { fmtDay, toDay, toISO, isISODate } from '../dates.js';
 import { uid } from '../parse.js';
+import { outlineCoverage } from '../learn.js';
+import { planFor } from './tasks.js';
+
+/**
+ * For a course taught alongside a learning track: where the planner puts the
+ * lessons for each outline topic, against the exam that topic is due before.
+ */
+function trackCoverage(app, course) {
+  const track = (app.state.tracks || []).find((t) => t.id === course.trackId);
+  if (!track || !(course.topics || []).some((t) => Array.isArray(t.lessons))) return null;
+  const dueOf = (id) => {
+    const e = (app.state.calendar || []).find((x) => x.id === id);
+    return e && isISODate(e.start) ? toDay(e.start) : null;
+  };
+  const dues = course.topics.map((t) => dueOf(t.dueBy)).filter((d) => d !== null);
+  const days = Math.min(240, Math.max(30, ...dues.map((d) => d - app.today + 1)));
+  const plannedOn = new Map();
+  for (const day of planFor(app, app.today, days).days) {
+    for (const i of day.items) {
+      if (i.type !== 'lesson' || i.trackId !== track.id) continue;
+      for (const id of i.lessonIds || []) if (!plannedOn.has(id)) plannedOn.set(id, day.day);
+    }
+  }
+  const rows = outlineCoverage(course.topics, track, app.state.lessonDone || {}, plannedOn, dueOf);
+  return { track, rows, byTopic: new Map(rows.map((r) => [r.topic.id, r])), dueOf };
+}
+
+/** One line per exam: are all the topics due before it covered in time? */
+function coverageSummary(app, course, cov) {
+  const groups = new Map();
+  for (const r of cov.rows) (groups.get(r.topic.dueBy) || groups.set(r.topic.dueBy, []).get(r.topic.dueBy)).push(r);
+  return h(
+    'div',
+    { class: 'stack-sm', style: { marginTop: '8px' } },
+    [...groups].map(([eventId, rows]) => {
+      const ev = (app.state.calendar || []).find((e) => e.id === eventId);
+      const due = cov.dueOf(eventId);
+      const late = rows.filter((r) => !r.ok);
+      const label = `${ev ? ev.title : 'Exam'}${due !== null ? ` (${fmtDay(due, { weekday: false })})` : ''}`;
+      return h(
+        'p',
+        { class: 'small', style: { margin: 0 } },
+        chip(late.length ? `${late.length} late` : 'On track', { tone: late.length ? 'warning' : 'good' }),
+        ' ',
+        late.length
+          ? `${label}: ${late.map((r) => r.topic.title).join(', ')} ${late.length === 1 ? 'is' : 'are'} not planned in time on the ${cov.track.name} track.`
+          : `${label}: all ${rows.length} topics covered by the ${cov.track.name} track before then.`,
+      );
+    }),
+  );
+}
+
+/** Short status for one topic: lessons done and when the rest are planned. */
+function topicCoverageText(r) {
+  if (!r) return '';
+  if (r.missing.length) return `Lessons missing from the track: ${r.missing.join(', ')}`;
+  const due = r.due !== null ? ` · due before ${fmtDay(r.due, { weekday: false })}` : '';
+  if (!r.open) return `Covered: ${r.done}/${r.total} lessons done${due}`;
+  return `${r.done}/${r.total} lessons done · ${r.plannedBy !== null ? `rest planned by ${fmtDay(r.plannedBy, { weekday: false })}` : 'rest not planned in time'}${due}`;
+}
 
 export const TOPIC_STATUSES = [
   { id: 'not_started', label: 'Untouched', short: 'Untouched' },
@@ -159,6 +219,8 @@ function renderCourseCard(app, course, courseProg, courseAssessments) {
   const confident = topics.filter((t) => topicStatus[t.id] === 'confident').length;
   const revised = topics.filter((t) => topicStatus[t.id] === 'revised').length;
   const studying = topics.filter((t) => topicStatus[t.id] === 'studying').length;
+  const cov = course.trackId ? trackCoverage(app, course) : null;
+  const track = (app.state.tracks || []).find((t) => t.id === course.trackId);
 
   return card(
     h(
@@ -211,12 +273,15 @@ function renderCourseCard(app, course, courseProg, courseAssessments) {
         )
       : null,
 
-    // If CSM 281, provide link to Java Track
-    course.code === 'CSM 281'
+    // Exam deadlines for outline topics covered by a learning track
+    cov && cov.rows.length ? coverageSummary(app, course, cov) : null,
+
+    // Link to the learning track that covers this course
+    track
       ? h(
           'div',
           { class: 'row-actions wrap', style: { marginTop: '8px' } },
-          button('Open Java Track (58 Lessons) →', () => app.nav('plan/learn'), { kind: 'secondary', size: 'sm' }),
+          button(`Open ${track.name} Track (${(track.lessons || []).length} Lessons) →`, () => app.nav('plan/learn'), { kind: 'secondary', size: 'sm' }),
         )
       : null,
 
@@ -270,10 +335,11 @@ export function openCourseDetails(app, course) {
   const topicStatus = progress.topicStatus || {};
   const assessments = (academic.assessments || []).filter((a) => a.courseCode === course.code);
   const topics = course.topics || [];
+  const cov = course.trackId ? trackCoverage(app, course) : null;
 
   openSheet({
     title: `${course.code}: ${course.title}`,
-    content: (close) => {
+    body: (close) => {
       const setTopic = (topicId, status) => {
         app.update((s) => {
           const ac = (s.academic = s.academic || {});
@@ -334,6 +400,9 @@ export function openCourseDetails(app, course) {
                       h('strong', null, `${idx + 1}. ${t.title}`),
                       t.duration ? h('span', { class: 'small muted' }, ` (${t.duration})`) : null,
                       t.desc ? h('p', { class: 'small muted', style: { margin: '4px 0 0 0' } }, t.desc) : null,
+                      cov && cov.byTopic.has(t.id)
+                        ? h('p', { class: 'small', style: { margin: '4px 0 0 0' } }, chip(cov.byTopic.get(t.id).ok ? 'On track' : 'Late', { tone: cov.byTopic.get(t.id).ok ? 'good' : 'warning' }), ' ', topicCoverageText(cov.byTopic.get(t.id)))
+                        : null,
                     ),
                     select(
                       TOPIC_STATUSES.map((s) => ({ value: s.id, label: s.label })),
@@ -405,7 +474,7 @@ export function openStudySessionEditor(app, { courseCode = '', defaultDate = '' 
 
   openSheet({
     title: 'Schedule Academic Study Session',
-    content: (close) => {
+    body: (close) => {
       let selectedCourse = courseCode || (courses[0] ? courses[0].code : 'CSM 273');
       let actType = ACTIVITY_TYPES[0];
       let title = '';
@@ -527,7 +596,7 @@ export function openAssessmentEditor(app, { courseCode = '' } = {}) {
   const courses = app.state.courses || [];
   openSheet({
     title: 'Record Assessment Mark',
-    content: (close) => {
+    body: (close) => {
       let selectedCourse = courseCode || (courses[0] ? courses[0].code : 'CSM 273');
       let title = '';
       let mark = '';

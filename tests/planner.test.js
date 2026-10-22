@@ -390,7 +390,7 @@ test('version-1 saves upgrade without losing data', () => {
     progress: { W1: { status: 'done' } },
   };
   const s = normalise(old);
-  assert.equal(s.version, 5);
+  assert.equal(s.version, 6);
   assert.equal(s.settings.theme, 'dark');
   assert.equal(s.settings.studyStart, undefined);
   assert.ok(s.calendar.some((e) => e.id === 'c-pre'));

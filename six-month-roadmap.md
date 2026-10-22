@@ -236,14 +236,23 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 
 #### CSM 281: Object-Oriented Programming with Java
 - **Credits**: 3
-- **Outline Status**: **Outline Pending Confirmation**
-- **Curriculum Unit**: lessons (roadmap) (58 lessons (42 Mosh video chapters + 16 study lessons; official university syllabus pending confirmation))
-- **Official Notes**: Reusing existing Java roadmap curriculum (58 lessons: 42 Mosh video chapters + 16 study lessons). Official KNUST syllabus outline pending confirmation.
+- **Outline Status**: **Official Weekly Scheme Confirmed** (key text: *Java How To Program*; venue: Aboagye Menyeh Complex, SF 7)
+- **Curriculum Unit**: topics (8 total; week 7 is the mid-semester exam)
+
+**Course Syllabus / Breakdown** (with the Java track lessons that cover each topic):
+1. **Overview of Java as an object-oriented language** (Week 1 · Ch 1): Mosh chapters 1–7. *Due before mid-sems.*
+2. **Identifiers, variables, constants, data types and operators** (Weeks 2–3 · Ch 1–2): Mosh chapters 8–22, 26, 28–29. *Due before mid-sems.*
+3. **Control structures** (Weeks 4–5 · Ch 2–3): Mosh chapters 27, 30–39, 42. *Due before mid-sems.*
+4. **Arrays** (Week 6 · Ch 4): Mosh chapters 15–16. *Due before mid-sems.*
+5. **Methods** (Week 8 · Ch 5): study lesson j7. *Due before first-semester exams.*
+6. **Handling exceptions** (Week 9 · Ch 6): study lesson j13. *Due before first-semester exams.*
+7. **Files** (Week 10 · Ch 7): study lesson j13f, added for this outline. *Due before first-semester exams.*
+8. **Object-oriented concepts** (Weeks 11–12 · Ch 8): study lessons j8–j11. *Due before first-semester exams.*
 
 - **Supplementary Learning Resources**:
   - [Programming with Mosh: Java Tutorial for Beginners](https://www.youtube.com/watch?v=eIrMbAQSU34)
 
-**Integrated Learning Track**: Reusing existing Java roadmap curriculum (58 lessons: 42 Mosh video chapters + 16 study lessons). Official KNUST syllabus outline pending confirmation.
+**Integrated Learning Track**: The 59-lesson Java track (42 Mosh chapters + 17 study lessons) keeps its own pace. The outline only sets deadlines: Track → Courses shows whether each topic's lessons are planned before its exam.
 
 #### CSM 291: System Analysis and Design I
 - **Credits**: 2
@@ -927,9 +936,7 @@ Before submitting any application, verify all six eligibility criteria to avoid 
 
 In accordance with strict verification standards, the following items are currently pending official university confirmation and must not be fabricated:
 
-1. **CSM 281 (Object-Oriented Programming with Java) Official Outline**:
-   - The official lecture-by-lecture syllabus has not yet been released by the department.
-   - *Current Operating Plan*: Reusing the existing 58-lesson Java roadmap curriculum (42 Mosh video chapters + 16 study lessons). Official topic count will be confirmed once the outline is distributed.
+1. **CSM 281 (Object-Oriented Programming with Java)**: *Resolved.* The official weekly scheme has been added (8 topics; see section 4.2).
 2. **CSM 291 (System Analysis and Design I) Official Outline**:
    - Official course outline has not yet been distributed.
    - *Current Operating Plan*: Course marked as **Outline Pending**. Using the supplementary YouTube playlist ([System Analysis and Design Playlist](https://youtube.com/playlist?list=PL5q3E8eRUieWtYLmRU3z94-vGRcwKr9tM&si=SLNLiiCV2xRPecQu)) for background study without assuming it represents the official exam syllabus.

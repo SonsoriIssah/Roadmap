@@ -179,6 +179,28 @@ export function remainingMinutes(track, lessonDone, day) {
   }, 0);
 }
 
+/**
+ * Does a learning track cover each course-outline topic before its exam?
+ * Never changes the pace — it reads where the planner put each lesson.
+ * plannedOn: Map lessonId → day; dueOf(eventId) → day or null.
+ * For each topic: lessons done, the day its last open lesson is planned
+ * (null when not planned in time or missing from the track), and ok.
+ */
+export function outlineCoverage(topics, track, lessonDone, plannedOn, dueOf) {
+  const inTrack = new Set(((track && track.lessons) || []).map((l) => l.id));
+  return (topics || [])
+    .filter((t) => Array.isArray(t.lessons) && t.lessons.length)
+    .map((t) => {
+      const missing = t.lessons.filter((id) => !inTrack.has(id));
+      const open = t.lessons.filter((id) => inTrack.has(id) && !lessonDone[id]);
+      const days = open.map((id) => plannedOn.get(id));
+      const plannedBy = open.length && days.every((d) => d !== undefined) ? Math.max(...days) : null;
+      const due = dueOf(t.dueBy);
+      const ok = !missing.length && (!open.length || (plannedBy !== null && (due === null || plannedBy < due)));
+      return { topic: t, total: t.lessons.length - missing.length, done: t.lessons.length - missing.length - open.length, open: open.length, missing, plannedBy, due, ok };
+    });
+}
+
 export function isCourseDay(classes, keywords = []) {
   const keys = keywords.map((k) => String(k).toLowerCase()).filter(Boolean);
   return keys.length > 0 && classes.some((c) => keys.some((k) => `${c.code} ${c.title}`.toLowerCase().includes(k)));

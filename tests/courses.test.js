@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import { toDay, toISO } from '../public/js/dates.js';
 import { makeContext } from '../public/js/engine.js';
 import { defaultState } from '../public/js/store.js';
-import { DEFAULT_COURSES, DEFAULT_TIMETABLES } from '../public/js/data/defaults.js';
+import { DEFAULT_COURSES, DEFAULT_TIMETABLES, DEFAULT_TRACKS } from '../public/js/data/defaults.js';
+import { migrate } from '../public/js/store.js';
+import { outlineCoverage } from '../public/js/learn.js';
 import { planDays, isSem1StudyWindow, isXmasBreak, SEM1_START, SEM1_END } from '../public/js/planner.js';
 import { calculateSemesterAverage, getTopicStats } from '../public/js/views/courses.js';
 
@@ -72,12 +74,15 @@ test('topic, unit and strand counts are verified without invented data', () => {
   assert.ok(byCode['CSM 273'].topics[0].desc.includes('dot product'));
   assert.equal(byCode['CSM 273'].topics[9].title, 'Iterative Methods for Solving Systems of Equations');
 
-  // CSM 281: Java reuses existing roadmap count (58 lessons), does not duplicate curriculum
+  // CSM 281: the lecturer's weekly scheme, each topic pointing at Java track lessons (no duplicate curriculum)
+  const java = DEFAULT_TRACKS.find((t) => t.id === 'java');
+  const lessonIds = new Set(java.lessons.map((l) => l.id));
   assert.equal(byCode['CSM 281'].credits, 3);
-  assert.equal(byCode['CSM 281'].topicCount, 58);
-  assert.equal(byCode['CSM 281'].outlinePending, true);
+  assert.equal(byCode['CSM 281'].outlinePending, false);
   assert.equal(byCode['CSM 281'].trackId, 'java');
-  assert.equal(byCode['CSM 281'].topics.length, 0); // No duplicate topics array
+  assert.equal(byCode['CSM 281'].topics.length, 8);
+  assert.deepEqual(byCode['CSM 281'].topics.map((t) => t.dueBy), ['c-mid1', 'c-mid1', 'c-mid1', 'c-mid1', 'c-exam1', 'c-exam1', 'c-exam1', 'c-exam1']);
+  for (const t of byCode['CSM 281'].topics) for (const id of t.lessons) assert.ok(lessonIds.has(id), `${t.title}: ${id} is a Java track lesson`);
 
   // CSM 291: System Analysis and Design playlist resource, outline pending
   assert.equal(byCode['CSM 291'].outlinePending, true);
@@ -268,4 +273,34 @@ test('topic mastery counts track untouched, studying, revised, confident', () =>
   assert.equal(stats.studying, 1);
   assert.ok(stats.not_started > 0);
   assert.equal(stats.total, stats.confident + stats.revised + stats.studying + stats.not_started);
+});
+
+test('CSM 281 topics are checked against where the Java track plans their lessons, without changing its pace', () => {
+  const track = { lessons: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] };
+  const topics = [
+    { id: 't1', title: 'Done', lessons: ['a'], dueBy: 'mid' },
+    { id: 't2', title: 'In time', lessons: ['b'], dueBy: 'mid' },
+    { id: 't3', title: 'Too late', lessons: ['c'], dueBy: 'mid' },
+    { id: 't4', title: 'Missing', lessons: ['zz'], dueBy: 'final' },
+  ];
+  const plannedOn = new Map([['b', d('2026-11-01')], ['c', d('2026-12-20')]]);
+  const dueOf = (id) => (id === 'mid' ? d('2026-12-14') : id === 'final' ? d('2027-01-25') : null);
+  const rows = outlineCoverage(topics, track, { a: '2026-10-20' }, plannedOn, dueOf);
+  assert.deepEqual(rows.map((r) => [r.topic.id, r.ok]), [['t1', true], ['t2', true], ['t3', false], ['t4', false]]);
+  assert.equal(rows[1].plannedBy, d('2026-11-01'));
+  assert.deepEqual(rows[3].missing, ['zz']);
+});
+
+test('saves from before the CSM 281 outline get it, plus the Files lesson after Exceptions', () => {
+  const old = defaultState();
+  old.version = 5;
+  old.courses = old.courses.map((c) => (c.code === 'CSM 281' ? { ...c, outlinePending: true, topics: [] } : c));
+  old.tracks[0].lessons = old.tracks[0].lessons.filter((l) => l.id !== 'j13f');
+  const s = migrate(old);
+  const c = s.courses.find((x) => x.code === 'CSM 281');
+  assert.equal(c.topics.length, 8);
+  const ids = s.tracks[0].lessons.map((l) => l.id);
+  assert.equal(ids[ids.indexOf('j13') + 1], 'j13f');
+  assert.equal(ids.filter((id) => id === 'j13f').length, 1);
+  assert.equal(migrate(s), s); // already current: untouched
 });
