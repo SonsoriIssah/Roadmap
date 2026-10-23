@@ -3,7 +3,7 @@
 
 import {
   DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_COURSES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
-  JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, CSM281, moshLessons,
+  JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, CSM281, BACKEND_TRACK, moshLessons,
 } from './data/defaults.js';
 import { toDay, toISO, isISODate } from './dates.js';
 
@@ -198,6 +198,10 @@ export function migrate(raw) {
     const at = lessons.findIndex((l) => l && l.id === 'j13');
     if (at >= 0 && !lessons.some((l) => l && l.id === 'j13f')) lessons.splice(at + 1, 0, clone(JAVA_STUDY_LESSONS.find((l) => l.id === 'j13f')));
   }
+  if (v < 7) {
+    // Backend Engineering Notes became a learning track after Java.
+    if (Array.isArray(out.tracks) && !out.tracks.some((t) => t && t.id === BACKEND_TRACK.id)) out.tracks.push(clone(BACKEND_TRACK));
+  }
   if (!Array.isArray(out.courses) || !out.courses.length) {
     out.courses = clone(DEFAULT_COURSES);
   }
@@ -237,16 +241,25 @@ export function saveState(state, storage) {
 
 /**
  * Start fresh from today without losing anything you've done: unfinished
- * learning tracks restart their window today, overdue reviews are spread from
- * today (`perDay` a day, oldest first) and overdue application actions move to
- * today. Completed lessons, problems and ticks are kept.
+ * learning tracks restart one after another from today (a track planned for
+ * later keeps its date unless the restarted one before it now runs into it),
+ * overdue reviews are spread from today (`perDay` a day, oldest first) and
+ * overdue application actions move to today. Completed lessons, problems and
+ * ticks are kept.
  */
 export function startFresh(state, todayISO, { perDay = 2 } = {}) {
   const s = clone(state);
   const today = toDay(todayISO);
   s.settings.planStart = todayISO;
   const done = s.lessonDone || {};
-  for (const t of s.tracks || []) if ((t.lessons || []).some((l) => !done[l.id])) t.start = todayISO;
+  const startOf = (t) => (isISODate(t.start) ? toDay(t.start) : today);
+  const unfinished = (s.tracks || []).filter((t) => t.active !== false && (t.lessons || []).some((l) => !done[l.id])).sort((a, b) => startOf(a) - startOf(b));
+  let free = today;
+  for (const t of unfinished) {
+    const start = Math.max(startOf(t), free);
+    t.start = toISO(start);
+    free = start + Math.round(Math.max(0.5, Number(t.weeks) || 3) * 7);
+  }
   const overdue = (s.problems || [])
     .filter((p) => p.status !== 'new' && isISODate(p.nextReview) && toDay(p.nextReview) < today)
     .sort((a, b) => (a.nextReview < b.nextReview ? -1 : a.nextReview > b.nextReview ? 1 : (a.order ?? 0) - (b.order ?? 0)));

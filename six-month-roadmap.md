@@ -87,6 +87,8 @@ DSA mastery is built on structured revisit intervals rather than raw volume. Whe
 - **High confidence (score 4)**: Re-scheduled in **10 days**.
 - **Complete mastery (score 5)**: Re-scheduled in **14 days**.
 - **Daily execution order**: Overdue reviews come first, followed by due reviews, followed by new pattern problems. One slot is always kept for the day's lesson and one for a new problem, so reviews never push learning or new DSA off the list entirely.
+- **Backend engineering track**: After Java, 30 study sessions through the Backend Engineering Notes (13 Nov – 31 Dec 2026), one section group per session, each ending with a question to answer aloud.
+- **Interview practice**: One behavioural or project question to answer aloud, at weekends until 30 April 2027, then daily from 1 May for company-specific preparation. The app holds only the questions and cues; the full answers are in the JPMorgan Behavioral Prep, the Behavioral Interview Prep system, and the LedgerCore and Aggregation API handbooks.
 - **Fresh start**: If you fall behind, Settings → Start fresh from today restarts unfinished learning tracks today and spreads overdue reviews from today (2 a day), keeping everything already done.
 - **Why mastered gaps grow**: With a fixed 21-day gap, 60+ mastered problems would fill most daily slots on their own and stall new problems at about 60 by April. Growing gaps (21 → 45 → 90) keep the ladder moving.
 

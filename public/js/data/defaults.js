@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 6;
+export const DATA_VERSION = 7;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.
@@ -542,6 +542,57 @@ export const JAVA_STUDY_LESSONS = [
   L('j22', 'Checkpoint: small CLI app (library or bank) with classes, collections and exceptions', 90, 'Push it to GitHub with a README.'),
 ];
 
+// Backend Engineering Notes (your PDF study guide), one study session per
+// group of sections. For each concept: what it is, why it exists, how it
+// works, trade-offs, failure cases and how you would measure it. Each session
+// ends with a question to answer aloud without the notes.
+export const BACKEND_LESSONS = [
+  L('b1', '§1.1–1.2 What an API is; what makes an API RESTful', 30, 'Explain the difference between an API and REST in two sentences.'),
+  L('b2', '§1.3–1.5 Resource and endpoint design, JSON bodies, API design checklist', 35, 'Design StudyPair endpoints for listing, creating and joining study groups. Why is GET /customers/42/orders more resource-oriented than GET /getCustomerOrders?id=42?'),
+  L('b3', '§2.1–2.2 HTTP in brief; methods, safety and idempotency', 30, 'For GET, POST, PUT, PATCH and DELETE, say whether each is safe and whether it is idempotent.'),
+  L('b4', '§2.3 Status codes', 30, 'Without notes, say when to return 200, 201, 204, 400, 401, 403, 404, 409, 429 and 500.'),
+  L('b5', '§3 Stateless vs stateful; session-based vs token-based authentication', 40, 'Does a stateless REST API mean it cannot use a database or Redis? Answer aloud.'),
+  L('b6', '§3 JWTs, authentication vs authorization, OAuth 2.0 and OpenID Connect', 40, 'Compare JWTs and server-side sessions when access must be revoked, then explain how OAuth 2.0 and OpenID Connect relate.'),
+  L('b7', '§4.1–4.2 SQL vs NoSQL; primary keys, foreign keys and constraints', 35, 'List the keys and constraints for an orders table, then justify SQL or NoSQL for it.'),
+  L('b8', '§4.3 Indexing', 30, 'Why can an index speed up reads but slow down writes? Run EXPLAIN on one query in PostgreSQL.'),
+  L('b9', '§4.4–4.5 ACID transactions; isolation levels and anomalies', 45, 'Explain a lost update and one way to prevent it.'),
+  L('b10', '§4.6 Normalization vs denormalization', 25, 'When is denormalization worth the consistency cost?'),
+  L('b11', '§5.1–5.2 Rate limiting and throttling', 30, 'Sketch a token bucket that allows 100 requests a minute per user.'),
+  L('b12', '§5.3 Idempotency', 30, 'A payment request times out. How can the client retry without charging the customer twice?'),
+  L('b13', '§6.1–6.3 What to cache, where caches live, the cache-aside pattern', 35, 'Why might caching a private API response create a security hole?'),
+  L('b14', '§6.4–6.6 Eviction, consistency and invalidation, CDN and edge caching', 35, 'What is a cache stampede and how do you reduce it? Choose TTLs for product details and for a live account balance.'),
+  L('b15', '§6.7 Diagnosing latency with measurements', 25, 'An endpoint takes 500 ms. How do you find whether the time goes to app logic, the database or an external service?'),
+  L('b16', '§7.1 Pagination: offset vs cursor', 25, 'Why can cursor pagination outperform a large offset?'),
+  L('b17', '§7.2–7.4 Partitioning, sharding, read replicas, scaling writes', 40, 'Explain partitioning vs sharding, and why a read replica can return stale data right after a write.'),
+  L('b18', '§7.5–7.6 Duplicate records, race conditions, optimistic vs pessimistic locking', 40, 'Two requests check for a record and both insert it. What goes wrong, and what are two fixes?'),
+  L('b19', '§8.1–8.2 Load balancing; vertical vs horizontal scaling', 30, 'What does a load balancer need to know about a backend instance before sending it traffic?'),
+  L('b20', '§8.3 Monolith vs microservices', 30, 'When is a modular monolith a better choice than microservices?'),
+  L('b21', '§8.4–8.5 REST vs gRPC vs messaging; event-driven architecture', 35, 'When would you use REST, gRPC or asynchronous messaging? What is eventual consistency, and when is it acceptable?'),
+  L('b22', '§9.1 At-most-once, at-least-once and exactly-once delivery', 30, 'Explain at-least-once delivery and why consumers should be idempotent.'),
+  L('b23', '§9.2–9.4 Timeouts, retries with exponential backoff, circuit breakers', 40, 'Why does a timeout not prove an operation failed? Why can retries make an outage worse? What does a circuit breaker not do?'),
+  L('b24', '§9.5–9.6 Race conditions and distributed locks', 35, 'Describe a race condition from a concrete example, then explain what a lease or fencing token adds to a lock.'),
+  L('b25', '§9.7 The saga pattern', 30, 'How does a saga handle a failure after some steps have already succeeded?'),
+  L('b26', '§10 Security essentials', 35, 'Pick five of the practices and check whether LedgerCore follows each one.'),
+  L('b27', '§11 Observability: logs, metrics, traces, a debugging sequence', 35, 'List the metrics you would put on a dashboard for the Aggregation API, and why.'),
+  L('b28', '§12 Request-flow walkthrough', 30, 'Trace GET /customers/42/orders from load balancer to response aloud, including every failure and its status code.'),
+  L('b29', '§13 Practice questions: API, HTTP, auth and databases', 45, 'Answer them without the notes and mark the ones you could not answer.'),
+  L('b30', '§13–14 Practice questions: caching, scaling, reliability; glossary', 45, 'Answer them without the notes, then explain any glossary term you are unsure of.'),
+];
+
+// Starts the day after the Java track's 3-week target from the 23 October
+// fresh start, and runs through the Christmas break.
+export const BACKEND_TRACK = {
+  id: 'backend',
+  name: 'Backend engineering',
+  start: '2026-11-13',
+  weeks: 7,
+  active: true,
+  keywords: ['database'],
+  resource: 'your Backend Engineering Notes',
+  url: '',
+  lessons: BACKEND_LESSONS,
+};
+
 export const DEFAULT_TRACKS = [
   {
     id: 'java',
@@ -553,6 +604,7 @@ export const DEFAULT_TRACKS = [
     ...JAVA_VIDEO,
     lessons: [...moshLessons(), ...JAVA_STUDY_LESSONS],
   },
+  BACKEND_TRACK,
 ];
 
 // Saves from before the Mosh course used topic placeholders for the first
@@ -647,6 +699,74 @@ export const DSA_PATTERNS = [
   'Topological sort', 'Shortest path', 'Greedy', 'Backtracking', 'Dynamic programming',
   'SQL', 'Other',
 ];
+
+// ---------------------------------------------------------------------------
+// Interview practice: one question a day to answer aloud, in rotation —
+// at weekends until the company-focus months, then every day from May.
+// Only the questions and a cue live here (this site is public); your full
+// answers stay in your own PDFs, which each cue points to.
+// ---------------------------------------------------------------------------
+const BQ = (id, q, cue, source) => ({ id, kind: 'behavioral', q, cue, source });
+const PQ = (id, q, cue, source) => ({ id, kind: 'project', q, cue, source });
+const JPM = 'your JPMorgan Behavioral Prep';
+const LCH = 'your LedgerCore Engineering Handbook';
+const AGH = 'your Aggregation API Engineering Handbook';
+
+export const INTERVIEW = {
+  dailyFrom: '2027-05-01',
+  followUps: [
+    'What was your personal contribution?',
+    'What would you do differently?',
+    'How did you know your solution worked?',
+    'What did the other person think?',
+    'Why did you choose that approach?',
+    'What did you learn about yourself?',
+  ],
+  questions: [
+    BQ('iq1', 'Tell me about yourself.', 'Backend interest → LedgerCore → Aggregation API → Robotics Club mentoring → why this company.', `${JPM} §2`),
+    PQ('iq2', 'What does LedgerCore do, in one sentence? What is double-entry bookkeeping and how does it implement it?', 'Start from the transfer: matching debit and credit postings.', `${LCH} §1`),
+    BQ('iq3', 'Tell me about a time you disagreed with a teammate.', 'FarmLink: build our own delivery service or use an existing one — settled by research, not argument.', `${JPM} §3`),
+    PQ('iq4', 'What does the Aggregation API do, in one sentence? Name every major component and its job.', 'API, PostgreSQL, Redis, Kafka, worker, scheduler, provider layer.', `${AGH} §1`),
+    BQ('iq5', 'Tell me about a difficult technical problem.', 'LedgerCore audit-chain fork under concurrency; UNIQUE on previous_hash plus retries.', `${JPM} §4`),
+    PQ('iq6', 'Walk me through exactly what happens when I call POST /transfers.', 'Auth, ownership, retry loop, idempotency, postings, audit entry, commit.', `${LCH} §2.3`),
+    BQ('iq7', 'Why software engineering?', 'LedgerCore concurrency testing: you enjoy finding what can go wrong.', `${JPM} §2`),
+    PQ('iq8', 'Why are LedgerCore balances never stored as a column?', 'Derived from postings; what a stored balance would risk.', `${LCH} §3, §6`),
+    BQ('iq9', 'Tell me about a time you showed leadership.', 'FarmLink team lead and backend engineer: agreed tools and MVP, kept scope realistic, first place.', `${JPM} §3`),
+    PQ('iq10', 'Why is SERIALIZABLE used instead of the default isolation level?', 'Then the chain: which race, what Postgres does on conflict, why a retry loop, what happens when retries run out.', `${LCH} §4`),
+    BQ('iq11', 'Tell me about a mistake you made.', 'Assuming SERIALIZABLE would protect every business rule.', `${JPM} §4`),
+    PQ('iq12', 'Walk me through linking a bank account, end to end.', 'POST /accounts/link, then the callback; where the first sync runs.', `${AGH} §2.3`),
+    BQ('iq13', 'How do you use AI when coding?', 'AI suggested immediate retries; you chose exponential backoff with jitter and tested it.', `${JPM} §5`),
+    PQ('iq14', 'How does the idempotency key prevent duplicate transfers under concurrency, not just one after another?', 'What the database guarantees that a check-first cannot.', `${LCH} §5`),
+    BQ('iq15', 'Tell me about a time you mentored someone.', 'Robotics Club: three new students over about three weeks, onto the senior team.', `${JPM} §3`),
+    PQ('iq16', 'Why is there a unique constraint on (account_id, provider_transaction_id)? What happens without it?', 'Redelivery and re-sync both insert the same transaction.', `${AGH} §3, §5`),
+    BQ('iq17', 'Why this company?', 'Scale and reliability of its systems, your financial-data projects, learning from experienced engineers. Swap in the company you are preparing for.', `${JPM} §2`),
+    PQ('iq18', 'Walk me through the audit-chain forking bug: what caused it, why SERIALIZABLE missed it, how you fixed it.', 'The shared append point: two transfers read the same latest entry.', `${LCH} §4, §18`),
+    BQ('iq19', 'Tell me about a time you worked under pressure.', 'FarmLink hackathon: clear priorities over doing everything.', `${JPM} §7`),
+    PQ('iq20', 'Explain the token-bucket rate limiter precisely, and why it uses a Lua script.', 'The actual mechanism (capacity, refill, atomic check-and-take), not "it limits requests".', `${AGH} §6`),
+    BQ('iq21', 'Tell me about a time you learned something quickly.', 'Aggregation API: Redis, Kafka, providers, deduplication — one piece at a time, tested before connecting.', `${JPM} §6`),
+    PQ('iq22', 'The same Kafka message is delivered twice. What happens? Why is the offset committed after processing, not before?', 'At-least-once delivery and the idempotent insert.', `${AGH} §7`),
+    BQ('iq23', 'How do you handle competing priorities?', 'Must-have vs can-wait; FarmLink MVP; tell people early.', `${JPM} §7`),
+    PQ('iq24', 'Why did an earlier benchmark report zero conflicts while the data was being corrupted?', 'What the benchmark measured versus what it should have checked.', `${LCH} §18`),
+    BQ('iq25', 'Tell me about a time you explained something technical to a non-technical person.', 'Robotics mentoring: small steps and simple examples before code.', `${JPM} §7`),
+    PQ('iq26', 'What does "fail open" mean for the rate limiters, and what is the risk?', 'Then the chain: why not Postgres, Redis down, is it a security risk, how you would notice, how it scales.', `${AGH} §6, §19`),
+    BQ('iq27', 'How do you handle feedback?', 'Separate it from ego, understand the reason, apply it. Your feedback story (S12) is still a template — fill it in honestly.', `${JPM} §7`),
+    PQ('iq28', 'Two syncs run for the same account at the same moment. What is protected, and what is not?', 'Constraints versus application checks.', `${AGH} §4`),
+    BQ('iq29', 'Tell me about a time you changed your mind.', 'FarmLink delivery decision: the evidence changed it.', `${JPM} §7`),
+    PQ('iq30', 'What is LedgerCore\'s measured throughput ceiling, and what specifically causes it?', 'Name the number and the bottleneck.', `${LCH} §13`),
+    BQ('iq31', 'Tell me about a time you disagreed with an AI suggestion.', 'Immediate retries would collide under load; backoff with jitter, tested.', `${JPM} §5`),
+    PQ('iq32', 'Why is a database constraint a stronger guarantee than "check first, then insert" under concurrency?', 'Explain the mechanism, not just the conclusion.', `${AGH} §4, §5`),
+    BQ('iq33', 'Tell me about a time requirements changed.', 'Find what changed, discuss impact, decide what to change, remove or delay.', `${JPM} §7`),
+    PQ('iq34', 'Kafka is unavailable for an hour. Trace what happens to every kind of sync trigger, and after it recovers.', 'Inline first sync, scheduled syncs, manual syncs.', `${AGH} §7, §10`),
+    BQ('iq35', 'What project are you most proud of?', 'LedgerCore pushed you technically; FarmLink as a team lead.', `${JPM} §8`),
+    PQ('iq36', 'Defend "at-least-once, not exactly-once", and say what closes the gap. What would exactly-once cost?', 'Delivery guarantee versus effect guarantee.', `${AGH} §7`),
+    BQ('iq37', 'What are your strengths? And a weakness?', 'Problem solving, persistence, learning by building; going too deep — checkpoints.', `${JPM} §9`),
+    PQ('iq38', 'Why does login check a dummy hash for unknown emails? Why 404 rather than 403 for resources you do not own?', 'What each one stops an attacker from learning.', `${AGH} §2.2, §9`),
+    BQ('iq39', 'Why should we choose you?', 'Curiosity, hands-on systems you built, willingness to learn.', `${JPM} §9`),
+    PQ('iq40', 'Critique your use of Kafka: was it actually necessary at this scale? Defend both sides.', 'Honest trade-off, not a sales pitch.', `${AGH} §15`),
+    BQ('iq41', 'Where do you want to grow? What does good engineering mean to you?', 'Large-scale backend and distributed systems; correctness first, then simplicity and testing.', `${JPM} §9`),
+    PQ('iq42', 'What would you change about the LedgerCore schema, and why?', 'Be specific: a table, a column, a constraint.', `${LCH} §3`),
+  ],
+};
 
 // "Comfortable with Mediums": of your last 10 first attempts at unseen Mediums,
 // 7 solved on your own in 25 minutes or less, by the end of April — leaving

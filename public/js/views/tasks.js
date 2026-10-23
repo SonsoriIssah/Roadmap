@@ -25,6 +25,7 @@ const TYPE_LABEL = {
   academic: 'Academics',
   career: 'Career',
   basics: 'Fundamentals',
+  interview: 'Interview',
   personal: 'Personal',
 };
 

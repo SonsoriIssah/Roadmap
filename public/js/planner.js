@@ -3,9 +3,9 @@
 // tasks), so tomorrow's list continues where today's leaves off and anything
 // you skip simply rolls forward. Pure — no DOM or storage.
 
-import { toISO, toDay, isISODate, weekKey, fmtDay } from './dates.js';
+import { toISO, toDay, isISODate, weekKey, fmtDay, weekdayIndex } from './dates.js';
 import { resolveDay, classesOn, timetableOn } from './engine.js';
-import { CHECKLISTS, DEFAULT_SETTINGS } from './data/defaults.js';
+import { CHECKLISTS, DEFAULT_SETTINGS, INTERVIEW } from './data/defaults.js';
 import { orderNew, dueProblems, reviewTask, reviewGap, stageOf, targetMinutes, applyOutcome, STAGE_LABEL } from './problems.js';
 import { lessonMinutes, trackWindow, remainingMinutes, isCourseDay, fmtTimestamp, videoLink } from './learn.js';
 import { BASICS } from './data/basics.js';
@@ -67,19 +67,20 @@ export function pushItem(dayItems, item, d) {
 }
 
 /** Highest priority first. Lower number = kept first when a day is over the cap. */
-const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, academic: 3, career: 4, kickoff: 5, module: 6, personal: 7 };
+// Application actions come before the Upsoma fundamentals item (2.5).
+const RANK = { revisit: 0, problem: 1, lesson: 2, career: 2.2, interview: 2.4, revise: 3, academic: 3, kickoff: 5, module: 6, personal: 7 };
 const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
 
 /**
- * Keep one slot for the day's lesson and one for a new problem, so reviews
- * never crowd out learning or new DSA entirely; reviews fill the slots left.
- * A kind already done that day needs no slot. Skipped when there is only one
- * slot (heavy and exam days).
+ * Keep one slot each for the day's lesson, a new problem and (on practice
+ * days) interview practice, so reviews never crowd them out entirely; reviews
+ * fill the slots left. A kind already done that day needs no slot. Skipped
+ * when there is only one slot (heavy and exam days).
  */
 function reserveSlots(open, slots, items) {
   if (slots < 2) return open;
   const picks = [];
-  for (const type of ['lesson', 'problem']) {
+  for (const type of ['lesson', 'problem', 'interview']) {
     if (items.some((i) => i.type === type && i.done)) continue;
     const x = open.find((o) => o.item.type === type);
     if (x) picks.push(x);
@@ -239,6 +240,12 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   const basicsKeys = Object.entries(checks).filter(([k]) => k.startsWith('revise:') && k.includes(':basics:'));
   const basicsBase = basicsKeys.filter(([, v]) => v !== iso0).length;
   const basicsDoneToday = basicsKeys.find(([, v]) => v === iso0);
+  // Interview practice: keys are interview:<date>:<question id>.
+  const ivQuestions = s.interviewPractice !== false ? INTERVIEW.questions : [];
+  const ivKeys = Object.entries(checks).filter(([k]) => k.startsWith('interview:'));
+  const ivDoneToday = ivKeys.find(([, v]) => v === iso0);
+  let ivNext = ivKeys.filter(([, v]) => v !== iso0).length;
+  const ivDailyFrom = toDay(INTERVIEW.dailyFrom);
   const days = [];
   const last = from + Math.max(count, horizon) - 1;
   for (let d = today; d <= last; d++) {
@@ -441,6 +448,31 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
           done: doneOn(checks[key], iso),
         }, d);
       }
+    }
+
+    // 4e. Interview practice: one question to answer aloud, in rotation —
+    // at weekends until the company-focus months, then every day.
+    const practiceDay = weekdayIndex(d) >= 5 || d >= ivDailyFrom;
+    if (ivQuestions.length && practiceDay && (r.mode === 'normal' || r.mode === 'break')) {
+      const doneQ = isToday && ivDoneToday ? ivQuestions.find((q) => ivDoneToday[0].endsWith(`:${q.id}`)) : null;
+      const q = doneQ || ivQuestions[ivNext % ivQuestions.length];
+      const followUp = INTERVIEW.followUps[ivNext % INTERVIEW.followUps.length];
+      ivNext++;
+      const key = `interview:${iso}:${q.id}`;
+      pushItem(items, {
+        key,
+        type: 'interview',
+        category: 'career',
+        isTechnical: false,
+        scheduledDate: iso,
+        title: `Practise aloud: ${q.q}`,
+        desc: q.kind === 'behavioral'
+          ? `${q.cue} Keep it to 45–90 seconds, then answer a follow-up: “${followUp}”`
+          : `${q.cue} Answer cold, then push yourself through why → why not → what if → how would it scale.`,
+        meta: `${q.kind === 'behavioral' ? 'Behavioural' : 'Technical · project'} · check against ${q.source}`,
+        min: 10,
+        done: doneOn(checks[key], iso),
+      }, d);
     }
 
     // 5. Applications

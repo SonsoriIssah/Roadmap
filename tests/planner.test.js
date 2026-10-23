@@ -390,7 +390,7 @@ test('version-1 saves upgrade without losing data', () => {
     progress: { W1: { status: 'done' } },
   };
   const s = normalise(old);
-  assert.equal(s.version, 6);
+  assert.equal(s.version, 7);
   assert.equal(s.settings.theme, 'dark');
   assert.equal(s.settings.studyStart, undefined);
   assert.ok(s.calendar.some((e) => e.id === 'c-pre'));
@@ -585,4 +585,59 @@ test('a fresh start re-times the plan from today and keeps what you have done', 
   const ctx = makeContext(f);
   const res = planDays(d('2026-10-23'), 1, f, ctx, d('2026-10-23'), { fc: forecast(f.modules, f.progress, d('2026-10-23'), ctx), current: currentModule(f.modules, f.progress), horizon: 120 });
   assert.ok(res.trackFinish.java <= res.trackWindows.java.end);
+});
+
+test('Backend engineering follows the Java track, and a later fresh start keeps them one after another', () => {
+  const s = defaultState();
+  const backend = s.tracks.find((t) => t.id === 'backend');
+  assert.equal(backend.lessons.length, 30);
+  assert.ok(backend.lessons.every((l) => l.title.startsWith('§') && l.practice && l.min > 0));
+
+  // Fresh start on 23 Oct: Java's 3 weeks end 12 Nov, so Backend keeps 13 Nov.
+  const f = startFresh(s, '2026-10-23');
+  assert.deepEqual(f.tracks.map((t) => [t.id, t.start]), [['java', '2026-10-23'], ['backend', '2026-11-13']]);
+
+  // Fresh start on 20 Nov with both unfinished: Java restarts, Backend waits until Java's window ends.
+  const later = startFresh({ ...f, lessonDone: { mo1: '2026-10-24', b1: '2026-11-14' } }, '2026-11-20');
+  assert.deepEqual(later.tracks.map((t) => [t.id, t.start]), [['java', '2026-11-20'], ['backend', '2026-12-11']]);
+
+  // A finished track is left alone.
+  const allJava = Object.fromEntries(f.tracks[0].lessons.map((l) => [l.id, '2026-11-01']));
+  const after = startFresh({ ...f, lessonDone: allJava }, '2026-11-20');
+  assert.deepEqual(after.tracks.map((t) => [t.id, t.start]), [['java', '2026-10-23'], ['backend', '2026-11-20']]);
+});
+
+test('saves from before the Backend track get it once', () => {
+  const old = defaultState();
+  old.version = 6;
+  old.tracks = old.tracks.filter((t) => t.id !== 'backend');
+  const s = migrate(old);
+  assert.deepEqual(s.tracks.map((t) => t.id), ['java', 'backend']);
+  assert.equal(migrate({ ...s, version: 6 }).tracks.filter((t) => t.id === 'backend').length, 1);
+});
+
+test('interview practice: a question at weekends, the next one each time, daily from May, none in exams', async () => {
+  const { INTERVIEW } = await import('../public/js/data/defaults.js');
+  const today = d('2026-10-23'); // Friday
+  const { s, ctx } = setup();
+  const days = plan(s, ctx, today, today, 3).days; // Fri, Sat, Sun
+  const iv = (day) => day.items.filter((i) => i.type === 'interview');
+  assert.equal(iv(days[0]).length, 0);
+  assert.equal(iv(days[1])[0].key, `interview:2026-10-24:${INTERVIEW.questions[0].id}`);
+  assert.equal(iv(days[2])[0].key, `interview:2026-10-25:${INTERVIEW.questions[1].id}`);
+  assert.match(iv(days[1])[0].title, /^Practise aloud: /);
+
+  // Saturday's list of three keeps a slot for the practice question.
+  const sat = plan(s, ctx, d('2026-10-24')).days[0];
+  assert.ok(sat.items.some((i) => i.type === 'interview'));
+
+  // A question you practised moves the rotation on.
+  s.checks[`interview:2026-10-24:${INTERVIEW.questions[0].id}`] = '2026-10-24';
+  const sun = plan(s, ctx, d('2026-10-25')).days[0];
+  assert.equal(sun.items.find((i) => i.type === 'interview').key, `interview:2026-10-25:${INTERVIEW.questions[1].id}`);
+
+  // Every teaching day from 1 May (a Saturday), but not on exam days.
+  const may = plan(s, ctx, d('2027-05-03'), d('2027-05-03'), 1).days[0]; // Monday
+  assert.ok(may.items.some((i) => i.type === 'interview'));
+  assert.ok(!plan(s, ctx, d('2027-01-30')).days[0].items.some((i) => i.type === 'interview')); // a Saturday in the January exams
 });
