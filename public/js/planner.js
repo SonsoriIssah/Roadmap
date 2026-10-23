@@ -71,18 +71,21 @@ const RANK = { revisit: 0, problem: 1, lesson: 2, revise: 3, academic: 3, career
 const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
 
 /**
- * Keep one slot for a new problem: when reviews (or anything ranked above it)
- * would fill every slot, the first open problem takes the last one. Skipped
- * when a new problem is already done that day or there is only one slot.
+ * Keep one slot for the day's lesson and one for a new problem, so reviews
+ * never crowd out learning or new DSA entirely; reviews fill the slots left.
+ * A kind already done that day needs no slot. Skipped when there is only one
+ * slot (heavy and exam days).
  */
-function reserveNewProblem(open, slots, items) {
-  if (slots < 2 || items.some((i) => i.type === 'problem' && i.done)) return open;
-  const at = open.findIndex((x) => x.item.type === 'problem');
-  if (at < slots) return open;
-  const out = open.slice();
-  const [p] = out.splice(at, 1);
-  out.splice(slots - 1, 0, p);
-  return out;
+function reserveSlots(open, slots, items) {
+  if (slots < 2) return open;
+  const picks = [];
+  for (const type of ['lesson', 'problem']) {
+    if (items.some((i) => i.type === type && i.done)) continue;
+    const x = open.find((o) => o.item.type === type);
+    if (x) picks.push(x);
+  }
+  if (!picks.length) return open;
+  return [...picks, ...open.filter((o) => !picks.includes(o))];
 }
 /** Module the forecast places on a day (falls back to the current one). */
 function moduleOn(day, today, modules, fc, current) {
@@ -253,7 +256,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       // Recomputed daily, so a short day is made up on the following ones.
       const w = tr.weight(d);
       const left = tr.win && d <= tr.win.end ? tr.weightLeft(d) : 0;
-      const quota = left > 0 ? Math.min(w, (tr.rem * w) / left) : w;
+      // On the window's last day, take whatever is left so the track ends on target.
+      const quota = left > 0 ? (d === tr.win.end && w > 0 ? Math.max(w, tr.rem) : Math.min(w, (tr.rem * w) / left)) : w;
       const chosen = isToday ? [...tr.doneToday] : [];
       let used = chosen.reduce((sum, l) => sum + lessonMinutes(l), 0);
       let extraN = isToday ? Number(extra.lessons) || 0 : 0;
@@ -481,7 +485,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         const completed = nonSchool.filter(({ item }) => item.done);
         const kept = new Set(completed.slice(0, 3).map(({ item }) => item));
         const free = Math.max(0, 3 - kept.size);
-        const open = reserveNewProblem(
+        const open = reserveSlots(
           nonSchool.filter(({ item }) => !item.done).sort((a, b) => rankOf(a.item) - rankOf(b.item) || a.idx - b.idx),
           free,
           items,
@@ -520,9 +524,9 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       let allowedMin = Math.max(0, maxTechMin - doneTechMin);
 
       // Prioritize: revisit (protect spaced repetition recall) -> lesson (curriculum learning) -> problem (active DSA) -> module (project/systems & baseline) -> basics,
-      // with one slot kept for a new problem so reviews never crowd out new DSA entirely.
+      // with slots kept for the day's lesson and a new problem so reviews never crowd them out entirely.
       const rankOrder = { revisit: 0, lesson: 1, problem: 2, module: 3, basics: 4 };
-      const openTech = reserveNewProblem(
+      const openTech = reserveSlots(
         techItems
           .map((item, idx) => ({ item, idx }))
           .filter((x) => !x.item.done)

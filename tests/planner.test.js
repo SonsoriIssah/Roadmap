@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import { toDay, toISO } from '../public/js/dates.js';
 import { makeContext, forecast, currentModule } from '../public/js/engine.js';
-import { defaultState, normalise, migrate } from '../public/js/store.js';
+import { defaultState, normalise, migrate, startFresh } from '../public/js/store.js';
 import { readXlsx, parseCSV, decodeEntities } from '../public/js/xlsx.js';
 import {
   detectTable, candidateSheets, rowsToProblems, mergeProblems, orderNew, mapStatus, mapDate, mapPriority,
@@ -322,7 +322,7 @@ test("ticked items stay on today's list and tomorrow continues from there", () =
   assert.ok(past.items.some((i) => i.type === 'problem'));
 });
 
-test('reviews come first, one slot is kept for a new problem; overflow rolls forward', () => {
+test('reviews come first, with slots kept for the lesson and a new problem; overflow rolls forward', () => {
   const today = d('2026-10-20'); // test DSA queue allocation formula with capacity for 4 items
   const { s, ctx } = setup((st) => {
     st.settings.daily.normal.maxTech = 5;
@@ -331,7 +331,7 @@ test('reviews come first, one slot is kept for a new problem; overflow rolls for
   });
   const [t, tm] = plan(s, ctx, today, today, 2).days;
   const dsa = (day) => day.items.filter((i) => i.type === 'revisit' || i.type === 'problem').map((i) => i.type);
-  assert.deepEqual(dsa(t), ['revisit', 'revisit', 'problem']); // today's list holds 3: the new problem keeps its slot
+  assert.deepEqual(dsa(t), ['revisit', 'problem']); // today's list holds 3: the Java lesson and a new problem keep their slots, one review fills the last
   assert.match(t.items.find((i) => i.type === 'revisit').title, /^Retry /);
   assert.match(t.items.find((i) => i.type === 'revisit').meta, /overdue since/);
   assert.deepEqual(dsa(tm), ['revisit', 'revisit', 'revisit', 'problem']); // the 3 reviews left over from today come first
@@ -560,4 +560,29 @@ test('generic recurring tasks are removed and Stanbic Bank is verified', async (
   assert.ok(PORTFOLIO_PROJECTS.scheduler);
   assert.equal(PORTFOLIO_PROJECTS.scheduler.tier, 'flagship');
   assert.equal(PORTFOLIO_PROJECTS.rateLimiter.tier, 'supporting');
+});
+
+test('a fresh start re-times the plan from today and keeps what you have done', () => {
+  const s = defaultState();
+  s.lessonDone = { mo1: '2026-10-08' };
+  s.problems = [
+    { id: 'a', title: 'A', status: 'solved', stage: 'solved', nextReview: '2026-10-10', order: 0 },
+    { id: 'b', title: 'B', status: 'solved', stage: 'timed', nextReview: '2026-10-12', order: 1 },
+    { id: 'c', title: 'C', status: 'attempted', stage: 'attempted', nextReview: '2026-10-15', order: 2 },
+    { id: 'd', title: 'D', status: 'solved', stage: 'solved', nextReview: '2026-11-01', order: 3 }, // not overdue
+    { id: 'e', title: 'E', status: 'new', stage: 'new', order: 4 },
+  ];
+  s.applications = [{ id: 'x', company: 'Google', status: 'researching', nextAction: 'Check STEP', nextActionDate: '2026-10-09' }];
+  const f = startFresh(s, '2026-10-23');
+  assert.equal(f.settings.planStart, '2026-10-23');
+  assert.equal(f.tracks[0].start, '2026-10-23');
+  assert.equal(f.lessonDone.mo1, '2026-10-08'); // done work is kept
+  assert.deepEqual(f.problems.map((p) => p.nextReview), ['2026-10-23', '2026-10-23', '2026-10-24', '2026-11-01', undefined]);
+  assert.deepEqual(f.problems.map((p) => p.stage), ['solved', 'timed', 'attempted', 'solved', 'new']);
+  assert.equal(f.applications[0].nextActionDate, '2026-10-23');
+  assert.equal(f.meta.freshStartAt, '2026-10-23');
+  // The Java track is no longer behind: its three weeks now run from today.
+  const ctx = makeContext(f);
+  const res = planDays(d('2026-10-23'), 1, f, ctx, d('2026-10-23'), { fc: forecast(f.modules, f.progress, d('2026-10-23'), ctx), current: currentModule(f.modules, f.progress), horizon: 120 });
+  assert.ok(res.trackFinish.java <= res.trackWindows.java.end);
 });

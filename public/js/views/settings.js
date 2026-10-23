@@ -1,7 +1,7 @@
 import { h, card, cardHeader, button, segmented, field, input, select, toast, confirmSheet, icon } from '../ui.js';
 import { MODES, MODE_ORDER, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_MODULES, DEFAULT_SETTINGS, DEFAULT_TRACKS, DAILY_FIELDS } from '../data/defaults.js';
 import { isISODate, toISO, fmtDay, toDay } from '../dates.js';
-import { exportJSON, importJSON, defaultState } from '../store.js';
+import { exportJSON, importJSON, defaultState, startFresh } from '../store.js';
 import { syncConfig, saveSyncConfig, disconnectSync, isSyncOn, TOKEN_URL } from '../sync.js';
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -94,6 +94,14 @@ export function render(app) {
         ),
         'See how exam weeks or next semester will look. Nothing is changed.',
       ),
+      h('p', { class: 'small muted' }, app.state.meta.freshStartAt ? `Last fresh start: ${fmtDay(toDay(app.state.meta.freshStartAt), { year: true })}.` : 'Fell behind? Restart the plan from today. Nothing you have done is lost.'),
+      button('Start fresh from today', async () => {
+        const msg = 'Restart from today? Your Java track starts again today, overdue reviews are spread from today (2 a day), overdue application actions move to today and "Plan started" becomes today. Everything you have done is kept.';
+        if (await confirmSheet(msg, { title: 'Start fresh', confirmLabel: 'Start fresh', danger: false })) {
+          app.update((st) => startFresh(st, toISO(app.realToday)));
+          toast('Fresh start: your plan now runs from today');
+        }
+      }, { kind: 'secondary', size: 'sm' }),
     ),
 
     syncCard(app),

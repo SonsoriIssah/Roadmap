@@ -5,6 +5,7 @@ import {
   DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_COURSES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
   JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, CSM281, moshLessons,
 } from './data/defaults.js';
+import { toDay, toISO, isISODate } from './dates.js';
 
 export const STORAGE_KEY = 'roadmap.state.v1';
 
@@ -232,6 +233,29 @@ export function saveState(state, storage) {
   } catch {
     return false;
   }
+}
+
+/**
+ * Start fresh from today without losing anything you've done: unfinished
+ * learning tracks restart their window today, overdue reviews are spread from
+ * today (`perDay` a day, oldest first) and overdue application actions move to
+ * today. Completed lessons, problems and ticks are kept.
+ */
+export function startFresh(state, todayISO, { perDay = 2 } = {}) {
+  const s = clone(state);
+  const today = toDay(todayISO);
+  s.settings.planStart = todayISO;
+  const done = s.lessonDone || {};
+  for (const t of s.tracks || []) if ((t.lessons || []).some((l) => !done[l.id])) t.start = todayISO;
+  const overdue = (s.problems || [])
+    .filter((p) => p.status !== 'new' && isISODate(p.nextReview) && toDay(p.nextReview) < today)
+    .sort((a, b) => (a.nextReview < b.nextReview ? -1 : a.nextReview > b.nextReview ? 1 : (a.order ?? 0) - (b.order ?? 0)));
+  overdue.forEach((p, i) => (p.nextReview = toISO(today + Math.floor(i / Math.max(1, perDay)))));
+  for (const a of s.applications || []) {
+    if (!['rejected', 'offer'].includes(a.status) && isISODate(a.nextActionDate) && a.nextActionDate < todayISO) a.nextActionDate = todayISO;
+  }
+  s.meta = { ...s.meta, freshStartAt: todayISO };
+  return s;
 }
 
 /**

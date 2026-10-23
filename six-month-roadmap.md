@@ -86,7 +86,8 @@ DSA mastery is built on structured revisit intervals rather than raw volume. Whe
 - **Medium confidence (score 3)**: Re-scheduled in **5 days**.
 - **High confidence (score 4)**: Re-scheduled in **10 days**.
 - **Complete mastery (score 5)**: Re-scheduled in **14 days**.
-- **Daily execution order**: Overdue reviews come first, followed by due reviews, followed by new pattern problems. One slot is always kept for a new problem, so reviews never push new DSA off the list entirely.
+- **Daily execution order**: Overdue reviews come first, followed by due reviews, followed by new pattern problems. One slot is always kept for the day's lesson and one for a new problem, so reviews never push learning or new DSA off the list entirely.
+- **Fresh start**: If you fall behind, Settings → Start fresh from today restarts unfinished learning tracks today and spreads overdue reviews from today (2 a day), keeping everything already done.
 - **Why mastered gaps grow**: With a fixed 21-day gap, 60+ mastered problems would fill most daily slots on their own and stall new problems at about 60 by April. Growing gaps (21 → 45 → 90) keep the ladder moving.
 
 ### 2.4 Weekly Scorecard System
