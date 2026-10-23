@@ -1,4 +1,5 @@
 import { createStore } from './store.js';
+import { isSyncOn, syncNow } from './sync.js';
 import { makeContext, forecast, currentModule } from './engine.js';
 import { localToday, toDay, isISODate, fmtDay } from './dates.js';
 import { h, mount, icon, toast } from './ui.js';
@@ -138,6 +139,40 @@ window.addEventListener('beforeinstallprompt', (e) => {
 if (store.corrupt) toast('Saved data could not be read, so defaults were loaded.');
 
 render();
+
+// ---------------------------------------------------------------------------
+// Sync with your other devices (Settings → Sync): when the app opens or comes
+// back to the foreground, shortly after you change something, and when you
+// leave it.
+// ---------------------------------------------------------------------------
+let lastSyncAt = 0;
+let syncing = false;
+let pushTimer = null;
+
+async function sync({ force = false } = {}) {
+  if (!isSyncOn() || (navigator.onLine === false && !force)) return null;
+  if (!force && Date.now() - lastSyncAt < 30000) return null;
+  lastSyncAt = Date.now();
+  clearTimeout(pushTimer);
+  pushTimer = null;
+  syncing = true;
+  const res = await syncNow(store).finally(() => (syncing = false));
+  if (res.status === 'ok' && res.pulled) toast('Synced changes from your other device');
+  if (parseRoute().view === 'settings') render({ keepScroll: true });
+  return res;
+}
+app.sync = sync;
+
+store.subscribe(() => {
+  if (syncing || !isSyncOn()) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => sync({ force: true }), 20000);
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') sync();
+  else if (pushTimer) sync({ force: true });
+});
+sync({ force: true });
 
 // ---------------------------------------------------------------------------
 // Offline support and updates

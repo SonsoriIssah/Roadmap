@@ -234,6 +234,23 @@ export function saveState(state, storage) {
   }
 }
 
+/**
+ * Note when each part of the state (settings, problems, calendar…) last
+ * changed on this device, so sync can let the more recent edit win a conflict.
+ */
+export function stampEdits(prev, next, now = new Date().toISOString()) {
+  const edited = { ...obj(prev.meta && prev.meta.edited) };
+  let changed = false;
+  for (const k of Object.keys(next)) {
+    if (k === 'meta' || k === 'version') continue;
+    if (JSON.stringify(prev[k]) !== JSON.stringify(next[k])) {
+      edited[k] = now;
+      changed = true;
+    }
+  }
+  return changed ? { ...next, meta: { ...next.meta, edited } } : next;
+}
+
 export function createStore(storage) {
   const loaded = loadState(storage);
   let state = loaded.state;
@@ -251,7 +268,8 @@ export function createStore(storage) {
     update(fn) {
       const draft = clone(state);
       const res = fn(draft);
-      state = normalise(res && isObj(res) ? res : draft);
+      const prev = state;
+      state = stampEdits(prev, normalise(res && isObj(res) ? res : draft));
       persisted = saveState(state, storage);
       listeners.forEach((l) => l(state));
     },

@@ -2,7 +2,7 @@
 
 A phone app (installable PWA) for a nine-month software engineering internship plan. It re-plans itself from your **academic calendar**, **class timetable** and **progress** every time you open it, so it keeps working when the university moves dates, your timetable changes, or a week turns out heavier than expected.
 
-No accounts, no server, no dependencies. Your data stays on your phone (with backup/restore).
+No accounts, no server, no dependencies. Your data stays on your phone (with backup/restore), and can optionally sync to your laptop through a secret GitHub Gist.
 
 ## What it does
 
@@ -43,7 +43,7 @@ Thursday 22 October · Normal week · lectures CSM 255, CSM 281, CSM 297
 | **Plan** | **Roadmap**: the 35 modules (W1–W39), weekly deliverables and projected dates. **Learn**: tracks, weeks target, video chapters, lessons. **Playbook**: priorities, decision rules, DSA mastery criteria, CS syllabus, the 22-company matrix. |
 | **Schedule** | Any week, day by day (what you did on past days, what's planned from today), your timetables (one per semester) and the academic calendar — all editable, with paste-as-text. |
 | **Track** | Weekly scorecard, problem bank (up next / due / attempted / solved, by-pattern stats, Medium readiness), application tracker with eligibility checks and an internship-vs-exam clash check, evidence checklists. |
-| **Settings** | How much goes on each day's list for Break / Normal / Heavy / Exam days, lecture-day boost, problem order, preview any date, backup/restore. |
+| **Settings** | How much goes on each day's list for Break / Normal / Heavy / Exam days, lecture-day boost, problem order, preview any date, sync between devices, backup/restore. |
 
 ## How it adapts
 
@@ -87,12 +87,24 @@ It opens full-screen from the icon and works offline after the first visit.
 
 Everything is stored in the browser's local storage on that device. Use **Settings → Back up** now and then (on phones this opens the share sheet so you can save it to Drive/Files), and **Restore** to move to a new phone. The app reminds you if you haven't backed up in a while.
 
+### Sync between your phone and laptop
+
+There's no server: the app keeps your data in a secret GitHub Gist on your own account.
+
+1. Create a GitHub token with only the **gist** scope ([create token](https://github.com/settings/tokens/new?scopes=gist&description=Roadmap%20sync)).
+2. **Settings → Sync between devices**: paste it and tap **Connect**. The first device creates the gist.
+3. Do the same on your other device with the same token. It finds the gist and merges both devices' progress.
+
+Sync runs when the app opens or comes back to the foreground, about 20 seconds after a change, when you leave the app, and whenever you tap **Sync now**. Each device remembers the copy it last synced, so merging is three-way. Lists with ids (problems, the DSA log, calendar events, lessons, applications) are merged item by item. Ticks and finished lessons from both devices are kept, and anything deleted on one device stays deleted. When both devices changed the same thing, the more recent edit wins; for a problem, the later attempt wins the whole problem. The "preview as if today were…" date stays on its own device.
+
+The token is stored only on that device and never synced. A secret gist is unlisted but not private: anyone with its exact link could read it.
+
 ## Development
 
 Requires Node 18+. There are no npm dependencies.
 
 ```bash
-npm test          # 43 tests: planner, reviews, import, engine, storage (node:test)
+npm test          # planner, reviews, import, engine, storage and sync tests (node:test)
 npm run dev       # build + serve public/ at http://localhost:5173
 npm run build     # stamp version + offline file list into public/sw.js
 ```
@@ -110,6 +122,7 @@ public/
     dates.js          day-number date maths (no time-zone surprises)
     parse.js          plain-text timetable/calendar import
     store.js          state, local storage, backup/restore, input repair
+    sync.js           three-way merge and GitHub Gist sync
     data/defaults.js  KNUST 2026/27 calendar, Group 1 timetable, modules, playbook
     views/            today, plan, schedule, track, settings
 tests/                engine, planner, import tests (+ fixtures/trackers.xlsx)

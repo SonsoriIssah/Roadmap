@@ -2,6 +2,7 @@ import { h, card, cardHeader, button, segmented, field, input, select, toast, co
 import { MODES, MODE_ORDER, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_MODULES, DEFAULT_SETTINGS, DEFAULT_TRACKS, DAILY_FIELDS } from '../data/defaults.js';
 import { isISODate, toISO, fmtDay, toDay } from '../dates.js';
 import { exportJSON, importJSON, defaultState } from '../store.js';
+import { syncConfig, saveSyncConfig, disconnectSync, isSyncOn, TOKEN_URL } from '../sync.js';
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
 
@@ -95,6 +96,7 @@ export function render(app) {
       ),
     ),
 
+    syncCard(app),
     dataCard(app),
     resetCard(app),
     aboutCard(app),
@@ -166,6 +168,66 @@ function installCard(app) {
   );
 }
 
+function syncCard(app) {
+  const cfg = syncConfig();
+  const title = 'Sync between devices';
+  if (!cfg.token) {
+    let token = '';
+    const connect = async () => {
+      const t = token.trim();
+      if (!t) return toast('Paste your GitHub token first');
+      saveSyncConfig({ token: t });
+      toast('Connecting to GitHub…');
+      const res = await app.sync({ force: true });
+      if (res && res.status === 'error') {
+        if ([401, 403].includes(res.error.status)) disconnectSync();
+        toast(res.error.message);
+        app.rerender();
+      } else toast(res && res.pulled ? 'Sync is on: data from your other device is in' : 'Sync is on');
+    };
+    return card(
+      cardHeader(title, null, 'Keep your phone and laptop in step through a secret GitHub Gist. No server needed.'),
+      h(
+        'ol',
+        { class: 'tight small' },
+        h('li', null, 'Create a GitHub token with only the ', h('strong', null, 'gist'), ' scope: ', h('a', { href: TOKEN_URL, target: '_blank', rel: 'noopener' }, 'create token ↗'), '.'),
+        h('li', null, 'Paste it below and tap Connect.'),
+        h('li', null, 'Do the same on your other device with the same token. It finds the same gist and merges both devices’ progress.'),
+      ),
+      field('GitHub token', input({ type: 'password', autocomplete: 'off', spellcheck: 'false', placeholder: 'ghp_…', oninput: (e) => (token = e.target.value) })),
+      h('p', { class: 'small muted' }, 'The token stays on this device and is never synced. Your data goes to a secret gist on your account: it is unlisted, but anyone with its exact link could read it.'),
+      h('div', { class: 'row-actions wrap' }, button('Connect', connect, { kind: 'primary', iconName: 'link' })),
+    );
+  }
+
+  const last = cfg.lastSync ? new Date(cfg.lastSync) : null;
+  const syncNow = async () => {
+    const res = await app.sync({ force: true });
+    if (!res) return toast('Sync is off');
+    if (res.status === 'error') return toast(res.error.message);
+    toast(res.pulled ? 'Synced: changes from your other device are in' : res.pushed ? 'Synced: your changes are saved to GitHub' : 'Already in sync');
+  };
+  const turnOff = async () => {
+    if (await confirmSheet('Stop syncing on this device? Your data stays here and in the gist.', { title: 'Turn off sync', confirmLabel: 'Turn off', danger: false })) {
+      disconnectSync();
+      toast('Sync turned off on this device');
+      app.rerender();
+    }
+  };
+  return card(
+    cardHeader(title, null, 'Syncs when the app opens, about 20 seconds after a change, and when you leave the app.'),
+    h('p', { class: 'small' }, icon('clock', { size: 14 }), last ? ` Last synced ${last.toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ' Not synced yet.'),
+    cfg.error ? h('p', { class: 'small warn-text' }, icon('alert', { size: 14 }), ` ${cfg.error}`) : null,
+    h(
+      'div',
+      { class: 'row-actions wrap' },
+      button('Sync now', syncNow, { kind: 'primary', iconName: 'upload' }),
+      cfg.gistId ? h('a', { href: `https://gist.github.com/${cfg.gistId}`, target: '_blank', rel: 'noopener', class: 'button button-sm button-ghost' }, 'Open gist ↗') : null,
+      button('Turn off', turnOff, { kind: 'ghost', size: 'sm' }),
+    ),
+  );
+}
+
 function dataCard(app) {
   const meta = app.state.meta || {};
   const fileInput = h('input', {
@@ -216,7 +278,7 @@ function dataCard(app) {
   };
 
   return card(
-    cardHeader('Your data', null, 'Everything is stored on this device only. Back up to move to a new phone or recover from a cleared browser.'),
+    cardHeader('Your data', null, isSyncOn() ? 'Stored on this device and synced to your gist. A backup file is still a good safety net.' : 'Everything is stored on this device only. Back up to move to a new phone or recover from a cleared browser.'),
     h('p', { class: 'small' }, meta.lastBackupAt ? `Last backup: ${fmtDay(toDay(meta.lastBackupAt.slice(0, 10)), { year: true })}` : 'No backup yet.'),
     !app.store.persisted ? h('p', { class: 'small warn-text' }, icon('alert', { size: 14 }), ' This browser is blocking storage — changes will be lost when you close the app.') : null,
     h('div', { class: 'row-actions wrap' }, button('Back up', doExport, { kind: 'primary', iconName: 'download' }), button('Restore', () => fileInput.click(), { kind: 'secondary', iconName: 'upload' }), fileInput),
@@ -240,7 +302,7 @@ function resetCard(app) {
       button('Roadmap modules', () => reset('roadmap', 'Restore the original modules and order? Progress on modules with the same id is kept.', (s) => { s.modules = clone(DEFAULT_MODULES); }), { kind: 'secondary', size: 'sm' }),
       button('Java track', () => reset('Java track', 'Restore the default Java lessons? Pasted video chapters are removed.', (s) => { s.tracks = [...s.tracks.filter((t) => t.id !== 'java'), clone(DEFAULT_TRACKS[0])]; }), { kind: 'secondary', size: 'sm' }),
       button('Settings', () => reset('settings', 'Restore default settings?', (s) => { s.settings = clone(DEFAULT_SETTINGS); }), { kind: 'secondary', size: 'sm' }),
-      button('Everything', () => reset('everything', 'Erase all progress, applications and logs on this device? Back up first if unsure.', () => defaultState()), { kind: 'ghost-danger', size: 'sm' }),
+      button('Everything', () => reset('everything', isSyncOn() ? 'Erase all progress, applications and logs? Sync is on, so this also erases them on your other devices. Back up first if unsure.' : 'Erase all progress, applications and logs on this device? Back up first if unsure.', () => defaultState()), { kind: 'ghost-danger', size: 'sm' }),
     ),
   );
 }
