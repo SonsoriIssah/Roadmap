@@ -194,7 +194,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         if (win) for (let x = d; x <= win.end; x++) sum += weight(x);
         return sum;
       };
-      return { t, win, queue: pending, doneToday, weight, weightLeft, rem: remainingMinutes(t, lessonDone, today), finish: null, prevFinish: null };
+      const total = t.lessons.reduce((sum, l) => sum + lessonMinutes(l), 0);
+      return { t, win, queue: pending, doneToday, weight, weightLeft, total, wTotal: win ? weightLeft(win.start) : 0, rem: remainingMinutes(t, lessonDone, today), finish: null, prevFinish: null };
     });
 
   // --- Problems ----------------------------------------------------------------
@@ -264,7 +265,14 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       const w = tr.weight(d);
       const left = tr.win && d <= tr.win.end ? tr.weightLeft(d) : 0;
       // On the window's last day, take whatever is left so the track ends on target.
-      const quota = left > 0 ? (d === tr.win.end && w > 0 ? Math.max(w, tr.rem) : Math.min(w, (tr.rem * w) / left)) : w;
+      const share = left > 0 ? (d === tr.win.end && w > 0 ? Math.max(w, tr.rem) : Math.min(w, (tr.rem * w) / left)) : w;
+      // Lessons missed on earlier days move to the next day rather than being
+      // spread thinly over the rest of the window: catch up to where the track
+      // should be by the end of this day, adding at most one normal day's
+      // learning and staying within the day's time budget.
+      const behind = tr.win && tr.wTotal > 0 && w > 0 ? tr.total * (1 - tr.weightLeft(d + 1) / tr.wTotal) - (tr.total - tr.rem) : 0;
+      const cap = Math.max(w, Math.min(w + load.learn, (load.maxTechMin ?? 180) - 10));
+      const quota = Math.max(share, Math.min(behind, cap));
       const chosen = isToday ? [...tr.doneToday] : [];
       let used = chosen.reduce((sum, l) => sum + lessonMinutes(l), 0);
       let extraN = isToday ? Number(extra.lessons) || 0 : 0;
@@ -355,6 +363,37 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     const inXmas = isXmasBreak(d);
     const trackKeys = tracks.flatMap((tr) => tr.t.keywords || []);
     const lectured = [];
+    // Lecture revisions you missed in the past week come back today, until
+    // you do them (never from before the plan started).
+    if (isToday && inSem1 && !inXmas && (r.mode === 'normal' || r.mode === 'break')) {
+      const since = Math.max(d - 7, isISODate(s.planStart) ? toDay(s.planStart) : d - 7);
+      for (let p = since; p < d; p++) {
+        if (!isSem1StudyWindow(p) || isXmasBreak(p)) continue;
+        const lectureMin = dailyLoad(resolveDay(p, ctx).mode, s).lecture;
+        if (lectureMin <= 0) continue;
+        const pIso = toISO(p);
+        const seen = new Set();
+        for (const c of classesOn(p, ctx)) {
+          if (seen.has(c.code)) continue;
+          seen.add(c.code);
+          const key = `revise:${pIso}:${c.code}`;
+          if (checks[key] && !doneOn(checks[key], iso)) continue;
+          pushItem(items, {
+            key,
+            type: 'revise',
+            category: 'academic',
+            isTechnical: false,
+            courseCode: c.code,
+            scheduledDate: iso,
+            title: `Revise ${c.code} · ${c.title.replace(/\s*\(combined\)\s*$/i, '')}`,
+            desc: `Missed from ${fmtDay(p)}. ${isCourseDay([c], tracks.flatMap((tr) => tr.t.keywords || [])) ? "Rewrite that lecture's examples in code, then add one variation of your own." : 'Go over the notes from that lecture and write three questions an exam could ask.'}`,
+            meta: `Coursework · from ${fmtDay(p, { weekday: true })}`,
+            min: lectureMin,
+            done: doneOn(checks[key], iso),
+          }, d);
+        }
+      }
+    }
     if (inSem1 && !inXmas && load.lecture > 0) {
       const seen = new Set();
       for (const c of classes) {

@@ -250,7 +250,7 @@ test('lecture days list a revision item per course, with more Java on CSM 281 da
 test('weekends rotate through courses; exams rotate three a day with no new problems', () => {
   const { s, ctx } = setup();
   const sat = plan(s, ctx, d('2026-10-24')).days[0];
-  assert.equal(sat.items.filter((i) => i.type === 'revise').length, 2);
+  assert.equal(sat.items.filter((i) => i.type === 'revise' && i.meta === 'Revision').length, 2); // plus the week's missed lecture revisions
   const sunday = plan(s, ctx, d('2026-10-25')).days[0];
   assert.ok(!sunday.items.some((i) => i.recurrence === 'weekly'));
   assert.ok(!sat.items.some((i) => i.title === 'Check new openings and deadlines'));
@@ -640,4 +640,25 @@ test('interview practice: a question at weekends, the next one each time, daily 
   const may = plan(s, ctx, d('2027-05-03'), d('2027-05-03'), 1).days[0]; // Monday
   assert.ok(may.items.some((i) => i.type === 'interview'));
   assert.ok(!plan(s, ctx, d('2027-01-30')).days[0].items.some((i) => i.type === 'interview')); // a Saturday in the January exams
+});
+
+test('a missed day moves to the next day: its Java chapters and its lecture revisions', () => {
+  const f = startFresh(defaultState(), '2026-10-23');
+  const ctx = makeContext(f);
+  const fri = d('2026-10-23');
+  const java = (day) => day.items.filter((i) => i.type === 'lesson').flatMap((i) => i.lessonIds);
+  const planned = plan(f, ctx, fri, fri, 5).days; // Fri → Tue
+  for (const day of planned.slice(0, 3)) for (const id of java(day)) f.lessonDone[id] = toISO(day.day); // did Fri–Sun
+  f.checks['revise:2026-10-23:CSM 273'] = '2026-10-23';
+  const monday = java(planned[3]);
+  const tuesday = plan(f, ctx, d('2026-10-27')).days[0];
+  assert.deepEqual(java(tuesday).slice(0, monday.length), monday); // Monday's chapters first
+  assert.ok(java(tuesday).length > monday.length); // then Tuesday's own
+  const carried = tuesday.items.filter((i) => i.type === 'revise' && /from Mon 26 Oct/.test(i.meta)).map((i) => i.courseCode);
+  assert.deepEqual(carried, ['CSM 273', 'CSM 251', 'ENGL 263']);
+  assert.ok(!tuesday.items.some((i) => /from Fri 23 Oct/.test(i.meta || ''))); // done on its own day
+  // Ticking a carried revision today keeps it (done) on today's list and stops it coming back.
+  f.checks['revise:2026-10-26:CSM 273'] = '2026-10-27';
+  assert.ok(plan(f, ctx, d('2026-10-27')).days[0].items.find((i) => i.key === 'revise:2026-10-26:CSM 273').done);
+  assert.ok(!plan(f, ctx, d('2026-10-28')).days[0].items.some((i) => i.key === 'revise:2026-10-26:CSM 273'));
 });
