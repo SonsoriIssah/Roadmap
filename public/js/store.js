@@ -5,6 +5,7 @@ import {
   DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_COURSES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
   JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, CSM281, BACKEND_TRACK, moshLessons,
 } from './data/defaults.js';
+import { normaliseDayPlan } from './timeplan.js';
 import { toDay, toISO, isISODate } from './dates.js';
 
 export const STORAGE_KEY = 'roadmap.state.v1';
@@ -64,6 +65,7 @@ export function normalise(input) {
       settings.daily[mode][k] = Number.isFinite(n) && n >= 0 ? n : def;
     }
   }
+  settings.dayPlan = normaliseDayPlan(settings.dayPlan);
   if (!['roadmap', 'sheet'].includes(settings.problemOrder)) settings.problemOrder = base.settings.problemOrder;
   settings.pace = { ...base.settings.pace, ...obj(raw.settings && raw.settings.pace) };
   for (const k of Object.keys(settings.pace)) {

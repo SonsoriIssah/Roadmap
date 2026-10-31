@@ -2,8 +2,9 @@
 // importing your problem sheet, pasting video chapters, editing lessons).
 
 import { h, button, field, input, select, textarea, openSheet, toast, icon, segmented } from '../ui.js';
-import { toISO, toDay, fmtDuration, fmtDay, isISODate } from '../dates.js';
+import { toISO, toDay, fmtDuration, fmtDay, isISODate, fromMin } from '../dates.js';
 import { planDays } from '../planner.js';
+import { suggestTimes } from '../timeplan.js';
 import { applyOutcome, outcomeChoices, reviewTask, stageOf, targetMinutes, STAGE_LABEL, candidateSheets, rowsToProblems, mergeProblems } from '../problems.js';
 import { readSpreadsheetFile } from '../xlsx.js';
 import { parseChapters, importChapters, parseTimestamp, lessonsToText, parseLessonsText } from '../learn.js';
@@ -32,13 +33,19 @@ const TYPE_LABEL = {
 
 /** Render a day's items as a numbered (i, ii, iii…) list. */
 export function taskList(app, day, { interactive = false } = {}) {
-  if (!day.items.length) {
+  if (!day.items.length && !day.roadmap) {
     return h('p', { class: 'muted small' }, day.mode === 'off' ? 'Off — nothing planned.' : 'Nothing planned for this day.');
   }
-  return h(
+  const now = new Date();
+  const times = day.past ? null : suggestTimes(day, app.state.settings.dayPlan, { nowMin: day.day === app.realToday ? now.getHours() * 60 + now.getMinutes() : null });
+  const slotsOf = (item) => (times && times.slots.get(item.key)) || [];
+  // Open tasks in time order, then any with no time left, then what's done.
+  const startOf = (item) => (item.done ? 1e5 : slotsOf(item)[0]?.s ?? 1e4);
+  const items = times ? [...day.items].sort((a, b) => startOf(a) - startOf(b)) : day.items;
+  const list = h(
     'ol',
     { class: 'todo' },
-    day.items.map((item) => {
+    items.map((item) => {
       const tick = interactive
         ? h('input', {
             type: 'checkbox',
@@ -79,6 +86,7 @@ export function taskList(app, day, { interactive = false } = {}) {
             h('span', { class: 'todo-tag' }, TYPE_LABEL[item.type] || item.type),
             item.meta ? h('span', null, item.meta) : null,
             item.min ? h('span', null, fmtDuration(item.min)) : null,
+            !item.done && slotsOf(item).length ? h('span', { class: 'todo-time' }, fmtSlots(slotsOf(item))) : null,
             item.url && !item.action ? h('a', { href: item.url, target: '_blank', rel: 'noopener', class: 'todo-link' }, 'Open ↗') : null,
             interactive && item.type === 'module' && !item.done ? h('button', { type: 'button', class: 'linkish', onclick: () => app.nav('plan') }, 'Plan') : null,
           ),
@@ -86,6 +94,29 @@ export function taskList(app, day, { interactive = false } = {}) {
       );
     }),
   );
+  return times ? h('div', { class: 'stack-sm' }, list, timeNotes(app, day, times)) : list;
+}
+
+const fmtSlots = (slots) => slots.map((x) => `${fromMin(x.s)}–${fromMin(x.e)}`).join(', ');
+
+/** The roadmap block (ticked in Plan) and anything the free time couldn't hold. */
+function timeNotes(app, day, times) {
+  const roadmapSlots = times.slots.get('roadmap');
+  const short = times.short.reduce((sum, x) => sum + x.min, 0);
+  return [
+    day.roadmap
+      ? h(
+          'p',
+          { class: 'small' },
+          roadmapSlots ? h('span', { class: 'todo-time' }, fmtSlots(roadmapSlots)) : null,
+          ` Roadmap: ${day.roadmap.id} · ${day.roadmap.title} (${fmtDuration(day.roadmap.min)}) `,
+          h('button', { type: 'button', class: 'linkish', onclick: () => app.nav('plan') }, 'Plan'),
+        )
+      : null,
+    short
+      ? h('p', { class: 'small warn-text' }, `${fmtDuration(short)} doesn't fit in the free time left: anything above with no time. Do it if you can, or change your hours in Settings.`)
+      : null,
+  ];
 }
 
 // ---------------------------------------------------------------------------

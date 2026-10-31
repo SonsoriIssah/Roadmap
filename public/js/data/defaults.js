@@ -53,6 +53,15 @@ export const DEFAULT_SETTINGS = {
   },
   courseBoost: 2, // extra learning on days you have a lecture in the same subject
   problemOrder: 'roadmap', // roadmap: current topic first | sheet: your sheet's priority and order
+  // The hours suggested times can use, and the parts of them to keep free.
+  dayPlan: {
+    start: '06:00',
+    end: '22:00',
+    blocked: [
+      { label: 'Lunch', start: '12:30', end: '13:30' },
+      { label: 'Dinner', start: '18:30', end: '19:30' },
+    ],
+  },
 };
 
 export const DAILY_FIELDS = [
@@ -703,19 +712,42 @@ export const DSA_PATTERNS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Interview practice: one question a day to answer aloud, in rotation —
-// at weekends until the company-focus months, then every day from May.
-// Only the questions and a cue live here (this site is public); your full
-// answers stay in your own PDFs, which each cue points to.
+// Interview practice: one step a day. A behavioural answer is memorised a piece
+// at a time over about a week, then said in full on a final day; each story is
+// followed by one project question to answer aloud.
+// Only the questions, a cue and the names of the pieces live here (this site is
+// public); your full answers stay in your own PDFs, which each cue points to.
 // ---------------------------------------------------------------------------
-const BQ = (id, q, cue, source) => ({ id, kind: 'behavioral', q, cue, source });
+const BQ_PIECES = {
+  iq1: ['Backend interest', 'LedgerCore', 'Aggregation API', 'Robotics Club mentoring', 'Why this company'],
+  iq3: ['The situation: FarmLink and who disagreed', 'The two options: build a delivery service or use an existing one', 'The research you did', 'How the research settled it', 'What you learned about disagreeing'],
+  iq5: ['The system: LedgerCore and its audit chain', 'The bug: the chain forked under concurrency', 'The fix: UNIQUE on previous_hash', 'The fix: retries', 'How you knew it worked'],
+  iq7: ['Your opening answer', 'LedgerCore concurrency testing', 'Enjoying finding what can go wrong'],
+  iq9: ['FarmLink: team lead and backend engineer', 'Agreeing the tools and the MVP', 'Keeping the scope realistic', 'The result: first place'],
+  iq11: ['The situation', 'The assumption: SERIALIZABLE would protect every business rule', 'How you found out it did not', 'What you changed', 'What you do differently now'],
+  iq13: ['How you use AI when coding', 'The example: AI suggested immediate retries', 'Your choice: exponential backoff with jitter', 'How you tested it'],
+  iq15: ['Robotics Club: the three new students', 'How you taught them over about three weeks', 'The result: onto the senior team'],
+  iq17: ['Scale and reliability of its systems', 'Your financial-data projects', 'Learning from experienced engineers'],
+  iq19: ['The situation: the FarmLink hackathon', 'Clear priorities over doing everything', 'The result and what you learned'],
+  iq21: ['The situation: the Aggregation API', 'What you had to learn: Redis, Kafka, providers, deduplication', 'One piece at a time', 'Testing each piece before connecting'],
+  iq23: ['Must-have vs can-wait', 'The example: the FarmLink MVP', 'Telling people early'],
+  iq25: ['The situation: Robotics mentoring', 'Small steps', 'Simple examples before code'],
+  iq27: ['Separate it from ego', 'Understand the reason', 'Apply it', 'Your feedback story (S12), filled in honestly'],
+  iq29: ['The FarmLink delivery decision', 'What you thought at first', 'The evidence that changed it'],
+  iq31: ['The suggestion: immediate retries', 'Why they would collide under load', 'Your choice: backoff with jitter', 'How you tested it'],
+  iq33: ['Find what changed', 'Discuss the impact', 'Decide what to change, remove or delay'],
+  iq35: ['LedgerCore pushed you technically', 'FarmLink as a team lead', 'Why these two'],
+  iq37: ['Strength: problem solving', 'Strength: persistence, learning by building', 'Weakness: going too deep', 'What you do about it: checkpoints'],
+  iq39: ['Curiosity', 'Hands-on systems you built', 'Willingness to learn'],
+  iq41: ['Where you want to grow: large-scale backend and distributed systems', 'Good engineering: correctness first', 'Then simplicity and testing'],
+};
+const BQ = (id, q, cue, source) => ({ id, kind: 'behavioral', q, cue, source, pieces: BQ_PIECES[id] });
 const PQ = (id, q, cue, source) => ({ id, kind: 'project', q, cue, source });
 const JPM = 'your JPMorgan Behavioral Prep';
 const LCH = 'your LedgerCore Engineering Handbook';
 const AGH = 'your Aggregation API Engineering Handbook';
 
 export const INTERVIEW = {
-  dailyFrom: '2027-05-01',
   followUps: [
     'What was your personal contribution?',
     'What would you do differently?',

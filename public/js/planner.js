@@ -3,7 +3,7 @@
 // tasks), so tomorrow's list continues where today's leaves off and anything
 // you skip simply rolls forward. Pure — no DOM or storage.
 
-import { toISO, toDay, isISODate, weekKey, fmtDay, weekdayIndex } from './dates.js';
+import { toISO, toDay, isISODate, weekKey, fmtDay } from './dates.js';
 import { resolveDay, classesOn, timetableOn } from './engine.js';
 import { CHECKLISTS, DEFAULT_SETTINGS, INTERVIEW } from './data/defaults.js';
 import { orderNew, dueProblems, reviewTask, reviewGap, stageOf, targetMinutes, applyOutcome, STAGE_LABEL } from './problems.js';
@@ -68,13 +68,12 @@ export function pushItem(dayItems, item, d) {
 
 /** Highest priority first. Lower number = kept first when a day is over the cap. */
 // Application actions come before the Upsoma fundamentals item (2.5).
-const RANK = { recall: 0, revisit: 0, problem: 1, lesson: 2, career: 2.2, interview: 2.4, revise: 3, academic: 3, kickoff: 5, module: 6, personal: 7 };
+const RANK = { recall: 0, revisit: 0, problem: 1, lesson: 2, career: 2.2, revise: 3, academic: 3, kickoff: 5, module: 6, personal: 7 };
 const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
 
 /**
- * Keep one slot each for the day's lesson, a new problem and (on practice
- * days) interview practice, so reviews never crowd them out entirely; reviews
- * fill the slots left. A kind already done that day needs no slot. Skipped
+ * Keep one slot each for the day's lesson and a new problem, so reviews never
+ * crowd them out entirely; reviews fill the slots left. A kind already done that day needs no slot. Skipped
  * when there is only one slot (heavy and exam days). A review backlog gives up
  * the new-problem slot, so new problems can't outrun the reviews they create.
  */
@@ -82,7 +81,7 @@ const REVIEW_BACKLOG_LIMIT = 5;
 function reserveSlots(open, slots, items, reviewBacklog = 0) {
   if (slots < 2) return open;
   const picks = [];
-  for (const type of ['lesson', 'problem', 'interview']) {
+  for (const type of ['lesson', 'problem']) {
     if (type === 'problem' && reviewBacklog > REVIEW_BACKLOG_LIMIT) continue;
     if (items.some((i) => i.type === type && i.done)) continue;
     const x = open.find((o) => o.item.type === type);
@@ -91,6 +90,44 @@ function reserveSlots(open, slots, items, reviewBacklog = 0) {
   if (!picks.length) return open;
   return [...picks, ...open.filter((o) => !picks.includes(o))];
 }
+/**
+ * Every interview practice step, in order: a behavioural answer's pieces, then
+ * saying it all on a final day; a project question is a single step. A step's
+ * id is "<question id>:<piece number or all>", or the question id alone.
+ */
+export function interviewSteps(questions) {
+  return questions.flatMap((q) => (q.pieces ? [...q.pieces.map((_, i) => ({ q, part: String(i + 1) })), { q, part: 'all' }] : [{ q, part: null }]));
+}
+const stepId = (st) => (st.part ? `${st.q.id}:${st.part}` : st.q.id);
+
+/** The step a check key (interview:<date>:<step id>) records. */
+function stepFromKey(key, questions) {
+  const [, , id, part = null] = key.split(':');
+  const q = questions.find((x) => x.id === id);
+  return q ? { q, part } : null;
+}
+
+function interviewItem({ q, part }, iso, followUp) {
+  const meta = (what) => `${what} · check against ${q.source}`;
+  const item = { key: `interview:${iso}:${part ? `${q.id}:${part}` : q.id}`, type: 'interview', category: 'career', isTechnical: false, scheduledDate: iso, min: 10 };
+  if (part === 'all') {
+    return { ...item, title: `Say it all: ${q.q}`, desc: `No notes, every piece in order: ${q.pieces.join(' → ')}. Keep it to 45–90 seconds, then answer a follow-up: “${followUp}”`, meta: meta('Behavioural · final day') };
+  }
+  if (part) {
+    const n = Number(part);
+    const recap = n > 1 ? ` Then say the pieces so far in order: ${q.pieces.slice(0, n).join(' → ')}.` : '';
+    return { ...item, title: `${q.q} Piece ${n} of ${q.pieces.length}: ${q.pieces[n - 1]}`, desc: `Read just this piece, close your notes and say it from memory three times.${recap}`, meta: meta('Behavioural · memorise') };
+  }
+  return {
+    ...item,
+    title: `Practise aloud: ${q.q}`,
+    desc: q.kind === 'behavioral'
+      ? `${q.cue} Keep it to 45–90 seconds, then answer a follow-up: “${followUp}”`
+      : `${q.cue} Answer cold, then push yourself through why → why not → what if → how would it scale.`,
+    meta: meta(q.kind === 'behavioral' ? 'Behavioural' : 'Technical · project'),
+  };
+}
+
 /** Module the forecast places on a day (falls back to the current one). */
 function moduleOn(day, today, modules, fc, current) {
   if (day <= today || !fc) return current;
@@ -244,12 +281,16 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
   const basicsKeys = Object.entries(checks).filter(([k]) => k.startsWith('revise:') && k.includes(':basics:'));
   const basicsBase = basicsKeys.filter(([, v]) => v !== iso0).length;
   const basicsDoneToday = basicsKeys.find(([, v]) => v === iso0);
-  // Interview practice: keys are interview:<date>:<question id>.
+  // Interview practice: keys are interview:<date>:<step id>. Steps wait for you,
+  // so a missed day moves the rest on by a day. Once every answer has been
+  // learned, whole questions come round in rotation to keep them fresh.
   const ivQuestions = s.interviewPractice !== false ? INTERVIEW.questions : [];
   const ivKeys = Object.entries(checks).filter(([k]) => k.startsWith('interview:'));
   const ivDoneToday = ivKeys.find(([, v]) => v === iso0);
+  const ivDoneStep = ivDoneToday ? stepFromKey(ivDoneToday[0], ivQuestions) : null;
+  const ivDone = new Set(ivKeys.map(([k]) => k.split(':').slice(2).join(':')));
+  const ivQueue = interviewSteps(ivQuestions).filter((st) => !ivDone.has(stepId(st)));
   let ivNext = ivKeys.filter(([, v]) => v !== iso0).length;
-  const ivDailyFrom = toDay(INTERVIEW.dailyFrom);
   const days = [];
   const last = from + Math.max(count, horizon) - 1;
   for (let d = today; d <= last; d++) {
@@ -520,29 +561,12 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // 4e. Interview practice: one question to answer aloud, in rotation —
-    // at weekends until the company-focus months, then every day.
-    const practiceDay = weekdayIndex(d) >= 5 || d >= ivDailyFrom;
-    if (ivQuestions.length && practiceDay && (r.mode === 'normal' || r.mode === 'break')) {
-      const doneQ = isToday && ivDoneToday ? ivQuestions.find((q) => ivDoneToday[0].endsWith(`:${q.id}`)) : null;
-      const q = doneQ || ivQuestions[ivNext % ivQuestions.length];
-      const followUp = INTERVIEW.followUps[ivNext % INTERVIEW.followUps.length];
+    // 4e. Interview practice: one step a day, except before and during exams.
+    if (ivQuestions.length && (r.mode === 'normal' || r.mode === 'break')) {
+      const step = (isToday && ivDoneStep) || ivQueue.shift() || { q: ivQuestions[ivNext % ivQuestions.length], part: null };
+      const item = interviewItem(step, iso, INTERVIEW.followUps[ivNext % INTERVIEW.followUps.length]);
       ivNext++;
-      const key = `interview:${iso}:${q.id}`;
-      pushItem(items, {
-        key,
-        type: 'interview',
-        category: 'career',
-        isTechnical: false,
-        scheduledDate: iso,
-        title: `Practise aloud: ${q.q}`,
-        desc: q.kind === 'behavioral'
-          ? `${q.cue} Keep it to 45–90 seconds, then answer a follow-up: “${followUp}”`
-          : `${q.cue} Answer cold, then push yourself through why → why not → what if → how would it scale.`,
-        meta: `${q.kind === 'behavioral' ? 'Behavioural' : 'Technical · project'} · check against ${q.source}`,
-        min: 10,
-        done: doneOn(checks[key], iso),
-      }, d);
+      pushItem(items, { ...item, done: doneOn(checks[item.key], iso) }, d);
     }
 
     // 5. Applications
@@ -577,12 +601,12 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // Keep today's non-school task list to three items (five on break days). Coursework remains
-    // visible but does not use one of those slots.
+    // Keep today's non-school task list to three items (five on break days). Coursework and
+    // the short interview step remain visible but do not use one of those slots.
     if (isToday) {
       const nonSchool = items
         .map((item, idx) => ({ item, idx }))
-        .filter(({ item }) => item.category !== 'academic');
+        .filter(({ item }) => item.category !== 'academic' && item.type !== 'interview');
       const todayCap = r.mode === 'break' ? Math.max(3, load.maxTech) : 3; // free days can hold more
       if (nonSchool.length > todayCap) {
         const completed = nonSchool.filter(({ item }) => item.done);
@@ -597,7 +621,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         for (const { item } of open.slice(0, free)) kept.add(item);
         const droppedTech = new Set(nonSchool.map(({ item }) => item).filter((item) => !kept.has(item) && (item.isTechnical || item.category === 'technical')));
         restoreDroppedTech(d, droppedTech);
-        const filtered = items.filter((item) => item.category === 'academic' || kept.has(item));
+        const filtered = items.filter((item) => item.category === 'academic' || item.type === 'interview' || kept.has(item));
         items.length = 0;
         items.push(...filtered);
       }
@@ -681,7 +705,8 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     }
 
     if (d >= from && d < from + count) {
-      days.push({ day: d, mode: r.mode, resolved: r, classes, items, minutes: items.reduce((sum, i) => sum + (i.min || 0), 0) });
+      const roadmap = mod && load.module > 0 ? { id: mod.id, title: mod.title, min: load.module } : null;
+      days.push({ day: d, mode: r.mode, resolved: r, classes, items, roadmap, minutes: items.reduce((sum, i) => sum + (i.min || 0), 0) });
     }
     // With a horizon, keep walking only until every track is finished.
     if (horizon && d >= from + count - 1 && tracks.every((tr) => !tr.queue.length)) break;
@@ -780,8 +805,8 @@ export function historyDay(day, state, ctx) {
       const p = byId.get(key.split(':')[2]);
       pushItem(items, { key, type: 'recall', category: 'technical', isTechnical: true, title: `Recall ${p ? p.title : 'a problem'}`, url: p ? p.url : '', done: true, scheduledDate: iso }, day);
     } else if (key.startsWith('interview:')) {
-      const q = INTERVIEW.questions.find((x) => x.id === key.split(':')[2]);
-      pushItem(items, { key, type: 'interview', category: 'career', isTechnical: false, title: `Practise aloud: ${q ? q.q : 'interview question'}`, done: true, scheduledDate: iso }, day);
+      const step = stepFromKey(key, INTERVIEW.questions);
+      pushItem(items, { key, type: 'interview', category: 'career', isTechnical: false, title: step ? interviewItem(step, iso, '').title : 'Practise aloud: interview question', done: true, scheduledDate: iso }, day);
     } else if (key.startsWith('career:') || key.startsWith('app:')) {
       pushItem(items, { key, type: 'career', category: 'career', isTechnical: false, title: key.startsWith('career:') ? 'Checked new openings and deadlines' : 'Application next action', done: true, scheduledDate: iso }, day);
     }

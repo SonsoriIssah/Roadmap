@@ -1,6 +1,6 @@
 import { h, card, cardHeader, button, segmented, field, input, select, toast, confirmSheet, icon } from '../ui.js';
 import { MODES, MODE_ORDER, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_MODULES, DEFAULT_SETTINGS, DEFAULT_TRACKS, DAILY_FIELDS } from '../data/defaults.js';
-import { isISODate, toISO, fmtDay, toDay } from '../dates.js';
+import { isISODate, isTime, toISO, fmtDay, toDay } from '../dates.js';
 import { exportJSON, importJSON, defaultState, startFresh } from '../store.js';
 import { syncConfig, saveSyncConfig, disconnectSync, isSyncOn, TOKEN_URL } from '../sync.js';
 
@@ -75,6 +75,7 @@ export function render(app) {
     ),
 
     dailyCard(app),
+    timesCard(app),
 
     card(
       cardHeader('Plan dates'),
@@ -149,6 +150,21 @@ function dailyCard(app) {
       { class: 'form-row' },
       field('Lecture-day boost', select([{ value: '1', label: 'None' }, { value: '1.5', label: '1.5×' }, { value: '2', label: '2×' }, { value: '3', label: '3×' }], String(s.courseBoost), { onchange: (e) => app.update((st) => { st.settings.courseBoost = Number(e.target.value); }) }), 'More Java on CSM 281 days.'),
       field('Problem order', select([{ value: 'roadmap', label: 'Roadmap topic first' }, { value: 'sheet', label: 'My sheet’s order' }], s.problemOrder, { onchange: (e) => app.update((st) => { st.settings.problemOrder = e.target.value; }) }), 'Both respect P0 → P1 → P2.'),
+    ),
+  );
+}
+
+function timesCard(app) {
+  const dp = app.state.settings.dayPlan;
+  const setTime = (fn) => (e) => {
+    if (isTime(e.target.value)) app.update((st) => fn(st.settings.dayPlan, e.target.value));
+  };
+  const time = (value, onchange) => input({ type: 'time', value, onchange });
+  return card(
+    cardHeader('Suggested times', null, 'Each day’s tasks are fitted around your lectures within these hours.'),
+    h('div', { class: 'form-row' }, field('Earliest start', time(dp.start, setTime((p, v) => { p.start = v; }))), field('Latest finish', time(dp.end, setTime((p, v) => { p.end = v; })))),
+    dp.blocked.map((b, i) =>
+      h('div', { class: 'form-row' }, field(`${b.label} from`, time(b.start, setTime((p, v) => { p.blocked[i].start = v; }))), field('until', time(b.end, setTime((p, v) => { p.blocked[i].end = v; })))),
     ),
   );
 }

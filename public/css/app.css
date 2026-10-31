@@ -1015,6 +1015,12 @@ ol.tight {
   color: var(--good-ink);
 }
 
+.todo-time {
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
 .todo-link {
   font-weight: 600;
   text-decoration: none;

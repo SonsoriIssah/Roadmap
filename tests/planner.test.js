@@ -11,9 +11,10 @@ import {
   applyOutcome, reviewGap, reviewTask, upcomingReviews, mapStage, dueProblems, problemsToCSV, slugify, readiness, leetcodeDays,
 } from '../public/js/problems.js';
 import { parseChapters, importChapters, videoLink, lessonsToText, parseLessonsText, lessonMinutes, fmtTimestamp } from '../public/js/learn.js';
-import { planDays, historyDay, semesterCourses } from '../public/js/planner.js';
+import { planDays, historyDay, semesterCourses, interviewSteps } from '../public/js/planner.js';
 
 const d = toDay;
+const capped = (i) => i.category !== 'academic' && i.type !== 'interview'; // what counts towards the day's task limit
 let n = 0;
 const makeId = () => `t${++n}`;
 
@@ -222,15 +223,15 @@ test('today keeps non-school work to five items on break days, three otherwise, 
   const { s, ctx } = setup();
   const [day] = plan(s, ctx, d('2026-10-07')).days;
   assert.equal(day.mode, 'break');
-  assert.equal(day.items.filter((i) => i.category !== 'academic').length, 5);
+  assert.equal(day.items.filter(capped).length, 5);
   const [teaching] = plan(s, ctx, d('2026-10-20')).days;
   assert.equal(teaching.mode, 'normal');
-  assert.equal(teaching.items.filter((i) => i.category !== 'academic').length, 3);
+  assert.equal(teaching.items.filter(capped).length, 3);
   assert.ok(!day.items.some((i) => ['module', 'kickoff'].includes(i.type) || i.recurrence === 'weekly'));
   assert.ok(!day.items.some((i) => i.type === 'revise')); // no lectures yet
   // The non-school limit applies only to today, not the forecasted days.
   const days = plan(s, ctx, d('2026-10-07'), d('2026-10-07'), 3).days;
-  assert.equal(days[0].items.filter((i) => i.category !== 'academic').length, 5);
+  assert.equal(days[0].items.filter(capped).length, 5);
   assert.ok(days.slice(1).some((future) => future.items.length > 3));
 });
 
@@ -316,7 +317,7 @@ test("ticked items stay on today's list and tomorrow continues from there", () =
   assert.ok(t.items.find((i) => i.key === lesson.key).done);
   assert.ok(t.items.find((i) => i.key === `problem:${prob.problemId}`).done);
   assert.ok(!t.items.some((i) => i.key === 'kickoff:k1'));
-  assert.equal(t.items.filter((i) => i.category !== 'academic').length, 3);
+  assert.equal(t.items.filter(capped).length, 3);
   const tomorrowLessons = again[1].items.filter((i) => i.type === 'lesson').flatMap((i) => i.lessonIds);
   assert.ok(!tomorrowLessons.some((id) => lesson.lessonIds.includes(id)));
 
@@ -380,7 +381,7 @@ test('roadmap milestones and first-week deliverables are no longer daily tasks',
   const items = plan(s, ctx, today).days[0].items;
   assert.ok(!items.some((i) => i.type === 'module' || i.type === 'kickoff'));
   assert.ok(!items.some((i) => i.type === 'career'));
-  assert.equal(items.filter((i) => i.category !== 'academic').length, 5); // 7 October is a break day
+  assert.equal(items.filter(capped).length, 5); // 7 October is a break day
 });
 
 test('version-1 saves upgrade without losing data', () => {
@@ -619,30 +620,62 @@ test('saves from before the Backend track get it once', () => {
   assert.equal(migrate({ ...s, version: 6 }).tracks.filter((t) => t.id === 'backend').length, 1);
 });
 
-test('interview practice: a question at weekends, the next one each time, daily from May, none in exams', async () => {
-  const { INTERVIEW } = await import('../public/js/data/defaults.js');
-  const today = d('2026-10-23'); // Friday
+test('interview practice: a behavioural answer is learned piece by piece, with a final day to say it all', () => {
+  const today = d('2026-10-26'); // Monday
   const { s, ctx } = setup();
-  const days = plan(s, ctx, today, today, 3).days; // Fri, Sat, Sun
-  const iv = (day) => day.items.filter((i) => i.type === 'interview');
-  assert.equal(iv(days[0]).length, 0);
-  assert.equal(iv(days[1])[0].key, `interview:2026-10-24:${INTERVIEW.questions[0].id}`);
-  assert.equal(iv(days[2])[0].key, `interview:2026-10-25:${INTERVIEW.questions[1].id}`);
-  assert.match(iv(days[1])[0].title, /^Practise aloud: /);
+  const iv = (day) => day.items.find((i) => i.type === 'interview');
+  const week = plan(s, ctx, today, today, 7).days.map(iv);
 
-  // Saturday's list of three keeps a slot for the practice question.
-  const sat = plan(s, ctx, d('2026-10-24')).days[0];
-  assert.ok(sat.items.some((i) => i.type === 'interview'));
+  // Five pieces of "Tell me about yourself", the final day, then a project question.
+  assert.deepEqual(week.map((i) => i.key.split(':').slice(2).join(':')), ['iq1:1', 'iq1:2', 'iq1:3', 'iq1:4', 'iq1:5', 'iq1:all', 'iq2']);
+  assert.match(week[1].title, /^Tell me about yourself\. Piece 2 of 5: LedgerCore$/);
+  assert.match(week[1].desc, /Backend interest → LedgerCore/);
+  assert.match(week[5].title, /^Say it all: Tell me about yourself\.$/);
+  assert.match(week[6].title, /^Practise aloud: /);
 
-  // A question you practised moves the rotation on.
-  s.checks[`interview:2026-10-24:${INTERVIEW.questions[0].id}`] = '2026-10-24';
-  const sun = plan(s, ctx, d('2026-10-25')).days[0];
-  assert.equal(sun.items.find((i) => i.type === 'interview').key, `interview:2026-10-25:${INTERVIEW.questions[1].id}`);
+  // A missed day moves the rest on: the piece waits for you.
+  assert.equal(iv(plan(s, ctx, today + 3).days[0]).key, 'interview:2026-10-29:iq1:1');
 
-  // Every teaching day from 1 May (a Saturday), but not on exam days.
-  const may = plan(s, ctx, d('2027-05-03'), d('2027-05-03'), 1).days[0]; // Monday
-  assert.ok(may.items.some((i) => i.type === 'interview'));
-  assert.ok(!plan(s, ctx, d('2027-01-30')).days[0].items.some((i) => i.type === 'interview')); // a Saturday in the January exams
+  // A piece you did moves on to the next one, and stays on the day you did it.
+  s.checks['interview:2026-10-26:iq1:1'] = '2026-10-26';
+  const same = iv(plan(s, ctx, today).days[0]);
+  assert.equal(same.key, 'interview:2026-10-26:iq1:1');
+  assert.ok(same.done);
+  assert.equal(iv(plan(s, ctx, today + 1).days[0]).key, 'interview:2026-10-27:iq1:2');
+  assert.ok(historyDay(today, s, ctx).items.some((i) => /Piece 1 of 5: Backend interest/.test(i.title)));
+
+  // None on exam days.
+  assert.ok(!plan(s, ctx, d('2027-01-30')).days[0].items.some((i) => i.type === 'interview'));
+});
+
+test('interview practice: an old whole-question tick still counts for projects, not for memorising', () => {
+  const today = d('2026-10-26');
+  const { s, ctx } = setup();
+  s.checks['interview:2026-10-24:iq1'] = '2026-10-24';
+  s.checks['interview:2026-10-25:iq2'] = '2026-10-25';
+  const keys = plan(s, ctx, today, today, 7).days.map((x) => x.items.find((i) => i.type === 'interview').key.split(':').slice(2).join(':'));
+  assert.deepEqual(keys, ['iq1:1', 'iq1:2', 'iq1:3', 'iq1:4', 'iq1:5', 'iq1:all', 'iq3:1']);
+});
+
+test('interview practice: every answer is learned before the July 2027 applications, then questions rotate', async () => {
+  const { INTERVIEW } = await import('../public/js/data/defaults.js');
+  const steps = interviewSteps(INTERVIEW.questions);
+  for (const q of INTERVIEW.questions) if (q.kind === 'behavioral') assert.ok(q.pieces.length >= 3 && q.pieces.length <= 5, q.id);
+
+  const today = d('2026-11-02');
+  const { s, ctx } = setup();
+  const days = plan(s, ctx, today, today, d('2027-07-01') - today).days;
+  const iv = days.flatMap((x) => x.items.filter((i) => i.type === 'interview').map((i) => i.key.split(':').slice(2).join(':')));
+  assert.ok(iv.length > steps.length, `${iv.length} practice days for ${steps.length} steps`);
+  assert.equal(new Set(iv.slice(0, steps.length)).size, steps.length);
+  assert.equal(iv[steps.length], INTERVIEW.questions[steps.length % INTERVIEW.questions.length].id);
+});
+
+test('the interview step sits outside the three-task limit', () => {
+  const { s, ctx } = setup();
+  const day = plan(s, ctx, d('2026-10-26')).days[0];
+  assert.ok(day.items.some((i) => i.type === 'interview'));
+  assert.ok(day.items.filter(capped).length <= 3);
 });
 
 test('a missed day moves to the next day: its Java chapters and its lecture revisions', () => {
