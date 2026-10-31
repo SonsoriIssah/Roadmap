@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 7;
+export const DATA_VERSION = 8;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.
@@ -412,7 +412,7 @@ export const DEFAULT_MODULES = [
   m('W1', 'p1', 'dsa', 'Baseline', 'Solve two unseen DSA problems; record time, hints and complexity.', 'Write your starting scorecard.'),
   m('W2', 'p1', 'dsa', 'Python and debugging', 'Implement a small function with edge cases and debug a deliberately faulty version.', 'Review strings, lists, dictionaries and testing.'),
   m('W3', 'p1', 'dsa', 'Arrays and hashing', 'Practise frequency maps, sets and prefix sums.', 'Re-solve one Week 1 problem without notes.'),
-  m('W4', 'p1', 'project', 'Scheduler: Core data model & persistence', 'Implement durable job persistence in PostgreSQL with atomic state machine (pending, running, completed, failed, dead_letter).', 'Verify atomic state transitions and idempotent submission with unit tests.'),
+  m('W4', 'p1', 'project', 'Harden LedgerCore', 'Define the workload behind the 98.5% figure, explain or fix the remaining failures, and make the skipped integration tests run in CI.', 'Write the one-page architecture diagram and consistency-guarantees note, and report the real test pass count.'),
   m('W5', 'p1', 'dsa', 'Two pointers', 'Practise sorted arrays, pairs and in-place operations.', 'Redo one hashing problem.'),
   m('W6', 'p1', 'dsa', 'Sliding windows', 'Practise fixed and variable windows.', 'Explain the window invariant aloud.'),
   m('W7', 'p1', 'dsa', 'Stacks and queues', 'Implement stack/queue patterns and recognise monotonic-stack use cases.', 'Review complexity and boundary cases.'),
@@ -420,11 +420,13 @@ export const DEFAULT_MODULES = [
   m('W9', 'p2', 'dsa', 'Binary search', 'Practise boundary search and monotonic predicates.', 'Re-solve one sliding-window problem.'),
   m('W10', 'p2', 'dsa', 'Linked lists and recursion', 'Practise pointer changes, recursion bases and call-stack tracing.', 'Review stack and queue problems.'),
   m('W11', 'p2', 'cs', 'Database transactions', 'Study atomicity, isolation, locks and serialization failures.', "Write down LedgerCore's consistency guarantees.", { keywords: ['database', 'sql'] }),
-  m('W12', 'p2', 'project', 'Scheduler: Leases & worker crash recovery', 'Implement lease duration, worker heartbeats, and background expired-lease sweeper using FOR UPDATE SKIP LOCKED.', 'Simulate worker SIGKILL and verify automatic lease recovery without double-execution.'),
+  m('W12', 'p2', 'project', 'Harden the Aggregation API', 'Add reproducible tests for a worker crash before acknowledgement, duplicate delivery, out-of-order updates, provider timeouts and database failures.', 'Report sample size, duplicates found and recovery behaviour, and state the project status accurately.'),
   m('W13', 'p2', 'dsa', 'Trees', 'Practise traversal, recursion and tree properties.', 'Re-solve two older problems.'),
   m('W14', 'p2', 'dsa', 'Heaps and intervals', 'Practise top-k, merging and interval overlaps.', 'Explain why the chosen data structure fits.'),
   m('W15', 'p2', 'dsa', 'Graphs', 'Practise BFS, DFS and visited-state correctness.', 'Review trees and queues.'),
-  m('W16', 'p2', 'project', 'Rate Limiter: Distributed sliding window', 'Implement sliding window counter algorithm with atomic Redis Lua updates and HTTP middleware.', 'Run concurrency tests verifying exact rate enforcement and 429 responses under burst load.'),
+  m('W16', 'p2', 'project', 'Build the Job Scheduler (Java and AWS)', 'Build it in Java with Spring Boot and PostgreSQL: idempotent submission, lease-based workers using FOR UPDATE SKIP LOCKED, a fencing check, retries and a dead-letter state. Deploy on AWS with a budget alarm, and tear it down when idle.', 'Pass the worker-kill, stale-worker, duplicate-submission, poison-job and database-restart tests, then answer its defence questions without notes.'),
+  m('W16b', 'p2', 'project', 'Build the Query Regression Detector (Python)', 'Fingerprint PostgreSQL query telemetry, compare a baseline window with a recent one, and inject regressions to test it.', 'Measure detection delay, precision and recall on injected regressions, then answer its defence questions without notes.'),
+  m('W16c', 'p2', 'project', 'Build the tailoring projects', 'Build the Provisioning Platform, then the Payments Risk Service. Build the Drill Lab only for the Meta Production Engineer role, and the Rate Limiter only for Cloudflare.', 'List a project on your resume only when it is built, tested and you can defend it without notes.'),
   m('W17', 'p3', 'cs', 'Core networking', 'Study HTTP, DNS, TCP, TLS and connection lifecycles.', 'Explain one API request from client to database.', { keywords: ['network'] }),
   m('W18', 'p3', 'cs', 'Operating systems', 'Study processes, threads, memory and context switching.', 'Review concurrency terminology.', { keywords: ['operating system'] }),
   m('W19', 'p3', 'cs', 'Concurrency', 'Study races, locks, deadlocks and transaction conflicts.', 'Explain a race condition from a concrete example.', { keywords: ['operating system', 'concurren'] }),
@@ -435,7 +437,7 @@ export const DEFAULT_MODULES = [
   m('W24', 'p3', 'interview', 'Behavioural preparation', 'Draft truthful STAR stories for leadership, failure and teamwork.', 'Practise a concise project explanation.'),
   m('W25', 'p4', 'dsa', 'Dynamic programming introduction', 'Practise state definition, transitions and base cases.', 'Re-solve a graph or tree problem.'),
   m('W26', 'p4', 'interview', 'Timed assessments', 'Complete a realistic timed coding set.', 'Analyse accuracy, speed and avoidable errors.'),
-  m('W27', 'p4', 'project', 'Project interview defence', 'Rehearse technical defense for Scheduler and Rate Limiter: explain architecture, failure scenarios, and trade-offs aloud.', 'Defend all design decisions, lease semantics, and benchmark methodologies without notes.', { keywords: ['system analysis', 'design'] }),
+  m('W27', 'p4', 'project', 'Project interview defence', 'Rehearse the technical defence of LedgerCore, the Aggregation API and the Job Scheduler: explain architecture, failure scenarios and trade-offs aloud.', 'Defend every design decision and measurement without notes, and verify all resume metrics.', { keywords: ['system analysis', 'design'] }),
   m('W28', 'p4', 'career', 'Company-specific preparation', 'Choose two active applications and review their actual job requirements.', 'Tailor resumes and schedule mock interviews.'),
   m('W29', 'p4', 'dsa', 'Weakest DSA patterns', 'Use scorecard evidence to target recurring mistakes.', 'Revisit problems after a delay.'),
   m('W30', 'p4', 'cs', 'Database and performance', 'Study indexes, EXPLAIN plans and bottleneck measurement.', 'Record one defensible benchmark if useful.', { keywords: ['database'] }),
@@ -800,7 +802,7 @@ export const CHECKLISTS = {
   resume: {
     title: 'Resume actions',
     items: [
-      { id: 'r1', text: 'Add the current Stanbic Bank Personalisation Team internship with real responsibilities and technologies.' },
+      { id: 'r1', text: 'Add your Stanbic Bank Personalisation Team internship with real responsibilities and technologies.' },
       { id: 'r2', text: 'Verify the LedgerCore 98.5% concurrency figure: define the workload and explain the other 1.5%.' },
       { id: 'r3', text: 'Make the aggregation failure injection reproducible; report sample size, duplicates and recovery.' },
       { id: 'r4', text: 'Show what GitHub Actions actually runs (tests, lint) instead of listing CI/CD as a keyword.' },
@@ -893,7 +895,7 @@ export const PLAYBOOK = {
     'Use your mentor to practise technical explanations and get honest feedback.',
     'Request a referral only for a suitable role and when the person is comfortable.',
     'Track follow-ups; avoid repeated messages that add no new information.',
-    'At Stanbic Bank, seek a small backend-oriented assignment or an intro to a services team.',
+    'Ask your Stanbic Bank contacts for feedback, a reference or an intro to a services team.',
   ],
   archetypes: [
     { id: 'A', name: 'Financial-services technology', priority: 'High', focus: 'DSA, clean coding, OOP, SQL, debugging, project walkthroughs and behavioural interviews. Add Java when relevant. Bloomberg and infrastructure teams: systems fundamentals and performance.' },
@@ -942,10 +944,10 @@ export const PORTFOLIO_PROJECTS = {
   // Flagship Project
   scheduler: {
     id: 'scheduler',
-    name: 'Distributed Task Scheduler',
+    name: 'Distributed Job Scheduler',
     tier: 'flagship',
     status: 'planned_flagship',
-    span: 'W4, W12, W27 (Phase 1 Spring 2027)',
+    span: 'W16, W27 (the one Java project)',
     summary: 'High-reliability distributed task scheduling coordinator with leasing heartbeats, partitioned workers, and resilient failure recovery.',
     architecture: {
       overview: 'Master coordinator election with partitioned worker node pools and transactional state store.',
@@ -978,9 +980,9 @@ export const PORTFOLIO_PROJECTS = {
   rateLimiter: {
     id: 'rate-limiter',
     name: 'High-Throughput Distributed Rate Limiter',
-    tier: 'supporting',
-    status: 'planned_supporting',
-    span: 'W16 (Winter/Spring 2027)',
+    tier: 'optional',
+    status: 'backlog_optional',
+    span: 'W16c, only for Cloudflare',
     summary: 'Multi-algorithm high-throughput rate limiter service supporting Token Bucket, Sliding Window Log, and Sliding Window Counter with sub-millisecond evaluation.',
     architecture: {
       overview: 'Low-latency reverse proxy / middleware layer backed by an in-memory local cache tier and distributed Redis cluster.',

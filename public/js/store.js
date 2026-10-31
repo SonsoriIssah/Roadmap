@@ -202,6 +202,25 @@ export function migrate(raw) {
     // Backend Engineering Notes became a learning track after Java.
     if (Array.isArray(out.tracks) && !out.tracks.some((t) => t && t.id === BACKEND_TRACK.id)) out.tracks.push(clone(BACKEND_TRACK));
   }
+  if (v < 8 && Array.isArray(out.modules)) {
+    // Project modules now follow the portfolio design. Modules you renamed
+    // yourself are left alone; progress is kept by module id.
+    const OLD_TITLES = {
+      W4: ['Project audit', 'Scheduler: Core data model & persistence'],
+      W12: ['Project test sprint', 'Scheduler: Leases & worker crash recovery'],
+      W16: ['Aggregation API reliability', 'Rate Limiter: Distributed sliding window'],
+      W27: ['Project interview defence'],
+    };
+    for (const [id, titles] of Object.entries(OLD_TITLES)) {
+      const mod = out.modules.find((m) => m && m.id === id);
+      const next = DEFAULT_MODULES.find((m) => m.id === id);
+      if (mod && titles.includes(mod.title)) Object.assign(mod, { title: next.title, objective: next.objective, exit: next.exit });
+    }
+    let at = out.modules.findIndex((m) => m && m.id === 'W16');
+    for (const id of ['W16b', 'W16c']) {
+      if (at >= 0 && !out.modules.some((m) => m && m.id === id)) out.modules.splice(++at, 0, clone(DEFAULT_MODULES.find((m) => m.id === id)));
+    }
+  }
   if (!Array.isArray(out.courses) || !out.courses.length) {
     out.courses = clone(DEFAULT_COURSES);
   }

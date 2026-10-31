@@ -8,7 +8,7 @@ import { defaultState, normalise, migrate, startFresh } from '../public/js/store
 import { readXlsx, parseCSV, decodeEntities } from '../public/js/xlsx.js';
 import {
   detectTable, candidateSheets, rowsToProblems, mergeProblems, orderNew, mapStatus, mapDate, mapPriority,
-  applyOutcome, reviewGap, reviewTask, upcomingReviews, mapStage, dueProblems, problemsToCSV, slugify, readiness,
+  applyOutcome, reviewGap, reviewTask, upcomingReviews, mapStage, dueProblems, problemsToCSV, slugify, readiness, leetcodeDays,
 } from '../public/js/problems.js';
 import { parseChapters, importChapters, videoLink, lessonsToText, parseLessonsText, lessonMinutes, fmtTimestamp } from '../public/js/learn.js';
 import { planDays, historyDay, semesterCourses } from '../public/js/planner.js';
@@ -218,16 +218,19 @@ test('lesson text editing round-trips', () => {
 // Daily plans
 // ---------------------------------------------------------------------------
 
-test('today keeps non-school work to three items and leaves week deliverables out', () => {
+test('today keeps non-school work to five items on break days, three otherwise, and leaves week deliverables out', () => {
   const { s, ctx } = setup();
   const [day] = plan(s, ctx, d('2026-10-07')).days;
   assert.equal(day.mode, 'break');
-  assert.equal(day.items.filter((i) => i.category !== 'academic').length, 3);
+  assert.equal(day.items.filter((i) => i.category !== 'academic').length, 5);
+  const [teaching] = plan(s, ctx, d('2026-10-20')).days;
+  assert.equal(teaching.mode, 'normal');
+  assert.equal(teaching.items.filter((i) => i.category !== 'academic').length, 3);
   assert.ok(!day.items.some((i) => ['module', 'kickoff'].includes(i.type) || i.recurrence === 'weekly'));
   assert.ok(!day.items.some((i) => i.type === 'revise')); // no lectures yet
   // The non-school limit applies only to today, not the forecasted days.
   const days = plan(s, ctx, d('2026-10-07'), d('2026-10-07'), 3).days;
-  assert.equal(days[0].items.filter((i) => i.category !== 'academic').length, 3);
+  assert.equal(days[0].items.filter((i) => i.category !== 'academic').length, 5);
   assert.ok(days.slice(1).some((future) => future.items.length > 3));
 });
 
@@ -377,7 +380,7 @@ test('roadmap milestones and first-week deliverables are no longer daily tasks',
   const items = plan(s, ctx, today).days[0].items;
   assert.ok(!items.some((i) => i.type === 'module' || i.type === 'kickoff'));
   assert.ok(!items.some((i) => i.type === 'career'));
-  assert.equal(items.filter((i) => i.category !== 'academic').length, 3);
+  assert.equal(items.filter((i) => i.category !== 'academic').length, 5); // 7 October is a break day
 });
 
 test('version-1 saves upgrade without losing data', () => {
@@ -390,7 +393,7 @@ test('version-1 saves upgrade without losing data', () => {
     progress: { W1: { status: 'done' } },
   };
   const s = normalise(old);
-  assert.equal(s.version, 7);
+  assert.equal(s.version, 8);
   assert.equal(s.settings.theme, 'dark');
   assert.equal(s.settings.studyStart, undefined);
   assert.ok(s.calendar.some((e) => e.id === 'c-pre'));
@@ -559,7 +562,7 @@ test('generic recurring tasks are removed and Stanbic Bank is verified', async (
   assert.ok(PLAYBOOK.networking.some((n) => n.includes('Stanbic Bank')));
   assert.ok(PORTFOLIO_PROJECTS.scheduler);
   assert.equal(PORTFOLIO_PROJECTS.scheduler.tier, 'flagship');
-  assert.equal(PORTFOLIO_PROJECTS.rateLimiter.tier, 'supporting');
+  assert.equal(PORTFOLIO_PROJECTS.rateLimiter.tier, 'optional');
 });
 
 test('a fresh start re-times the plan from today and keeps what you have done', () => {
@@ -661,4 +664,69 @@ test('a missed day moves to the next day: its Java chapters and its lecture revi
   f.checks['revise:2026-10-26:CSM 273'] = '2026-10-27';
   assert.ok(plan(f, ctx, d('2026-10-27')).days[0].items.find((i) => i.key === 'revise:2026-10-26:CSM 273').done);
   assert.ok(!plan(f, ctx, d('2026-10-28')).days[0].items.some((i) => i.key === 'revise:2026-10-26:CSM 273'));
+});
+
+test('a review backlog gives up the new-problem slot, so new problems cannot outrun reviews', () => {
+  const today = d('2026-10-20'); // a teaching day
+  const withDue = (n) => setup((st) => {
+    st.tracks.forEach((t) => (t.active = false));
+    for (const p of st.problems.slice(0, n)) Object.assign(p, applyOutcome(p, 'alone', today - 3));
+  });
+  const types = ({ s, ctx }) => plan(s, ctx, today).days[0].items.filter((i) => i.type === 'revisit' || i.type === 'problem').map((i) => i.type);
+  assert.ok(types(withDue(3)).includes('problem')); // a few reviews: a new problem keeps its slot
+  assert.ok(!types(withDue(6)).includes('problem')); // more than 5 due: reviews first
+  assert.equal(types(withDue(6)).length, 3);
+});
+
+test('exam days always have one short LeetCode item that fits the time limit', () => {
+  const exam = d('2027-01-27');
+  const dsa = (day) => day.items.filter((i) => ['revisit', 'problem', 'recall'].includes(i.type));
+
+  // A timed redo is too long for the exam-day limit, so a recall takes its place.
+  const long = setup((st) => {
+    Object.assign(st.problems[4], applyOutcome({ ...st.problems[4], stage: 'solved', status: 'solved' }, 'clean', exam - 5)); // 3Sum, now due a 25-minute timed redo
+  });
+  const items = dsa(plan(long.s, long.ctx, exam).days[0]);
+  assert.deepEqual(items.map((i) => i.type), ['recall']);
+  assert.ok(items[0].min <= 20);
+  assert.equal(items[0].key, `recall:2027-01-27:${long.s.problems[4].id}`);
+
+  // Ticking it counts, keeps it on the list as done, and leaves the review stage alone.
+  long.s.checks[items[0].key] = '2027-01-27';
+  const after = dsa(plan(long.s, long.ctx, exam).days[0]);
+  assert.ok(after.find((i) => i.type === 'recall').done);
+  assert.equal(long.s.problems[4].stage, 'reimplemented');
+  assert.equal(leetcodeDays(long.s, exam).doneToday, true);
+
+  // A review that fits is used instead, and an empty history has nothing to recall.
+  const short = setup((st) => Object.assign(st.problems[0], applyOutcome(st.problems[0], 'alone', exam - 3)));
+  assert.deepEqual(dsa(plan(short.s, short.ctx, exam).days[0]).map((i) => i.type), ['revisit']);
+  const none = setup();
+  assert.deepEqual(dsa(plan(none.s, none.ctx, exam).days[0]), []);
+});
+
+test('the LeetCode counter counts days in the last 30, and a miss does not reset it', () => {
+  const day = d('2026-11-20');
+  const log = (date) => ({ problemId: 'p', date, kind: 'first' });
+  const state = {
+    dsaLog: [log('2026-11-20'), log('2026-11-20'), log('2026-11-18'), log('2026-10-22'), log('2026-10-21'), { date: '2026-11-19', kind: 'first' }],
+    checks: { 'recall:2026-11-17:p': '2026-11-17', 'revise:2026-11-16:CSM 281': '2026-11-16' },
+  };
+  assert.deepEqual(leetcodeDays(state, day), { done: 4, window: 30, doneToday: true, doneYesterday: false });
+});
+
+test('saves from before move project modules to the portfolio design, keeping progress and your own names', () => {
+  const old = defaultState();
+  old.version = 7;
+  old.progress = { W4: { status: 'done' } };
+  old.modules = old.modules.filter((m) => !['W16b', 'W16c'].includes(m.id));
+  Object.assign(old.modules.find((m) => m.id === 'W4'), { title: 'Project audit', objective: 'old', exit: 'old' });
+  Object.assign(old.modules.find((m) => m.id === 'W12'), { title: 'My own sprint', objective: 'mine', exit: 'mine' });
+  const s = migrate(old);
+  assert.equal(s.modules.find((m) => m.id === 'W4').title, 'Harden LedgerCore');
+  assert.equal(s.progress.W4.status, 'done');
+  assert.equal(s.modules.find((m) => m.id === 'W12').title, 'My own sprint');
+  const ids = s.modules.map((m) => m.id);
+  assert.deepEqual(ids.slice(ids.indexOf('W16'), ids.indexOf('W16') + 3), ['W16', 'W16b', 'W16c']);
+  assert.equal(migrate({ ...s, version: 7 }).modules.filter((m) => m.id === 'W16b').length, 1);
 });

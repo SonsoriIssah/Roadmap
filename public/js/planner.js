@@ -68,19 +68,22 @@ export function pushItem(dayItems, item, d) {
 
 /** Highest priority first. Lower number = kept first when a day is over the cap. */
 // Application actions come before the Upsoma fundamentals item (2.5).
-const RANK = { revisit: 0, problem: 1, lesson: 2, career: 2.2, interview: 2.4, revise: 3, academic: 3, kickoff: 5, module: 6, personal: 7 };
+const RANK = { recall: 0, revisit: 0, problem: 1, lesson: 2, career: 2.2, interview: 2.4, revise: 3, academic: 3, kickoff: 5, module: 6, personal: 7 };
 const rankOf = (i) => (i.basics ? 2.5 : RANK[i.type] ?? 99);
 
 /**
  * Keep one slot each for the day's lesson, a new problem and (on practice
  * days) interview practice, so reviews never crowd them out entirely; reviews
  * fill the slots left. A kind already done that day needs no slot. Skipped
- * when there is only one slot (heavy and exam days).
+ * when there is only one slot (heavy and exam days). A review backlog gives up
+ * the new-problem slot, so new problems can't outrun the reviews they create.
  */
-function reserveSlots(open, slots, items) {
+const REVIEW_BACKLOG_LIMIT = 5;
+function reserveSlots(open, slots, items, reviewBacklog = 0) {
   if (slots < 2) return open;
   const picks = [];
   for (const type of ['lesson', 'problem', 'interview']) {
+    if (type === 'problem' && reviewBacklog > REVIEW_BACKLOG_LIMIT) continue;
     if (items.some((i) => i.type === type && i.done)) continue;
     const x = open.find((o) => o.item.type === type);
     if (x) picks.push(x);
@@ -300,6 +303,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
     const focus = mod && mod.track === 'dsa' ? mod.patterns || [] : [];
     const doneReviews = isToday ? reviewedToday : [];
     const dueNow = isToday ? dueQueue : [...overflow, ...(scheduledLater.get(d) || [])];
+    const reviewBacklog = dueNow.length;
     const reviewCap = Math.max(0, load.revisits + Math.max(0, load.problems - 1) - doneReviews.length);
     const reviews = [...doneReviews, ...dueNow.slice(0, reviewCap)];
     overflow = dueNow.slice(reviewCap);
@@ -353,6 +357,33 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
         done,
         next: done ? nextLabel(p) : '',
       });
+    }
+
+    // 3. Exam and pre-exam days: LeetCode every day, without taking from
+    // coursework. If no review fits the day's time limit, a short recall of a
+    // problem you have already started keeps the habit going. It doesn't move
+    // the problem's review stage.
+    if (r.mode === 'exam' || r.mode === 'heavy') {
+      const fits = items.some((i) => (i.type === 'revisit' || i.type === 'problem') && (i.done || (i.min || 0) <= load.maxTechMin));
+      const doneId = isToday ? (Object.keys(checks).find((k) => k.startsWith(`recall:${iso0}:`)) || '').split(':')[2] : null;
+      const pool = problems.filter((p) => p.status !== 'new').sort((a, b) => String(a.lastAt || '').localeCompare(String(b.lastAt || '')) || (a.order ?? 0) - (b.order ?? 0));
+      const p = doneId ? pool.find((x) => x.id === doneId) : pool[(d - today) % (pool.length || 1)];
+      if (p && (doneId || !fits)) {
+        const key = `recall:${iso}:${p.id}`;
+        items.push({
+          key,
+          type: 'recall',
+          category: 'technical',
+          isTechnical: true,
+          scheduledDate: iso,
+          title: `Recall ${p.title}`,
+          desc: 'No coding needed: say the pattern, the approach, the complexity and one edge case, then check your notes. Coursework comes first today.',
+          meta: [p.difficulty, p.pattern || p.topic, 'Exam-day LeetCode'].filter(Boolean).join(' · '),
+          url: p.url,
+          min: Math.min(15, load.maxTechMin || 15),
+          done: doneOn(checks[key], iso),
+        });
+      }
     }
 
     // 4. Coursework revision and university study
@@ -546,20 +577,22 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
       }
     }
 
-    // Keep today's non-school task list to three items. Coursework remains
+    // Keep today's non-school task list to three items (five on break days). Coursework remains
     // visible but does not use one of those slots.
     if (isToday) {
       const nonSchool = items
         .map((item, idx) => ({ item, idx }))
         .filter(({ item }) => item.category !== 'academic');
-      if (nonSchool.length > 3) {
+      const todayCap = r.mode === 'break' ? Math.max(3, load.maxTech) : 3; // free days can hold more
+      if (nonSchool.length > todayCap) {
         const completed = nonSchool.filter(({ item }) => item.done);
-        const kept = new Set(completed.slice(0, 3).map(({ item }) => item));
-        const free = Math.max(0, 3 - kept.size);
+        const kept = new Set(completed.slice(0, todayCap).map(({ item }) => item));
+        const free = Math.max(0, todayCap - kept.size);
         const open = reserveSlots(
           nonSchool.filter(({ item }) => !item.done).sort((a, b) => rankOf(a.item) - rankOf(b.item) || a.idx - b.idx),
           free,
           items,
+          reviewBacklog,
         );
         for (const { item } of open.slice(0, free)) kept.add(item);
         const droppedTech = new Set(nonSchool.map(({ item }) => item).filter((item) => !kept.has(item) && (item.isTechnical || item.category === 'technical')));
@@ -596,7 +629,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
 
       // Prioritize: revisit (protect spaced repetition recall) -> lesson (curriculum learning) -> problem (active DSA) -> module (project/systems & baseline) -> basics,
       // with slots kept for the day's lesson and a new problem so reviews never crowd them out entirely.
-      const rankOrder = { revisit: 0, lesson: 1, problem: 2, module: 3, basics: 4 };
+      const rankOrder = { recall: 0, revisit: 0, lesson: 1, problem: 2, module: 3, basics: 4 };
       const openTech = reserveSlots(
         techItems
           .map((item, idx) => ({ item, idx }))
@@ -608,6 +641,7 @@ export function planDays(from, count, state, ctx, today, { fc = null, current = 
           }),
         allowedSlots,
         items,
+        reviewBacklog,
       );
 
       const keptTech = new Set(doneTech);
@@ -742,6 +776,12 @@ export function historyDay(day, state, ctx) {
         done: true,
         scheduledDate: iso,
       }, day);
+    } else if (key.startsWith('recall:')) {
+      const p = byId.get(key.split(':')[2]);
+      pushItem(items, { key, type: 'recall', category: 'technical', isTechnical: true, title: `Recall ${p ? p.title : 'a problem'}`, url: p ? p.url : '', done: true, scheduledDate: iso }, day);
+    } else if (key.startsWith('interview:')) {
+      const q = INTERVIEW.questions.find((x) => x.id === key.split(':')[2]);
+      pushItem(items, { key, type: 'interview', category: 'career', isTechnical: false, title: `Practise aloud: ${q ? q.q : 'interview question'}`, done: true, scheduledDate: iso }, day);
     } else if (key.startsWith('career:') || key.startsWith('app:')) {
       pushItem(items, { key, type: 'career', category: 'career', isTechnical: false, title: key.startsWith('career:') ? 'Checked new openings and deadlines' : 'Application next action', done: true, scheduledDate: iso }, day);
     }

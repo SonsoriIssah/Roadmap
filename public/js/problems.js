@@ -437,6 +437,20 @@ export function readiness(log = [], problems = [], { difficulty = 'Medium', wind
   return { attempts: recent.length, passed, untimed, window, maxMin };
 }
 
+/**
+ * How many of the last `window` days had any LeetCode: a first attempt or a
+ * review (whatever the outcome, showing up counts) or an exam-day recall.
+ * A missed day lowers it a little instead of resetting it to zero.
+ */
+export function leetcodeDays(state, day, window = 30) {
+  const dates = new Set();
+  for (const e of state.dsaLog || []) if (e.problemId && isISODate(e.date)) dates.add(e.date);
+  for (const [k, v] of Object.entries(state.checks || {})) if (k.startsWith('recall:') && isISODate(v)) dates.add(v);
+  let done = 0;
+  for (let d = day - window + 1; d <= day; d++) if (dates.has(toISO(d))) done++;
+  return { done, window, doneToday: dates.has(toISO(day)), doneYesterday: dates.has(toISO(day - 1)) };
+}
+
 /** CSV you can paste back into your sheet. */
 export function problemsToCSV(problems) {
   const esc = (v) => {

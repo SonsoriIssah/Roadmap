@@ -26,6 +26,7 @@ const TYPE_LABEL = {
   career: 'Career',
   basics: 'Fundamentals',
   interview: 'Interview',
+  recall: 'LeetCode',
   personal: 'Personal',
 };
 

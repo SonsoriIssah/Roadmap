@@ -1,7 +1,7 @@
 import { h, card, cardHeader, button, chip, progressBar, toast } from '../ui.js';
 import { MODES, RITUALS } from '../data/defaults.js';
 import { fmtDay, fmtRange, relDays, weekKey, weekStart, fromMin, fmtDuration, WEEKDAYS_LONG, weekdayIndex, parts, toISO, toDay, isISODate } from '../dates.js';
-import { reviewTask, stageOf, STAGE_LABEL } from '../problems.js';
+import { reviewTask, stageOf, leetcodeDays, STAGE_LABEL } from '../problems.js';
 import { resolveDay, activeRituals, upcoming, decisionHints } from '../engine.js';
 import { modeChip, modeReason, weekOverrideControl, banner } from './common.js';
 import { planFor, taskList, openProblemImport, trackSummary } from './tasks.js';
@@ -23,6 +23,7 @@ export function render(app) {
     hintCards(app),
     yesterdayCard(app),
     todayCard(app, day),
+    consistencyCard(app),
     academicTodayWidget(app),
     importPrompt(app),
     tomorrowCard(app, tomorrow),
@@ -40,6 +41,21 @@ function header(today, r) {
     { class: 'page-head' },
     h('div', null, h('p', { class: 'eyebrow' }, WEEKDAYS_LONG[weekdayIndex(today)]), h('h1', null, `${d} ${MONTHS_LONG[m]} ${y}`)),
     modeChip(r.mode, MODES[r.mode].label),
+  );
+}
+
+function consistencyCard(app) {
+  if (!app.state.problems.length) return null;
+  const c = leetcodeDays(app.state, app.today);
+  const note = c.doneToday
+    ? 'Done for today. Tomorrow, one more.'
+    : c.done && !c.doneYesterday
+      ? "You missed yesterday. Don't miss twice: do one problem today, even a short review."
+      : 'Do one problem today, even a short review. Nothing needs restarting.';
+  return card(
+    cardHeader('LeetCode every day', h('strong', null, `${c.done}/${c.window}`), `Days with LeetCode in the last ${c.window}`),
+    progressBar(c.done / c.window, 'LeetCode days in the last 30'),
+    h('p', { class: 'small muted' }, note),
   );
 }
 

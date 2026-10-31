@@ -5,7 +5,8 @@
 > **Graduation Class**: Expected May 2029 (Undergraduate)  
 > **Target Academic Standing**: First Class Honours / 85+ Semester CWA  
 > **Primary Career Goal**: Be fully prepared for the software engineering internship applications that open from July 2027 (Focus: Backend & Systems Engineering). This season's open roles are not the target.  
-> **DSA Target**: Comfortable with Mediums by April 30, 2027: 7 of your last 10 unseen Mediums solved alone in 25 minutes or less (tracked in the app under Track → Problems).  
+> **DSA Target**: Comfortable with Mediums by April 30, 2027: 7 of your last 10 unseen Mediums solved alone in 25 minutes or less (tracked in the app under Track → Problems). Planning estimate: about 80 problems taken through the review ladder by April and 110 by July, if you do every day. If the test is not met in April, use May for more problems.  
+> **Daily Rule**: LeetCode every day, even a 15-minute review. Never miss twice in a row. Do not restart: missed work moves forward by itself.  
 > **Active Planning Horizon**: October 5, 2026 – July 31, 2027 (10 Months / 43 Weeks)  
 > **Workspace Location**: `c:\Users\HP\Roadmap`  
 > **Core Applications**: [Phone Web App / PWA](file:///c:/Users/HP/Roadmap/README.md) & [2027 Recruiting Tracker](file:///c:/Users/HP/Roadmap/2027_software_engineering_recruiting_tracker.xlsx)
@@ -86,11 +87,12 @@ DSA mastery is built on structured revisit intervals rather than raw volume. Whe
 - **Medium confidence (score 3)**: Re-scheduled in **5 days**.
 - **High confidence (score 4)**: Re-scheduled in **10 days**.
 - **Complete mastery (score 5)**: Re-scheduled in **14 days**.
-- **Daily execution order**: Overdue reviews come first, followed by due reviews, followed by new pattern problems. One slot is always kept for the day's lesson and one for a new problem, so reviews never push learning or new DSA off the list entirely.
+- **Daily execution order**: Overdue reviews come first, followed by due reviews, followed by new pattern problems. One slot is kept for the day's lesson and one for a new problem, but when more than 5 reviews are due the new-problem slot goes to reviews, so new problems cannot outrun the reviews they create. Break days can hold 5 non-school items; other days hold 3.
+- **Exam and pre-exam days**: If no review fits the day's time limit, the list shows a 15-minute recall of a problem you have started: say the pattern, approach, complexity and one edge case. It does not change the review stage, and coursework still comes first.
 - **Backend engineering track**: After Java, 30 study sessions through the Backend Engineering Notes (13 Nov – 31 Dec 2026), one section group per session, each ending with a question to answer aloud.
 - **Interview practice**: One behavioural or project question to answer aloud, at weekends until 30 April 2027, then daily from 1 May for company-specific preparation. The app holds only the questions and cues; the full answers are in the JPMorgan Behavioral Prep, the Behavioral Interview Prep system, and the LedgerCore and Aggregation API handbooks.
 - **Fresh start**: If you fall behind, Settings → Start fresh from today restarts unfinished learning tracks today and spreads overdue reviews from today (2 a day), keeping everything already done.
-- **Why mastered gaps grow**: With a fixed 21-day gap, 60+ mastered problems would fill most daily slots on their own and stall new problems at about 60 by April. Growing gaps (21 → 45 → 90) keep the ladder moving.
+- **Why mastered gaps grow**: With a fixed 21-day gap, a growing bank of mastered problems would fill most daily slots on its own. Growing gaps (21 → 45 → 90) keep the ladder moving.
 
 ### 2.4 Weekly Scorecard System
 
@@ -310,10 +312,10 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 
 | Area | Focus & Concrete Deliverables |
 | :--- | :--- |
-| **Kickoff Tasks** | • Complete the 7-day kickoff: audit resume, establish application tracker, define project claims.<br>• Add Ecobank Personalisation Team internship with real responsibilities and defensible tech stack. |
+| **Kickoff Tasks** | • Complete the 7-day kickoff: audit resume, establish application tracker, define project claims.<br>• Add Stanbic Bank Personalisation Team internship with real responsibilities and defensible tech stack. |
 | **DSA & Algorithms** | • **W1 (Baseline)**: Solve 2 unseen problems without hints. Record time, complexity, and mistakes.<br>• **W2**: Python debugging, edge-case testing.<br>• **W3 (Arrays & Hashing)**: Frequency maps, hash sets, prefix sums, Kadane’s algorithm.<br>• **W5 (Two Pointers)**: Sorted arrays, pair sums, in-place manipulation. |
 | **Learn Track** | • **Java in 3 Weeks (Mosh Chapters 1–25)**: Setup, primitives, reference types, control flow, clean coding, and build the Mortgage Calculator project. |
-| **Project Engineering** | • **W4 (LedgerCore Audit)**: Trace a transfer end-to-end. Document invariants, validation, and error states. Draw a one-page architecture diagram. |
+| **Project Engineering** | • **W4 (Harden LedgerCore)**: Define the workload behind the 98.5% figure, make the skipped integration tests run in CI, and draw a one-page architecture diagram with a consistency note. |
 | **Recruitment** | • Check live early-insight and summer openings (Google, NVIDIA Ignite, banking technology).<br>• Verify eligibility: May 2029 graduation, Ghana/KNUST location, visa rules. |
 | **Month-End Milestone** | *Baseline diagnostic recorded, Java fundamentals solid, LedgerCore architecture diagram finished.* |
 
@@ -341,8 +343,8 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 | :--- | :--- |
 | **DSA & Algorithms** | • **W9 (Binary Search)**: Boundary conditions, monotonic predicates, rotated sorted arrays.<br>• **W10 (Linked Lists & Recursion)**: Pointer updates, cycle detection, call-stack tracing.<br>• **W13 (Trees)**: BFS/DFS traversals, BST properties, tree recursion, lowest common ancestor. |
 | **CS & Systems** | • **W11 (Database Transactions)**: Study atomicity, dirty reads, non-repeatable reads, serialization anomalies, and row-level locks. |
-| **Project Engineering** | • **W12 (Project Test Sprint)**: Build stress tests for LedgerCore: concurrent debit attempts, duplicate idempotency keys, and network timeouts. |
-| **Mid-Sem Rule** | • *During Dec 14–18*: Pause all new LeetCode and side projects. Shift daily list to 100% course revision. |
+| **Project Engineering** | • **W12 (Harden the Aggregation API)**: Add reproducible tests for worker crashes, duplicate delivery, out-of-order updates, provider timeouts and database failures. |
+| **Mid-Sem Rule** | • *During Dec 14–18*: Pause new LeetCode problems and side projects. Coursework comes first, with one short review or recall a day to keep the habit. |
 | **Month-End Milestone** | *Mid-sems cleared; LedgerCore tests pass against concurrent transactions; tree traversals mastered.* |
 
 ---
@@ -354,7 +356,7 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 | Area | Focus & Concrete Deliverables |
 | :--- | :--- |
 | **DSA & Algorithms** | • **W14 (Heaps & Intervals)**: Top-K elements, merge intervals, heap sort.<br>• **W15 (Graphs Foundations)**: Adjacency lists, BFS, DFS, cycle detection, connected components.<br>• *(Pauses Jan 25 for Exams)*. |
-| **Project Engineering** | • **W16 (Aggregation API Reliability)**: Test failure injection with Kafka/message queues: worker crashes before ACK, consumer backlogs, and out-of-order event delivery. |
+| **Project Engineering** | • **W16 (Build the Job Scheduler, Java and AWS)**: Scheduled for the February break, with **W16b (Query Regression Detector)** and **W16c (tailoring projects)** after it. At the AI-assisted pace, allow 2–3 days per project plus time to defend it without notes. |
 | **Exam Period Protocol** | • From Jan 25: App enters **Exam Mode**.<br>• **0 new DSA problems**, **0 new lessons**.<br>• Exactly 3 KNUST courses rotated daily for comprehensive exam revision. Maintain only critical DSA recall. |
 | **Recruitment** | • Log any incoming Online Assessments (OAs). Schedule them outside exam weeks if allowed. |
 | **Month-End Milestone** | *Aggregation API failure recovery documented; semester 1 exams actively managed without career burnout.* |
@@ -383,7 +385,7 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 | :--- | :--- |
 | **DSA & Algorithms** | • Timed sets on Medium problems: aim for 20–25 minutes without hints.<br>• Focus on weak patterns identified in February mocks. |
 | **CS & Systems** | • **W18 (Operating Systems)**: Processes vs threads, virtual memory, paging, context switches.<br>• **W19 (Concurrency)**: Race conditions, deadlocks, mutexes, semaphores, producer-consumer queues.<br>• **W23 (Java/OOP Diagnostic)**: Deep dive into Java memory model and collection internals. |
-| **Behavioural Prep** | • **W24 (STAR Stories)**: Write 5 rock-solid stories: technical challenge, failure, disagreement, leadership, and tight deadline. Base them on Ecobank and LedgerCore. |
+| **Behavioural Prep** | • **W24 (STAR Stories)**: Write 5 rock-solid stories: technical challenge, failure, disagreement, leadership, and tight deadline. Base them on Stanbic Bank and LedgerCore. |
 | **Month-End Milestone** | *STAR stories written and rehearsed; concurrency primitives understood; Semester 2 timetable synced.* |
 
 ---
@@ -395,7 +397,7 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 | Area | Focus & Concrete Deliverables |
 | :--- | :--- |
 | **DSA & Algorithms** | • **W25 (Dynamic Programming)**: 1D DP, memoization vs tabulation, knapsack, LCS.<br>• Re-solve previously failed problems from blank without notes. |
-| **Interview Readiness** | • **W26 (Timed Assessments)**: Simulate realistic 60-90 min online assessments (HackerRank/Codesignal style).<br>• **W27 (Project Interview Defense)**: Defend LedgerCore and Aggregation API aloud without notes.<br>  *Be ready to answer: "What happens when a transaction aborts during high load?"* |
+| **Interview Readiness** | • **W26 (Timed Assessments)**: Simulate realistic 60-90 min online assessments (HackerRank/Codesignal style).<br>• **W27 (Project Interview Defense)**: Defend LedgerCore, the Aggregation API and the Job Scheduler aloud without notes.<br>  *Be ready to answer: "What happens when a transaction aborts during high load?"* |
 | **Recruitment** | • Review live applications and interviews scheduled for Q2. Reallocate daily hours to active interview prep if an invite arrives. |
 | **Month-End Milestone** | *Defended flagship project architecture without notes; DP base cases and transitions internalized; every DSA topic covered and Medium readiness at 7/10 (unseen Mediums solved alone in ≤ 25 min).* |
 
@@ -439,7 +441,7 @@ The official academic calendar for Kwame Nkrumah University of Science and Techn
 
 ---
 
-## 6. The Complete 35-Module Curriculum Matrix (W1 to W39)
+## 6. The Complete 37-Module Curriculum Matrix (W1 to W39)
 
 The sequential modules define your core career preparation curriculum. Modules are assigned to weeks based on capacity and scheduled automatically.
 
@@ -449,7 +451,7 @@ The sequential modules define your core career preparation curriculum. Modules a
 | **W1** | Foundation and diagnostics | DSA | **Baseline** | Solve two unseen DSA problems; record time, hints and complexity. | Write your starting scorecard. | `` |
 | **W2** | Foundation and diagnostics | DSA | **Python and debugging** | Implement a small function with edge cases and debug a deliberately faulty version. | Review strings, lists, dictionaries and testing. | `` |
 | **W3** | Foundation and diagnostics | DSA | **Arrays and hashing** | Practise frequency maps, sets and prefix sums. | Re-solve one Week 1 problem without notes. | `array, hash, frequency, prefix, running state, kadane, string` |
-| **W4** | Foundation and diagnostics | Project | **Project audit** | Trace one LedgerCore transfer end to end and identify unverified claims. | Write a one-page architecture diagram. | `` |
+| **W4** | Foundation and diagnostics | Project | **Harden LedgerCore** | Define the workload behind the 98.5% figure, explain or fix the remaining failures, and make the skipped integration tests run in CI. | Write the architecture diagram and consistency note; report the real pass count. | `` |
 | **W5** | Foundation and diagnostics | DSA | **Two pointers** | Practise sorted arrays, pairs and in-place operations. | Redo one hashing problem. | `two pointer` |
 | **W6** | Foundation and diagnostics | DSA | **Sliding windows** | Practise fixed and variable windows. | Explain the window invariant aloud. | `sliding window` |
 | **W7** | Foundation and diagnostics | DSA | **Stacks and queues** | Implement stack/queue patterns and recognise monotonic-stack use cases. | Review complexity and boundary cases. | `stack, queue, monotonic` |
@@ -457,11 +459,13 @@ The sequential modules define your core career preparation curriculum. Modules a
 | **W9** | Engineering depth | DSA | **Binary search** | Practise boundary search and monotonic predicates. | Re-solve one sliding-window problem. | `binary search` |
 | **W10** | Engineering depth | DSA | **Linked lists and recursion** | Practise pointer changes, recursion bases and call-stack tracing. | Review stack and queue problems. | `linked list, recursion` |
 | **W11** | Engineering depth | Core CS | **Database transactions** | Study atomicity, isolation, locks and serialization failures. | Write down LedgerCore's consistency guarantees. | `database, sql` |
-| **W12** | Engineering depth | Project | **Project test sprint** | Add tests for duplicate requests, rollback and concurrent debits. | Run the full suite and record failures honestly. | `` |
+| **W12** | Engineering depth | Project | **Harden the Aggregation API** | Add reproducible tests for worker crashes, duplicates, out-of-order updates, provider timeouts and database failures. | Report sample size, duplicates and recovery; state its status accurately. | `` |
 | **W13** | Engineering depth | DSA | **Trees** | Practise traversal, recursion and tree properties. | Re-solve two older problems. | `tree, trie, bst` |
 | **W14** | Engineering depth | DSA | **Heaps and intervals** | Practise top-k, merging and interval overlaps. | Explain why the chosen data structure fits. | `heap, priority queue, interval, top k` |
 | **W15** | Engineering depth | DSA | **Graphs** | Practise BFS, DFS and visited-state correctness. | Review trees and queues. | `graph, island, union find, matrix` |
-| **W16** | Engineering depth | Project | **Aggregation API reliability** | Test duplicate messages, provider timeouts and worker restarts. | Document idempotency and recovery behaviour. | `` |
+| **W16** | Engineering depth | Project | **Build the Job Scheduler (Java and AWS)** | Idempotent submission, lease-based workers, a fencing check, retries and a dead-letter state, deployed with a budget alarm. | Pass the failure tests and defend it without notes. | `` |
+| **W16b** | Engineering depth | Project | **Build the Query Regression Detector (Python)** | Fingerprint query telemetry and detect injected regressions. | Measure detection delay, precision and recall; defend it without notes. | `` |
+| **W16c** | Engineering depth | Project | **Build the tailoring projects** | Provisioning Platform, then Payments Risk Service. Drill Lab only for Meta Production Engineer; Rate Limiter only for Cloudflare. | List a project only when it is built, tested and defended. | `` |
 | **W17** | Interview readiness | Core CS | **Core networking** | Study HTTP, DNS, TCP, TLS and connection lifecycles. | Explain one API request from client to database. | `network` |
 | **W18** | Interview readiness | Core CS | **Operating systems** | Study processes, threads, memory and context switching. | Review concurrency terminology. | `operating system` |
 | **W19** | Interview readiness | Core CS | **Concurrency** | Study races, locks, deadlocks and transaction conflicts. | Explain a race condition from a concrete example. | `operating system, concurren` |
@@ -668,7 +672,12 @@ Your portfolio must stand up to rigorous scrutiny by senior engineers and hiring
 - [ ] **A6**: Tests exist for worker restarts, duplicates, out-of-order updates, provider timeouts and database failures.
 
 
-### 9.3 Supporting Project 3: StudyPair (Collaborative Peer Learning Platform)
+### 9.3 Next Build: Distributed Job Scheduler (Java and AWS)
+- **Why it comes next**: It is the one Java project in your portfolio design, used for every target company alongside two Python projects.
+- **Build status**: Not built. Do not list it on a resume until it is built, tested and you can defend it without notes.
+- **Other planned projects**: Query Regression Detector, Provisioning Platform and Payments Risk Service, with the Drill Lab and Rate Limiter only for the roles that need them.
+
+### 9.3b Supporting Project: StudyPair (Collaborative Peer Learning Platform)
 - **Core Purpose**: A collaborative matching platform for university students.
 - **Key Architectural Highlights**:
   - Secure session/token-based authentication.
@@ -685,7 +694,7 @@ Your portfolio must stand up to rigorous scrutiny by senior engineers and hiring
 
 
 ### 9.4 Work Experience & Supporting Metrics
-- **Ecobank Ghana (Personalisation Team Internship)**:
+- **Stanbic Bank (Personalisation Team Internship)**:
   - Add real responsibilities: backend service development, data pipeline maintenance, API integrations.
   - Defensible skills only: practical production usage of Java, Spring Boot, Kafka, Redis, and PostgreSQL.
 - **FarmLink (Academic Project)**:
@@ -699,13 +708,13 @@ Your portfolio must stand up to rigorous scrutiny by senior engineers and hiring
 - [ ] **K2**: Run the DSA baseline: two unseen problems, no solutions first. Record approach, complexity and mistakes.
 - [ ] **K3**: Audit LedgerCore: trace a transfer from validation to commit (idempotency, isolation, retries, integrity).
 - [ ] **K4**: Test SQL and database fundamentals: joins, grouping, indexes, isolation.
-- [ ] **K5**: Update your resume: add Ecobank accurately, verify metrics, qualify claims you cannot defend.
+- [ ] **K5**: Update your resume: add Stanbic Bank accurately, verify metrics, qualify claims you cannot defend.
 - [ ] **K6**: Explain LedgerCore aloud in five minutes, then answer duplicate-request and concurrency questions.
 - [ ] **K7**: Review and plan: baseline, coursework load, applications. Pick three tasks for next week.
 
 #### Resume Action Checklist:
 
-- [ ] **R1**: Add the current Ecobank Personalisation Team internship with real responsibilities and technologies.
+- [ ] **R1**: Add your Stanbic Bank Personalisation Team internship with real responsibilities and technologies.
 - [ ] **R2**: Verify the LedgerCore 98.5% concurrency figure: define the workload and explain the other 1.5%.
 - [ ] **R3**: Make the aggregation failure injection reproducible; report sample size, duplicates and recovery.
 - [ ] **R4**: Show what GitHub Actions actually runs (tests, lint) instead of listing CI/CD as a keyword.
@@ -931,7 +940,7 @@ Before submitting any application, verify all six eligibility criteria to avoid 
 - Use mentor sessions to practice technical explanations aloud and solicit direct, unfiltered feedback.
 - Request a referral only for a verified open role where your background directly aligns and the contact feels comfortable vouching for you.
 - Maintain a strict follow-up log; never send repetitive messages that provide no new context.
-- At Ecobank, seek out a small backend-oriented assignment or an introduction to the core services and payments architecture teams.
+- Ask your Stanbic Bank contacts for feedback, a reference or an introduction to a services team.
 
 ---
 
