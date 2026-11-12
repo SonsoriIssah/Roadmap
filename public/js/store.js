@@ -3,7 +3,7 @@
 
 import {
   DATA_VERSION, DEFAULT_SETTINGS, DEFAULT_CALENDAR, DEFAULT_TIMETABLES, DEFAULT_COURSES, DEFAULT_MODULES, DEFAULT_TRACKS, MODES, MODULE_PATTERNS,
-  JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, CSM281, BACKEND_TRACK, moshLessons,
+  JAVA_VIDEO, JAVA_STUDY_LESSONS, OLD_JAVA_PLACEHOLDERS, CSM281, BACKEND_TRACK, FASTAPI_TRACK, moshLessons,
 } from './data/defaults.js';
 import { normaliseDayPlan } from './timeplan.js';
 import { toDay, toISO, isISODate } from './dates.js';
@@ -204,6 +204,10 @@ export function migrate(raw) {
     // Backend Engineering Notes became a learning track after Java.
     if (Array.isArray(out.tracks) && !out.tracks.some((t) => t && t.id === BACKEND_TRACK.id)) out.tracks.push(clone(BACKEND_TRACK));
   }
+  if (v < 9) {
+    // Your 30-day FastAPI plan became a learning track.
+    if (Array.isArray(out.tracks) && !out.tracks.some((t) => t && t.id === FASTAPI_TRACK.id)) out.tracks.push(clone(FASTAPI_TRACK));
+  }
   if (v < 8 && Array.isArray(out.modules)) {
     // Project modules now follow the portfolio design. Modules you renamed
     // yourself are left alone; progress is kept by module id.
@@ -275,11 +279,14 @@ export function startFresh(state, todayISO, { perDay = 2 } = {}) {
   const done = s.lessonDone || {};
   const startOf = (t) => (isISODate(t.start) ? toDay(t.start) : today);
   const unfinished = (s.tracks || []).filter((t) => t.active !== false && (t.lessons || []).some((l) => !done[l.id])).sort((a, b) => startOf(a) - startOf(b));
+  // Only a track that was restarted or moved pushes the ones after it, so a
+  // track planned to overlap on a break (FastAPI) keeps its date otherwise.
   let free = today;
   for (const t of unfinished) {
-    const start = Math.max(startOf(t), free);
+    const was = startOf(t);
+    const start = Math.max(was, free);
     t.start = toISO(start);
-    free = start + Math.round(Math.max(0.5, Number(t.weeks) || 3) * 7);
+    free = start !== was || was <= today ? start + Math.round(Math.max(0.5, Number(t.weeks) || 3) * 7) : today;
   }
   const overdue = (s.problems || [])
     .filter((p) => p.status !== 'new' && isISODate(p.nextReview) && toDay(p.nextReview) < today)

@@ -154,7 +154,7 @@ export function parseLessonsText(text, makeId, previous = []) {
         if (start === null || end === null || end <= start) return errors.push({ line: i + 1, message: 'Video range must look like 1:13:00-2:15:00' });
         lessons.push({ id: old ? old.id : makeId(), title, start, end, video: true, practice, practiceMin: old && old.practice === practice ? old.practiceMin : practice ? 10 : 0, breakAfter: old ? old.breakAfter : undefined, match: old && old.match });
       } else if (!time || /^\d+$/.test(time)) {
-        lessons.push({ id: old ? old.id : makeId(), title, min: Number(time) || 30, video: old ? !!old.video : false, practice, match: old && old.match });
+        lessons.push({ id: old ? old.id : makeId(), title, min: Number(time) || 30, video: old ? !!old.video : false, practice, match: old && old.match, url: old && old.url });
       } else errors.push({ line: i + 1, message: `"${time}" is neither minutes nor a video range` });
     });
   return { lessons, errors };

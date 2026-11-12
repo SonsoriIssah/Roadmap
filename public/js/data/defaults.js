@@ -2,7 +2,7 @@
 // everything (calendar, timetable, roadmap modules) is editable in the app.
 // "Reset" actions in Settings restore these values.
 
-export const DATA_VERSION = 8;
+export const DATA_VERSION = 9;
 
 // ---------------------------------------------------------------------------
 // Modes: how much career preparation a period can carry.
@@ -604,6 +604,57 @@ export const BACKEND_TRACK = {
   lessons: BACKEND_LESSONS,
 };
 
+// FastAPI hands-on: your 30-day plan, one study session per day, each with
+// its official documentation page. Weeks end in a project built without a
+// tutorial. Starts on the Christmas break, when there is time for long builds,
+// and finishes early in the February break: January teaching days fit about one
+// session every other day, and exams pause it.
+const FD = (id, title, min, practice, url) => L(id, title, min, practice, url ? { url } : {});
+export const FASTAPI_LESSONS = [
+  FD('f1', 'Day 1 · Python project setup: uv and virtual environments', 90, 'Create a project with uv, add FastAPI, and explain what the virtual environment and the lockfile are for.', 'https://docs.astral.sh/uv/guides/projects/'),
+  FD('f2', 'Day 2 · FastAPI installation, application structure, running the server', 90, 'Run a first app and open the automatic /docs page. Explain what the server process is doing.', 'https://fastapi.tiangolo.com/tutorial/first-steps/'),
+  FD('f3', 'Day 3 · HTTP methods, path and query parameters', 90, 'Build GET /items/{id} and GET /items?skip=&limit= with typed parameters, then send invalid input. Read the Query Parameters page too.', 'https://fastapi.tiangolo.com/tutorial/path-params/'),
+  FD('f4', 'Day 4 · Request bodies and Pydantic models', 90, 'Add a POST endpoint with a Pydantic model and look at what a 422 validation error contains.', 'https://fastapi.tiangolo.com/tutorial/body/'),
+  FD('f5', 'Day 5 · Response models, status codes and validation', 90, 'Return 201 on create and a 404 HTTPException when something is missing. Read Handling Errors too.', 'https://fastapi.tiangolo.com/tutorial/response-model/'),
+  FD('f6', 'Day 6 · APIRouter, modular structure and dependencies', 90, 'Split routes into routers in separate files and share one dependency between them. Read Dependencies too.', 'https://fastapi.tiangolo.com/tutorial/bigger-applications/'),
+  FD('f7', 'Day 7 · Week 1 project: Quotes API (no tutorial)', 150, 'Create, retrieve and delete quotes; search by author; filter by category; validate input; return the right status codes; keep routes in separate files. Open the docs only when stuck.'),
+  FD('f8', 'Day 8 · SQLAlchemy fundamentals and database connections', 90, 'Connect to PostgreSQL with create_engine and run a query through a Connection.', 'https://docs.sqlalchemy.org/en/20/tutorial/'),
+  FD('f9', 'Day 9 · ORM models, tables and relationships', 90, 'Define two models with a one-to-many relationship using SQLAlchemy 2.0 Mapped types.', 'https://docs.sqlalchemy.org/en/20/orm/quickstart.html'),
+  FD('f10', 'Day 10 · Sessions and dependency injection', 90, 'Write a get_db dependency that yields a Session and closes it. Explain commit versus flush.', 'https://docs.sqlalchemy.org/en/20/orm/session_basics.html'),
+  FD('f11', 'Day 11 · CRUD operations', 90, 'Build create, read, update and delete endpoints against PostgreSQL, using SQLAlchemy 2.0 directly rather than SQLModel.', 'https://fastapi.tiangolo.com/tutorial/sql-databases/'),
+  FD('f12', 'Day 12 · Database migrations with Alembic', 90, 'Autogenerate a migration and apply it, add a column and migrate again, then downgrade once.', 'https://alembic.sqlalchemy.org/en/latest/tutorial.html'),
+  FD('f13', 'Day 13 · Filtering, sorting and pagination', 90, 'Add limit/offset pagination, a sort field and one filter. Explain why cursor pagination scales better.', 'https://fastapi.tiangolo.com/tutorial/query-param-models/'),
+  FD('f14', 'Day 14 · Week 2 project: Notes/Bookmarks API (no tutorial)', 150, 'User-created notes and bookmarks in PostgreSQL: CRUD, relationships, pagination and filtering, and Alembic migrations. Revisit the SQLAlchemy and Alembic docs only when stuck.'),
+  FD('f15', 'Day 15 · Password hashing and verification', 90, 'Hash and verify a password. Explain why passwords are hashed rather than encrypted, and what a salt does.', 'https://fastapi.tiangolo.com/tutorial/security/'),
+  FD('f16', 'Day 16 · OAuth2, JWT and token authentication', 90, 'Issue a JWT on login and protect an endpoint with it. Decode a token and explain each claim.', 'https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/'),
+  FD('f17', 'Day 17 · Authorization and role-based access control', 90, 'Allow one action for admins only. Explain authentication versus authorization with an example.', 'https://fastapi.tiangolo.com/advanced/security/oauth2-scopes/'),
+  FD('f18', 'Day 18 · Advanced dependency injection and dependency overrides', 90, 'Override the current-user dependency in a test. Read Testing Dependencies too.', 'https://fastapi.tiangolo.com/advanced/advanced-dependencies/'),
+  FD('f19', 'Day 19 · Pytest fundamentals and test organisation', 90, 'Write unit tests with fixtures and parametrize, organised in a tests/ folder.', 'https://docs.pytest.org/en/stable/getting-started.html'),
+  FD('f20', 'Day 20 · FastAPI integration testing', 90, 'Test your endpoints with TestClient against a test database, including the 401 and 403 cases.', 'https://fastapi.tiangolo.com/tutorial/testing/'),
+  FD('f21', 'Day 21 · Week 3 project: Task Management API (no tutorial)', 150, 'Registration, JWT login, password hashing, protected user-specific tasks, admin and regular roles, unit and integration tests. Be able to explain why each security step exists.'),
+  FD('f22', 'Day 22 · Async/await, concurrency and synchronous endpoints', 90, 'Explain when to use async def versus def, and show a blocking call slowing an async endpoint.', 'https://fastapi.tiangolo.com/async/'),
+  FD('f23', 'Day 23 · Background tasks and the application lifecycle', 90, 'Send a fake email in a background task, and open and close a resource in a lifespan handler. Read Lifespan Events too.', 'https://fastapi.tiangolo.com/tutorial/background-tasks/'),
+  FD('f24', 'Day 24 · Middleware, CORS and exception handlers', 90, 'Add a timing middleware, configure CORS (read the CORS page) and write a custom exception handler.', 'https://fastapi.tiangolo.com/tutorial/middleware/'),
+  FD('f25', 'Day 25 · Configuration, environment variables and settings', 90, 'Load settings from environment variables and a .env file, and keep secrets out of git.', 'https://docs.pydantic.dev/latest/concepts/pydantic_settings/'),
+  FD('f26', 'Day 26 · Redis fundamentals and caching', 90, 'Cache one slow endpoint in Redis with a TTL and measure the difference.', 'https://redis.io/docs/latest/develop/get-started/'),
+  FD('f27', 'Day 27 · Docker and containerisation', 90, 'Containerise the API with PostgreSQL using Docker Compose, and run it from a clean start.', 'https://docs.docker.com/get-started/'),
+  FD('f28', 'Day 28 · PostgreSQL indexes, query performance and optimisation', 90, 'Run EXPLAIN ANALYZE on a slow query, add an index and compare the plans.', 'https://www.postgresql.org/docs/current/performance-tips.html'),
+  FD('f29', 'Day 29 · Independent timed backend build (no tutorial)', 150, 'Build a small API end to end against the clock. Use documentation only when absolutely necessary.'),
+  FD('f30', 'Day 30 · Final technical assessment', 120, 'No AI-generated code. Explain and defend your implementation aloud: design, data model, authentication, tests and trade-offs.'),
+];
+
+export const FASTAPI_TRACK = {
+  id: 'fastapi',
+  name: 'FastAPI hands-on',
+  start: '2026-12-19',
+  weeks: 9, // Christmas break, January teaching weeks (exams pause it), first days of the February break
+  active: true,
+  keywords: [],
+  resource: 'the official documentation',
+  url: '',
+  lessons: FASTAPI_LESSONS,
+};
+
 export const DEFAULT_TRACKS = [
   {
     id: 'java',
@@ -616,6 +667,7 @@ export const DEFAULT_TRACKS = [
     lessons: [...moshLessons(), ...JAVA_STUDY_LESSONS],
   },
   BACKEND_TRACK,
+  FASTAPI_TRACK,
 ];
 
 // Saves from before the Mosh course used topic placeholders for the first

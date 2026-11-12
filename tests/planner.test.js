@@ -394,7 +394,7 @@ test('version-1 saves upgrade without losing data', () => {
     progress: { W1: { status: 'done' } },
   };
   const s = normalise(old);
-  assert.equal(s.version, 8);
+  assert.equal(s.version, 9);
   assert.equal(s.settings.theme, 'dark');
   assert.equal(s.settings.studyStart, undefined);
   assert.ok(s.calendar.some((e) => e.id === 'c-pre'));
@@ -599,16 +599,16 @@ test('Backend engineering follows the Java track, and a later fresh start keeps 
 
   // Fresh start on 23 Oct: Java's 3 weeks end 12 Nov, so Backend keeps 13 Nov.
   const f = startFresh(s, '2026-10-23');
-  assert.deepEqual(f.tracks.map((t) => [t.id, t.start]), [['java', '2026-10-23'], ['backend', '2026-11-13']]);
+  assert.deepEqual(f.tracks.map((t) => [t.id, t.start]), [['java', '2026-10-23'], ['backend', '2026-11-13'], ['fastapi', '2026-12-19']]);
 
   // Fresh start on 20 Nov with both unfinished: Java restarts, Backend waits until Java's window ends.
   const later = startFresh({ ...f, lessonDone: { mo1: '2026-10-24', b1: '2026-11-14' } }, '2026-11-20');
-  assert.deepEqual(later.tracks.map((t) => [t.id, t.start]), [['java', '2026-11-20'], ['backend', '2026-12-11']]);
+  assert.deepEqual(later.tracks.map((t) => [t.id, t.start]), [['java', '2026-11-20'], ['backend', '2026-12-11'], ['fastapi', '2027-01-29']]); // moved tracks push the next one
 
   // A finished track is left alone.
   const allJava = Object.fromEntries(f.tracks[0].lessons.map((l) => [l.id, '2026-11-01']));
   const after = startFresh({ ...f, lessonDone: allJava }, '2026-11-20');
-  assert.deepEqual(after.tracks.map((t) => [t.id, t.start]), [['java', '2026-10-23'], ['backend', '2026-11-20']]);
+  assert.deepEqual(after.tracks.map((t) => [t.id, t.start]), [['java', '2026-10-23'], ['backend', '2026-11-20'], ['fastapi', '2027-01-08']]);
 });
 
 test('saves from before the Backend track get it once', () => {
@@ -616,7 +616,7 @@ test('saves from before the Backend track get it once', () => {
   old.version = 6;
   old.tracks = old.tracks.filter((t) => t.id !== 'backend');
   const s = migrate(old);
-  assert.deepEqual(s.tracks.map((t) => t.id), ['java', 'backend']);
+  assert.deepEqual(s.tracks.map((t) => t.id).sort(), ['backend', 'fastapi', 'java']);
   assert.equal(migrate({ ...s, version: 6 }).tracks.filter((t) => t.id === 'backend').length, 1);
 });
 
@@ -762,4 +762,34 @@ test('saves from before move project modules to the portfolio design, keeping pr
   const ids = s.modules.map((m) => m.id);
   assert.deepEqual(ids.slice(ids.indexOf('W16'), ids.indexOf('W16') + 3), ['W16', 'W16b', 'W16c']);
   assert.equal(migrate({ ...s, version: 7 }).modules.filter((m) => m.id === 'W16b').length, 1);
+});
+
+test('the FastAPI plan is a 30-session track from the Christmas break, each day linking to its docs', async () => {
+  const { FASTAPI_TRACK } = await import('../public/js/data/defaults.js');
+  const s = defaultState();
+  const t = s.tracks.find((x) => x.id === 'fastapi');
+  assert.equal(t.lessons.length, 30);
+  assert.equal(t.start, '2026-12-19');
+  const projects = t.lessons.filter((l) => !l.url).map((l) => l.id);
+  assert.deepEqual(projects, ['f7', 'f14', 'f21', 'f29', 'f30']); // build and assessment days have no tutorial
+  assert.ok(t.lessons.filter((l) => l.url).every((l) => /^https:\/\//.test(l.url)));
+
+  // A day's lesson opens its own documentation page (with Java and Backend done).
+  for (const x of s.tracks.filter((x) => x.id !== 'fastapi')) for (const l of x.lessons) s.lessonDone[l.id] = '2026-12-01';
+  const today = d('2026-12-19');
+  const ctx = makeContext(s);
+  const items = plan(s, ctx, today).days[0].items.filter((i) => i.trackId === 'fastapi');
+  assert.equal(items[0].url, FASTAPI_TRACK.lessons[0].url);
+  assert.equal(items[0].action, 'Read the documentation');
+
+  // Saves from before get the track once; editing lessons as text keeps the links.
+  const old = defaultState();
+  old.version = 8;
+  old.tracks = old.tracks.filter((x) => x.id !== 'fastapi');
+  const m = migrate(old);
+  assert.deepEqual(m.tracks.map((x) => x.id), ['java', 'backend', 'fastapi']);
+  assert.equal(migrate({ ...m, version: 8 }).tracks.filter((x) => x.id === 'fastapi').length, 1);
+  const { lessonsToText, parseLessonsText } = await import('../public/js/learn.js');
+  const back = parseLessonsText(lessonsToText(t.lessons), () => 'new', t.lessons).lessons;
+  assert.equal(back[0].url, t.lessons[0].url);
 });
