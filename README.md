@@ -44,7 +44,7 @@ Thursday 22 October · Normal week · lectures CSM 255, CSM 281, CSM 297
 | **Today** | Up to three non-school tasks (five on break days) with progress, a *LeetCode every day* counter of days done in the last 30 (a miss lowers it instead of resetting it), *+1 problem* / *+ next lesson* if you finish early, coursework, tomorrow's list, this week's mode (with a one-tap override), Java progress, calendar-triggered guidance and deadlines coming up. |
 | **Plan** | **Roadmap**: the 37 modules (W1–W39), weekly deliverables and projected dates. **Learn**: tracks, weeks target, video chapters, lessons. **Playbook**: priorities, decision rules, DSA mastery criteria, CS syllabus, the 22-company matrix. |
 | **Schedule** | Any week, day by day (what you did on past days, what's planned from today), your timetables (one per semester) and the academic calendar — all editable, with paste-as-text. |
-| **Track** | Weekly scorecard, problem bank (up next / due / attempted / solved, by-pattern stats, Medium readiness), application tracker with eligibility checks and an internship-vs-exam clash check, evidence checklists. |
+| **Track** | **Progress**: two charts of your progress against the plan line, one overall (learning tracks, roadmap modules and LeetCode) and one for LeetCode problems started, each saying how far ahead or behind you are today; then the weekly scorecard, problem bank (up next / due / attempted / solved, by-pattern stats, Medium readiness), application tracker with eligibility checks and an internship-vs-exam clash check, evidence checklists. |
 | **Settings** | How much goes on each day's list for Break / Normal / Heavy / Exam days, lecture-day boost, problem order, preview any date, sync between devices, backup/restore. |
 
 ## How it adapts
@@ -125,6 +125,7 @@ public/
     dates.js          day-number date maths (no time-zone surprises)
     parse.js          plain-text timetable/calendar import
     store.js          state, local storage, backup/restore, input repair
+    progress.js       your progress against the plan line, for the charts
     sync.js           three-way merge and GitHub Gist sync
     data/defaults.js  KNUST 2026/27 calendar, Group 1 timetable, modules, playbook
     views/            today, plan, schedule, track, settings

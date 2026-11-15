@@ -6,6 +6,8 @@ import { dueProblems, upcomingReviews, patternStats, orderNew, problemsToCSV, re
 import { banner, openAppEditor, eligibilityCount, statusTone } from './common.js';
 import { openProblemImport, openManualProblem } from './tasks.js';
 import { renderCoursesTab } from './courses.js';
+import { lineChart } from './charts.js';
+import { progressSeries, gapLabel } from '../progress.js';
 
 export function render(app, sub) {
   const tab = ['score', 'courses', 'dsa', 'apps', 'evidence'].includes(sub) ? sub : 'score';
@@ -15,7 +17,7 @@ export function render(app, sub) {
     h('header', { class: 'page-head' }, h('h1', null, 'Track')),
     segmented(
       [
-        { value: 'score', label: 'Score' },
+        { value: 'score', label: 'Progress' },
         { value: 'courses', label: 'Courses' },
         { value: 'dsa', label: 'Problems' },
         { value: 'apps', label: 'Applications' },
@@ -51,6 +53,7 @@ function scorecard(app) {
   return h(
     'div',
     { class: 'stack' },
+    progressCharts(app),
     card(
       h('div', { class: 'week-nav' }, iconButton('chevL', () => go(offset - 1), 'Previous week'), h('div', { class: 'week-nav-label' }, h('strong', null, fmtRange(ws, ws + 6)), h('span', { class: 'small muted' }, offset === 0 ? 'This week' : relDays(ws, weekStart(app.today)))), iconButton('chevR', () => go(offset + 1), 'Next week', { disabled: offset >= 0 })),
       h('div', { class: 'score-total' }, h('span', { class: 'stat-value' }, `${total}`), h('span', { class: 'muted' }, ' / 28')),
@@ -76,6 +79,29 @@ function scorecard(app) {
     hints.map((x) => banner(x.tone, 'Decision rule', x.text)),
     history(app),
   );
+}
+
+/** Your progress against the plan: overall, then LeetCode. */
+function progressCharts(app) {
+  const p = progressSeries(app.state, app.ctx, app.today);
+  if (!p) return null;
+  const tone = (you, plan) => (you + 0.5 >= plan ? 'good' : you >= plan * 0.75 ? 'warning' : 'critical');
+  const status = (you, plan, unit) => chip(gapLabel(you, plan, unit) === 'on plan' ? 'On plan' : gapLabel(you, plan, unit), { tone: tone(you, plan) });
+  const o = p.overall;
+  const lc = p.leetcode;
+  const goals = p.goals.map((g) => `${g.problems} by ${fmtDay(g.day, { weekday: false })}`).join(', ');
+  return [
+    card(
+      cardHeader('Overall progress', status(o.now, o.planNow, ' points'), `Share of the plan done: learning tracks, roadmap modules and LeetCode, from ${fmtDay(p.start, { weekday: false })}`),
+      h('div', { class: 'stats' }, stat(`${o.now}%`, 'you'), stat(`${o.planNow}%`, 'plan by today'), stat(fmtDay(p.end, { weekday: false }), 'target finish')),
+      lineChart({ title: 'Overall progress', days: p.days, today: app.today, yMax: 100, fmt: (v) => `${Math.round(v)}%`, series: [{ name: 'You', values: o.you, cls: 'you' }, { name: 'Plan', values: o.plan, cls: 'plan', dashed: true }] }),
+    ),
+    card(
+      cardHeader('LeetCode', status(lc.now, lc.planNow, ''), `Problems started. Plan: ${goals}; none in exam weeks`),
+      h('div', { class: 'stats' }, stat(String(lc.now), 'you'), stat(String(Math.round(lc.planNow)), 'plan by today'), stat(String(lc.goal), 'goal')),
+      lineChart({ title: 'LeetCode problems started', days: p.days, today: app.today, fmt: (v) => String(Math.round(v)), series: [{ name: 'You', values: lc.you, cls: 'you' }, { name: 'Plan', values: lc.plan, cls: 'plan', dashed: true }] }),
+    ),
+  ];
 }
 
 function history(app) {

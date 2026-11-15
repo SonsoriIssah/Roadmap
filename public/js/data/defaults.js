@@ -859,6 +859,14 @@ export const INTERVIEW = {
 // May to July for interview practice before the July 2027 applications.
 export const DSA_READINESS = { difficulty: 'Medium', window: 10, target: 7, by: '2027-04-30' };
 
+// Problems first attempted by each date: the plan line on the LeetCode chart.
+// From the daily-list simulation: about 80 by the end of April and 115 by
+// the end of July if you do every day.
+export const DSA_GOALS = [
+  { by: '2027-04-30', problems: 80 },
+  { by: '2027-07-31', problems: 115 },
+];
+
 export const APP_STATUSES =['researching', 'applied', 'OA', 'interview', 'rejected', 'offer'];
 
 export const ELIGIBILITY_CHECKS = [
