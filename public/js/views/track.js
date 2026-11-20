@@ -8,6 +8,7 @@ import { openProblemImport, openManualProblem } from './tasks.js';
 import { renderCoursesTab } from './courses.js';
 import { lineChart } from './charts.js';
 import { progressSeries, gapLabel } from '../progress.js';
+import { catchUp, CATCH_UP } from '../catchup.js';
 
 export function render(app, sub) {
   const tab = ['score', 'courses', 'dsa', 'apps', 'evidence'].includes(sub) ? sub : 'score';
@@ -96,12 +97,57 @@ function progressCharts(app) {
       h('div', { class: 'stats' }, stat(`${o.now}%`, 'you'), stat(`${o.planNow}%`, 'plan by today'), stat(fmtDay(p.end, { weekday: false }), 'target finish')),
       lineChart({ title: 'Overall progress', days: p.days, today: app.today, yMax: 100, fmt: (v) => `${Math.round(v)}%`, series: [{ name: 'You', values: o.you, cls: 'you' }, { name: 'Plan', values: o.plan, cls: 'plan', dashed: true }] }),
     ),
+    catchUpCard(app, p),
     card(
       cardHeader('LeetCode', status(lc.now, lc.planNow, ''), `Problems started. Plan: ${goals}; none in exam weeks`),
       h('div', { class: 'stats' }, stat(String(lc.now), 'you'), stat(String(Math.round(lc.planNow)), 'plan by today'), stat(String(lc.goal), 'goal')),
       lineChart({ title: 'LeetCode problems started', days: p.days, today: app.today, fmt: (v) => String(Math.round(v)), series: [{ name: 'You', values: lc.you, cls: 'you' }, { name: 'Plan', values: lc.plan, cls: 'plan', dashed: true }] }),
     ),
   ];
+}
+
+/** How to get back on the plan line: a catch-up line, then what to do, most useful first. */
+function catchUpCard(app, p) {
+  const c = catchUp(p, app.state, app.ctx, app.today);
+  const when = !c.behind
+    ? chip('On plan', { tone: 'good' })
+    : c.rejoin && c.rejoin <= p.end
+      ? chip(`Back on plan ${fmtDay(c.rejoin, { weekday: false })}`, { tone: 'info' })
+      : chip('Not by the target', { tone: 'critical' });
+  const factor = CATCH_UP === 1.5 ? 'half as much again as the plan' : `${CATCH_UP}× the plan`;
+  const pts = (id) => c.areas.find((a) => a.id === id)?.pts || 0;
+  const gapOf = { leetcode: pts('leetcode'), reviews: pts('leetcode'), learn: pts('learn'), roadmap: pts('roadmap') };
+  return card(
+    cardHeader('Back on track', when, c.behind ? `The catch-up line does ${factor} each study day. Do the suggestions below to follow it.` : 'You are on or ahead of the plan line.'),
+    c.behind
+      ? lineChart({
+          title: 'Catching up',
+          days: p.days,
+          today: app.today,
+          yMax: 100,
+          fmt: (v) => `${Math.round(v)}%`,
+          series: [{ name: 'You', values: p.overall.you, cls: 'you' }, { name: 'Plan', values: p.overall.plan, cls: 'plan', dashed: true }, { name: 'Catch-up', values: c.path, cls: 'catchup' }],
+        })
+      : null,
+    h(
+      'ol',
+      { class: 'catchup-list', 'aria-label': 'Suggestions' },
+      c.suggestions.map((s) =>
+        h(
+          'li',
+          { class: 'catchup-item', dataset: { tone: s.tone } },
+          h(
+            'div',
+            { class: 'catchup-body' },
+            h('strong', null, s.title),
+            h('p', { class: 'small muted' }, s.detail),
+          ),
+          gapOf[s.id] >= 0.5 ? h('span', { class: 'catchup-gap', title: 'Points of overall progress this closes' }, `+${Math.round(gapOf[s.id])} pts`) : null,
+          s.action ? button(s.action.label, () => app.nav(s.action.route), { kind: 'ghost', size: 'sm' }) : null,
+        ),
+      ),
+    ),
+  );
 }
 
 function history(app) {

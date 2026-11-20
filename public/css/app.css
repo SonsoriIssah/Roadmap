@@ -33,6 +33,7 @@
   --class-block: #b9b7ad;
   --series-you: #4a3aa7;
   --series-plan: #eb6834;
+  --series-catchup: #0f7f6a;
   --radius: 14px;
   --radius-sm: 9px;
   --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 2px 8px rgba(11, 11, 11, 0.04);
@@ -67,6 +68,7 @@
     --class-block: #55544f;
   --series-you: #9085e9;
   --series-plan: #d95926;
+  --series-catchup: #2fb594;
     --shadow: none;
   }
 }
@@ -96,6 +98,7 @@
   --class-block: #55544f;
   --series-you: #9085e9;
   --series-plan: #d95926;
+  --series-catchup: #2fb594;
   --shadow: none;
 }
 
@@ -1991,6 +1994,16 @@ dialog.sheet[open] {
   stroke: var(--series-plan);
 }
 
+.chart-line.catchup,
+.chart-dot.catchup {
+  stroke: var(--series-catchup);
+}
+
+.chart-line.catchup {
+  stroke-width: 2.5;
+  stroke-dasharray: 0.5 4.5;
+}
+
 .chart-dot {
   fill: var(--surface);
   stroke-width: 2.5;
@@ -2060,6 +2073,60 @@ dialog.sheet[open] {
 
 .chart-key.dashed {
   border-top-style: dashed;
+}
+
+.chart-key.catchup {
+  border-top: 3px dotted var(--series-catchup);
+}
+
+/* ---------- Back on track ---------- */
+
+.catchup-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.catchup-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--info-ink);
+  border-radius: var(--radius-sm);
+}
+
+.catchup-item[data-tone='critical'] {
+  border-left-color: var(--critical-ink);
+}
+
+.catchup-item[data-tone='warning'] {
+  border-left-color: var(--warning-ink);
+}
+
+.catchup-item[data-tone='good'] {
+  border-left-color: var(--good-ink);
+}
+
+.catchup-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.catchup-body p {
+  margin: 2px 0 0;
+}
+
+.catchup-gap {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .chart-table table {

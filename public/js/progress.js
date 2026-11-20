@@ -82,6 +82,10 @@ export function progressSeries(state, ctx, today) {
     const w = cumulative(win.start, win.end, (d) => dailyLoad(modeOn(d, ctx), s).learn || 0);
     return (d) => (w.total ? (total * w.at(d)) / w.total : d >= win.end ? total : 0);
   });
+  const trackDone = (t, d) => t.lessons.reduce((a, l) => {
+    const v = (state.lessonDone || {})[l.id];
+    return v && (isISODate(v) ? toDay(v) : start) <= d ? a + lessonMinutes(l) : a;
+  }, 0);
   const lessonDays = [];
   for (const t of tracks) {
     for (const l of t.lessons) {
@@ -104,26 +108,43 @@ export function progressSeries(state, ctx, today) {
   const planMods = (d) => (pace.total ? (modTotal * pace.at(d)) / pace.total : 0);
 
   // Overall: the average share done across learning, roadmap and LeetCode.
-  const pct = (learn, modules, lc) => Math.round(((Math.min(1, learn / learnTotal) + Math.min(1, modules / modTotal) + Math.min(1, lc / finalGoal)) / 3) * 1000) / 10;
+  const totals = { learn: learnTotal, roadmap: modTotal, leetcode: finalGoal };
+  const pct = (learn, roadmap, leetcode) => overallPct({ learn, roadmap, leetcode }, totals);
 
   const lc = { you: [], plan: [] };
+  const learn = { you: [], plan: [] };
+  const roadmap = { you: [], plan: [] };
   const overall = { you: [], plan: [] };
   for (const d of days) {
     const past = d <= today;
     lc.plan.push(Math.round(planLc(d) * 10) / 10);
     lc.you.push(past ? youLc(d) : null);
+    learn.plan.push(planLearn(d));
+    learn.you.push(past ? youLearn(d) : null);
+    roadmap.plan.push(planMods(d));
+    roadmap.you.push(past ? youMods(d) : null);
     overall.plan.push(pct(planLearn(d), planMods(d), planLc(d)));
     overall.you.push(past ? pct(youLearn(d), youMods(d), youLc(d)) : null);
   }
   const at = Math.min(Math.max(today, start), end) - start;
+  const now = start + at;
   return {
     start,
     end,
     days,
+    totals,
     goals: goals.map((g) => ({ day: g.day, problems: g.problems })),
     leetcode: { ...lc, now: lc.you[at] ?? 0, planNow: lc.plan[at], goal: finalGoal },
+    learn: { ...learn, tracks: tracks.map((t, i) => ({ id: t.id, name: t.name, window: trackWindow(t), planNow: trackPlans[i](now), now: trackDone(t, now) })) },
+    roadmap,
     overall: { ...overall, now: overall.you[at] ?? 0, planNow: overall.plan[at] },
   };
+}
+
+/** Overall progress in percent: the average share done of each area's total. */
+export function overallPct(values, totals) {
+  const share = (k) => Math.min(1, values[k] / (totals[k] || 1));
+  return Math.round(((share('learn') + share('roadmap') + share('leetcode')) / 3) * 1000) / 10;
 }
 
 /** "6 behind", "2 ahead" or "on plan", rounding to whole units. */
