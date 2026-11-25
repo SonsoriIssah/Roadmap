@@ -7,7 +7,7 @@ import { toDay, isISODate } from './dates.js';
 // Video timestamps
 // ---------------------------------------------------------------------------
 
-/** "1:13:20" / "13:20" / "0:45" → seconds, or null */
+/** "1:13:20" / "13:20" / "0:45" -> seconds, or null */
 export function parseTimestamp(s) {
   const m = /^(\d{1,2})(?::(\d{2}))(?::(\d{2}))?$/.exec(String(s).trim());
   if (!m) return null;
@@ -182,7 +182,7 @@ export function remainingMinutes(track, lessonDone, day) {
 /**
  * Does a learning track cover each course-outline topic before its exam?
  * Never changes the pace — it reads where the planner put each lesson.
- * plannedOn: Map lessonId → day; dueOf(eventId) → day or null.
+ * plannedOn: Map lessonId -> day; dueOf(eventId) -> day or null.
  * For each topic: lessons done, the day its last open lesson is planned
  * (null when not planned in time or missing from the track), and ok.
  */

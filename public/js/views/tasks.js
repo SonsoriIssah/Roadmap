@@ -245,7 +245,7 @@ function openOutcome(app, problemId, isRevisit) {
         { class: 'form-grid' },
         h('p', { class: 'small muted' }, [base.difficulty, base.pattern || base.topic, `target ${t} min`].filter(Boolean).join(' · ')),
         h('div', { class: 'form-row' }, field('Minutes taken', input({ type: 'number', min: '0', inputmode: 'numeric', value: minutes, oninput: (e) => (minutes = e.target.value) })), h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Confidence (1–5)'), confRow)),
-        h('p', { class: 'small muted' }, 'Same rules as your tracker: low confidence brings it back in 2 days; 3 → 5 days, 4 → 10, 5 → 14.'),
+        h('p', { class: 'small muted' }, 'Same rules as your tracker: low confidence brings it back in 2 days; 3 -> 5 days, 4 -> 10, 5 -> 14.'),
         h(
           'div',
           { class: 'choice-list' },
@@ -326,7 +326,7 @@ export function openProblemImport(app) {
     body: h(
       'div',
       { class: 'form-grid' },
-      h('p', { class: 'small' }, 'Use your Excel file, or in Google Sheets: File → Download → Microsoft Excel (.xlsx). Problem names, links (including “Open ↗” links), patterns, priority, status and next-review dates are read. Re-import any time to sync statuses.'),
+      h('p', { class: 'small' }, 'Use your Excel file, or in Google Sheets: File -> Download -> Microsoft Excel (.xlsx). Problem names, links (including “Open ↗” links), patterns, priority, status and next-review dates are read. Re-import any time to sync statuses.'),
       button('Choose .xlsx or .csv file', () => fileInput.click(), { kind: 'secondary', iconName: 'upload' }),
       fileInput,
       area,
@@ -389,7 +389,7 @@ export function openChapterImport(app, track) {
       { class: 'form-grid' },
       h('p', { class: 'small' }, 'Paste the video’s chapter list from its description (lines like “26:02 Variables”), or the whole transcript from YouTube’s “Show transcript” — chapter titles are picked out automatically. Your daily list will then say exactly which minutes to watch.'),
       field('Video link', input({ name: 'url', type: 'url', inputmode: 'url', value: track.url || '', placeholder: 'https://www.youtube.com/watch?v=…' })),
-      h('div', { class: 'form-row' }, field('Short name', input({ name: 'resource', value: track.resource || '', placeholder: 'Mosh' }), 'Shown as “Watch Mosh 26:02 → 34:32”.'), field('Video length', input({ name: 'videoLength', placeholder: '3:30:00' }), 'Sets the last chapter’s end.')),
+      h('div', { class: 'form-row' }, field('Short name', input({ name: 'resource', value: track.resource || '', placeholder: 'Mosh' }), 'Shown as “Watch Mosh 26:02 -> 34:32”.'), field('Video length', input({ name: 'videoLength', placeholder: '3:30:00' }), 'Sets the last chapter’s end.')),
       field('Chapters', textarea({ name: 'chapters', rows: 10, class: 'input mono', placeholder: '0:00 Introduction\n1:48 Installing Java\n…\n26:02 Variables', spellcheck: 'false', autocapitalize: 'off' })),
       h('label', { class: 'check-inline' }, h('input', { type: 'checkbox', name: 'replaceAll' }), ' Replace every lesson (otherwise only the video chapters are replaced; methods, OOP, collections and the rest stay)'),
       errBox,

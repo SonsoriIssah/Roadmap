@@ -460,7 +460,7 @@ export const DEFAULT_MODULES = [
 // ---------------------------------------------------------------------------
 // Learning tracks. Lessons are spread over the track's weeks; days with a
 // lecture matching `keywords` (CSM 281) get more. Video lessons carry their
-// chapter timestamps, so the daily list says "Watch 26:02 → 34:32".
+// chapter timestamps, so the daily list says "Watch 26:02 -> 34:32".
 // ---------------------------------------------------------------------------
 const L = (id, title, min, practice, extra = {}) => ({ id, title, min, practice, ...extra });
 
@@ -537,7 +537,7 @@ export const JAVA_STUDY_LESSONS = [
   L('j7', 'Methods: parameters, return values, overloading, static', 40, 'Refactor your mortgage calculator into methods: readNumber(prompt, min, max), calculateMortgage(...).'),
   L('j8', 'Classes and objects: fields, constructors, this, toString', 45, 'Model a Student class with a constructor and toString.'),
   L('j9', 'Encapsulation: access modifiers, getters/setters, final', 40, 'BankAccount with a private balance and validated deposit/withdraw.'),
-  L('j10', 'Inheritance: extends, super, overriding, equals and hashCode', 50, 'Shape → Circle and Rectangle with area(); override equals/hashCode on Circle.'),
+  L('j10', 'Inheritance: extends, super, overriding, equals and hashCode', 50, 'Shape -> Circle and Rectangle with area(); override equals/hashCode on Circle.'),
   L('j11', 'Polymorphism and abstract classes', 45, 'Store Shapes in a List<Shape> and total their areas polymorphically.'),
   L('j12', 'Interfaces, default methods, Comparable vs Comparator', 45, 'Sort Students by GPA (descending), then by name.'),
   L('j13', 'Exceptions: try/catch/finally, checked vs unchecked, custom, try-with-resources', 45, 'Throw an InsufficientFundsException from BankAccount.withdraw.'),
@@ -809,7 +809,7 @@ export const INTERVIEW = {
     'What did you learn about yourself?',
   ],
   questions: [
-    BQ('iq1', 'Tell me about yourself.', 'Backend interest → LedgerCore → Aggregation API → Robotics Club mentoring → why this company.', `${JPM} §2`),
+    BQ('iq1', 'Tell me about yourself.', 'Backend interest -> LedgerCore -> Aggregation API -> Robotics Club mentoring -> why this company.', `${JPM} §2`),
     PQ('iq2', 'What does LedgerCore do, in one sentence? What is double-entry bookkeeping and how does it implement it?', 'Start from the transfer: matching debit and credit postings.', `${LCH} §1`),
     BQ('iq3', 'Tell me about a time you disagreed with a teammate.', 'FarmLink: build our own delivery service or use an existing one — settled by research, not argument.', `${JPM} §3`),
     PQ('iq4', 'What does the Aggregation API do, in one sentence? Name every major component and its job.', 'API, PostgreSQL, Redis, Kafka, worker, scheduler, provider layer.', `${AGH} §1`),

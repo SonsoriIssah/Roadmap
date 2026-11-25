@@ -281,7 +281,7 @@ function renderCourseCard(app, course, courseProg, courseAssessments) {
       ? h(
           'div',
           { class: 'row-actions wrap', style: { marginTop: '8px' } },
-          button(`Open ${track.name} Track (${(track.lessons || []).length} Lessons) →`, () => app.nav('plan/learn'), { kind: 'secondary', size: 'sm' }),
+          button(`Open ${track.name} Track (${(track.lessons || []).length} Lessons) ->`, () => app.nav('plan/learn'), { kind: 'secondary', size: 'sm' }),
         )
       : null,
 
@@ -416,7 +416,7 @@ export function openCourseDetails(app, course) {
           : h(
               'div',
               { class: 'card', style: { padding: '14px' } },
-              h('p', { class: 'muted small', style: { margin: 0 } }, course.code === 'CSM 281' ? 'Java is covered by your existing learning roadmap (58 lessons). Open the Java track in Plan → Learn to study.' : 'Official course outline is pending. Topics will be listed here once the syllabus is confirmed.'),
+              h('p', { class: 'muted small', style: { margin: 0 } }, course.code === 'CSM 281' ? 'Java is covered by your existing learning roadmap (58 lessons). Open the Java track in Plan -> Learn to study.' : 'Official course outline is pending. Topics will be listed here once the syllabus is confirmed.'),
             ),
 
         // Assessments Section
@@ -715,7 +715,7 @@ export function academicTodayWidget(app) {
   return card(
     cardHeader(
       'KNUST Academics',
-      button('View All Courses →', () => app.nav('track/courses'), { kind: 'ghost', size: 'sm' }),
+      button('View All Courses ->', () => app.nav('track/courses'), { kind: 'ghost', size: 'sm' }),
       `${courses.length} Courses · ${totalCredits} Credits · Target: ${targetAvg}% Average`,
     ),
     h(

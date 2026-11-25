@@ -66,7 +66,7 @@ function todayCard(app, day) {
   const listed = new Set(day.items.filter((i) => i.type === 'problem').map((i) => i.problemId));
   const moreProblems = app.state.problems.some((p) => p.status === 'new' && !listed.has(p.id));
   const more = (key) => {
-    if (key === 'problems' && !moreProblems) return toast(app.state.problems.length ? 'Every problem in your bank is already started. Import more or add one in Track → Problems.' : 'Import your DSA sheet first (Track → Problems).');
+    if (key === 'problems' && !moreProblems) return toast(app.state.problems.length ? 'Every problem in your bank is already started. Import more or add one in Track -> Problems.' : 'Import your DSA sheet first (Track -> Problems).');
     app.update((s) => {
       const e = (s.extra[iso] = s.extra[iso] || {});
       e[key] = (Number(e[key]) || 0) + 1;
@@ -124,7 +124,7 @@ function tomorrowCard(app, day) {
 
 function importPrompt(app) {
   if (app.state.problems.length) return null;
-  return banner('info', 'Import your DSA sheet', 'Your list says “Solve …” with real problem names once your sheet is imported. From Google Sheets: File → Download → Microsoft Excel (.xlsx).', [
+  return banner('info', 'Import your DSA sheet', 'Your list says “Solve …” with real problem names once your sheet is imported. From Google Sheets: File -> Download -> Microsoft Excel (.xlsx).', [
     button('Import sheet', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' }),
   ]);
 }

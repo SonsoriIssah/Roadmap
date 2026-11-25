@@ -1,5 +1,5 @@
 // Minimal spreadsheet readers with no dependencies:
-//  - .xlsx (Excel, or Google Sheets → Download → Microsoft Excel)
+//  - .xlsx (Excel, or Google Sheets -> Download -> Microsoft Excel)
 //  - .csv
 // Only what a problem list needs: cell text, and links (hyperlink cells or
 // =HYPERLINK formulas). Styles, merged cells and charts are ignored.
@@ -18,7 +18,7 @@ async function inflateRaw(bytes) {
   return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
-/** Read a zip archive into a Map of path → bytes (only entries `want` accepts). */
+/** Read a zip archive into a Map of path -> bytes (only entries `want` accepts). */
 export async function unzip(input, want = () => true) {
   const buf = input instanceof Uint8Array ? input : new Uint8Array(input);
   const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);

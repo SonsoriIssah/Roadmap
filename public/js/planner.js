@@ -111,11 +111,11 @@ function interviewItem({ q, part }, iso, followUp) {
   const meta = (what) => `${what} · check against ${q.source}`;
   const item = { key: `interview:${iso}:${part ? `${q.id}:${part}` : q.id}`, type: 'interview', category: 'career', isTechnical: false, scheduledDate: iso, min: 10 };
   if (part === 'all') {
-    return { ...item, title: `Say it all: ${q.q}`, desc: `No notes, every piece in order: ${q.pieces.join(' → ')}. Keep it to 45–90 seconds, then answer a follow-up: “${followUp}”`, meta: meta('Behavioural · final day') };
+    return { ...item, title: `Say it all: ${q.q}`, desc: `No notes, every piece in order: ${q.pieces.join(' -> ')}. Keep it to 45–90 seconds, then answer a follow-up: “${followUp}”`, meta: meta('Behavioural · final day') };
   }
   if (part) {
     const n = Number(part);
-    const recap = n > 1 ? ` Then say the pieces so far in order: ${q.pieces.slice(0, n).join(' → ')}.` : '';
+    const recap = n > 1 ? ` Then say the pieces so far in order: ${q.pieces.slice(0, n).join(' -> ')}.` : '';
     return { ...item, title: `${q.q} Piece ${n} of ${q.pieces.length}: ${q.pieces[n - 1]}`, desc: `Read just this piece, close your notes and say it from memory three times.${recap}`, meta: meta('Behavioural · memorise') };
   }
   return {
@@ -123,7 +123,7 @@ function interviewItem({ q, part }, iso, followUp) {
     title: `Practise aloud: ${q.q}`,
     desc: q.kind === 'behavioral'
       ? `${q.cue} Keep it to 45–90 seconds, then answer a follow-up: “${followUp}”`
-      : `${q.cue} Answer cold, then push yourself through why → why not → what if → how would it scale.`,
+      : `${q.cue} Answer cold, then push yourself through why -> why not -> what if -> how would it scale.`,
     meta: meta(q.kind === 'behavioral' ? 'Behavioural' : 'Technical · project'),
   };
 }
@@ -140,7 +140,7 @@ function moduleOn(day, today, modules, fc, current) {
 
 function groupTitle(track, group) {
   if (group.length <= 3) return `${track.name}: ${group.map((l) => l.title).join(', ')}`;
-  return `${track.name}: ${group[0].title} → ${group[group.length - 1].title} (${group.length} chapters)`;
+  return `${track.name}: ${group[0].title} -> ${group[group.length - 1].title} (${group.length} chapters)`;
 }
 
 function lessonItem(track, group, iso, lessonDone) {
@@ -161,7 +161,7 @@ function lessonItem(track, group, iso, lessonDone) {
       lessonIds: ids,
       trackId: track.id,
       title: groupTitle(track, group),
-      action: `Watch ${track.resource || 'the video'} ${fmtTimestamp(first.start)} → ${fmtTimestamp(last.end)}`,
+      action: `Watch ${track.resource || 'the video'} ${fmtTimestamp(first.start)} -> ${fmtTimestamp(last.end)}`,
       url: videoLink(track.url, first.start),
       practice,
       min,
@@ -186,7 +186,7 @@ function lessonItem(track, group, iso, lessonDone) {
   };
 }
 
-/** Group consecutive video lessons into one "watch a → b" item. */
+/** Group consecutive video lessons into one "watch a -> b" item. */
 function groupLessons(lessons) {
   const groups = [];
   for (const l of lessons) {

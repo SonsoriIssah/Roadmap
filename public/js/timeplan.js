@@ -68,7 +68,7 @@ function place(min, allWindows, notBefore = 0) {
 
 /**
  * Suggest times for a day's open tasks and its roadmap block.
- * Returns { slots: Map(key → [{ s, e }]), short: [{ title, min }] }, where
+ * Returns { slots: Map(key -> [{ s, e }]), short: [{ title, min }] }, where
  * `short` holds what the free time couldn't hold.
  */
 export function suggestTimes(day, dayPlan, { nowMin = null } = {}) {

@@ -333,7 +333,7 @@ function editEvent(app, e) {
       h('div', { class: 'form-row' }, field('Start', input({ name: 'start', type: 'date', value: v.start })), field('End', input({ name: 'end', type: 'date', value: v.end }))),
       field(
         'Kind',
-        select(KIND_ORDER.map((k) => ({ value: k, label: `${KINDS[k].label}${KINDS[k].mode ? ` → ${MODES[KINDS[k].mode].short} mode` : ''}` })), v.kind, { name: 'kind' }),
+        select(KIND_ORDER.map((k) => ({ value: k, label: `${KINDS[k].label}${KINDS[k].mode ? ` -> ${MODES[KINDS[k].mode].short} mode` : ''}` })), v.kind, { name: 'kind' }),
         'Kinds with a mode change your weekly capacity; the others are reminders.',
       ),
     ),

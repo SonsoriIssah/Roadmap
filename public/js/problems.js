@@ -105,7 +105,7 @@ export function problemKey(title) {
 
 /**
  * Review stages, following your tracker's status ladder:
- * Attempted → Hint Needed → Solved → Reimplemented → Timed → Mastered.
+ * Attempted -> Hint Needed -> Solved -> Reimplemented -> Timed -> Mastered.
  */
 export const STAGES = ['new', 'attempted', 'hint', 'solved', 'reimplemented', 'timed', 'mastered'];
 export const STAGE_LABEL = { new: 'Not Started', attempted: 'Attempted', hint: 'Hint Needed', solved: 'Solved', reimplemented: 'Reimplemented', timed: 'Timed', mastered: 'Mastered' };
@@ -157,7 +157,7 @@ export function mapDate(raw) {
   if (isISODate(s.slice(0, 10))) return s.slice(0, 10);
   if (/^\d{5}(\.\d+)?$/.test(s)) {
     const serial = Math.floor(Number(s));
-    if (serial > 30000 && serial < 80000) return toISO(serial - 25569); // Excel epoch → Unix days
+    if (serial > 30000 && serial < 80000) return toISO(serial - 25569); // Excel epoch -> Unix days
   }
   const t = Date.parse(s);
   if (Number.isFinite(t) && /\d{4}/.test(s)) {

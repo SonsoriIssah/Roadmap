@@ -140,9 +140,9 @@ function suggest(p, state, ctx, today, areas, rejoin, behind) {
       tone: learn.pts >= 5 ? 'critical' : 'warning',
       title: `Catch up ${fmtDuration(Math.round(track.gap))} of ${track.name}`,
       detail: ended
-        ? `Its end date, ${end}, has passed, so all of it counts as due. Give it more weeks in Plan → Learn, so each day's share is realistic.`
+        ? `Its end date, ${end}, has passed, so all of it counts as due. Give it more weeks in Plan -> Learn, so each day's share is realistic.`
         : late
-          ? `That won't fit before the track's end on ${end}. Give it more weeks in Plan → Learn, so each day's share stays realistic.`
+          ? `That won't fit before the track's end on ${end}. Give it more weeks in Plan -> Learn, so each day's share stays realistic.`
           : `Your list already adds missed lessons each day. Do about ${perDay} extra minutes on study days, or tap "+ next lesson" when you finish early.`,
       action: late ? { label: 'Plan', route: 'plan/learn' } : { label: 'Today', route: 'today' },
     });

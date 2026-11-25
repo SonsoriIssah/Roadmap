@@ -175,7 +175,7 @@ export function migrate(raw) {
     }
   }
   if (v < 4) {
-    // Problems gained review stages (Attempted → … → Mastered). Infer them
+    // Problems gained review stages (Attempted -> … -> Mastered). Infer them
     // from the old status; a re-import restores the exact stage from your sheet.
     for (const p of Array.isArray(out.problems) ? out.problems : []) {
       if (!p || p.stage) continue;

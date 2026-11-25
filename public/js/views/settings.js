@@ -149,7 +149,7 @@ function dailyCard(app) {
       'div',
       { class: 'form-row' },
       field('Lecture-day boost', select([{ value: '1', label: 'None' }, { value: '1.5', label: '1.5×' }, { value: '2', label: '2×' }, { value: '3', label: '3×' }], String(s.courseBoost), { onchange: (e) => app.update((st) => { st.settings.courseBoost = Number(e.target.value); }) }), 'More Java on CSM 281 days.'),
-      field('Problem order', select([{ value: 'roadmap', label: 'Roadmap topic first' }, { value: 'sheet', label: 'My sheet’s order' }], s.problemOrder, { onchange: (e) => app.update((st) => { st.settings.problemOrder = e.target.value; }) }), 'Both respect P0 → P1 → P2.'),
+      field('Problem order', select([{ value: 'roadmap', label: 'Roadmap topic first' }, { value: 'sheet', label: 'My sheet’s order' }], s.problemOrder, { onchange: (e) => app.update((st) => { st.settings.problemOrder = e.target.value; }) }), 'Both respect P0 -> P1 -> P2.'),
     ),
   );
 }

@@ -141,7 +141,7 @@ if (store.corrupt) toast('Saved data could not be read, so defaults were loaded.
 render();
 
 // ---------------------------------------------------------------------------
-// Sync with your other devices (Settings → Sync): when the app opens or comes
+// Sync with your other devices (Settings -> Sync): when the app opens or comes
 // back to the foreground, shortly after you change something, and when you
 // leave it.
 // ---------------------------------------------------------------------------

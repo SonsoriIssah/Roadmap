@@ -9,7 +9,7 @@ const H = 200;
 const M = { top: 12, right: 52, bottom: 24, left: 34 };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** A rounded axis maximum just above v (115 → 120, 37 → 40), so the gridline at half stays a round number. */
+/** A rounded axis maximum just above v (115 -> 120, 37 -> 40), so the gridline at half stays a round number. */
 function niceMax(v) {
   if (v <= 0) return 1;
   const unit = 10 ** Math.floor(Math.log10(v));

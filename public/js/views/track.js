@@ -9,6 +9,7 @@ import { renderCoursesTab } from './courses.js';
 import { lineChart } from './charts.js';
 import { progressSeries, gapLabel } from '../progress.js';
 import { catchUp, CATCH_UP } from '../catchup.js';
+import { planFor } from './tasks.js';
 
 export function render(app, sub) {
   const tab = ['score', 'courses', 'dsa', 'apps', 'evidence', 'all'].includes(sub) ? sub : 'score';
@@ -216,13 +217,13 @@ function problemsTab(app) {
       cardHeader('Problem bank', button(bank.length ? 'Re-import' : 'Import sheet', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' }), app.state.meta.problemSource ? `From ${app.state.meta.problemSource}` : 'Import your Excel / Google Sheets tracker'),
       bank.length
         ? h('div', { class: 'stats' }, stat(String(count('new')), 'not started'), stat(String(count('solved')), 'solved'), stat(firsts.length ? `${Math.round((solo / firsts.length) * 100)}%` : '—', 'solved alone'))
-        : h('p', { class: 'small' }, 'Your daily list picks problems from here: the roadmap topic first, then your sheet's priority (P0 → P1 → P2) and order. Solved problems come back for spaced revisits.'),
+        : h('p', { class: 'small' }, "Your daily list picks problems from here: the roadmap topic first, then your sheet's priority (P0 -> P1 -> P2) and order. Solved problems come back for spaced revisits."),
       h('div', { class: 'row-actions wrap' }, button('Add one problem', () => openManualProblem(app), { kind: 'ghost', size: 'sm', iconName: 'plus' }), bank.length ? button('Export progress CSV', exportCsv, { kind: 'ghost', size: 'sm', iconName: 'download' }) : null),
     ),
     bank.length ? readinessCard(app) : null,
-    guessed ? banner('info', 'Re-import your sheet once', 'Reviews now follow your tracker's ladder (Solved → Reimplemented → Timed → Mastered). Re-import so each problem's exact stage comes across; what you ticked in the app is kept.', [button('Re-import', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' })]) : null,
+    guessed ? banner('info', 'Re-import your sheet once', "Reviews now follow your tracker's ladder (Solved -> Reimplemented -> Timed -> Mastered). Re-import so each problem's exact stage comes across; what you ticked in the app is kept.", [button('Re-import', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' })]) : null,
     card(
-      h('p', { class: 'small' }, h('strong', null, 'How reviews work: '), 'tick a problem on your daily list and it counts as solved — its next review is booked straight away (3 days later: reimplement from blank). Each review moves it up your ladder: timed redo → explain aloud → Mastered (back after 21 days, then 45, then every 90). Use "How did it go?" for hints, failed attempts or confidence.'),
+      h('p', { class: 'small' }, h('strong', null, 'How reviews work: '), 'tick a problem on your daily list and it counts as solved — its next review is booked straight away (3 days later: reimplement from blank). Each review moves it up your ladder: timed redo -> explain aloud -> Mastered (back after 21 days, then 45, then every 90). Use "How did it go?" for hints, failed attempts or confidence.'),
     ),
     bank.length
       ? card(
@@ -263,7 +264,7 @@ function problemsTab(app) {
             : h('p', { class: 'small muted' }, filter === 'due' ? 'Nothing due today. Reviews are added to your daily list on their day.' : filter === 'upcoming' ? 'No reviews booked yet. Tick a problem on your daily list and its review is added here.' : 'None.'),
           shown.length > limit ? button(`Show all ${shown.length}`, () => { app.ui.problemAll = true; app.rerender(); }, { kind: 'ghost', size: 'sm' }) : null,
         )
-      : empty('No problems yet. Import your tracker — from Google Sheets use File → Download → Microsoft Excel (.xlsx).', button('Import sheet', () => openProblemImport(app), { kind: 'secondary', size: 'sm' })),
+      : empty('No problems yet. Import your tracker — from Google Sheets use File -> Download -> Microsoft Excel (.xlsx).', button('Import sheet', () => openProblemImport(app), { kind: 'secondary', size: 'sm' })),
     stats.length
       ? card(
           cardHeader('By pattern', null, 'Most unsolved attempts first — use this for "weakest patterns"'),
@@ -325,7 +326,7 @@ function applications(app) {
     ),
     shown.length
       ? shown.map((a) => appCard(app, a))
-      : empty('No applications yet. Add live roles now — don't wait for a stronger portfolio. The Playbook tab lists your 22 target companies.', button('Open company playbook', () => app.nav('plan/playbook'), { kind: 'secondary', size: 'sm' })),
+      : empty("No applications yet. Add live roles now — don't wait for a stronger portfolio. The Playbook tab lists your 22 target companies.", button('Open company playbook', () => app.nav('plan/playbook'), { kind: 'secondary', size: 'sm' })),
   );
 }
 
@@ -382,6 +383,10 @@ function allTasksTab(app) {
   const res = planFor(app, today, 1);
   const day = res.days[0] || { items: [], classes: [] };
   const checks = s.checks || {};
+  const setCatchUp = (item, value) => app.update((state) => {
+    state.checks ||= {};
+    state.checks[`catchup:${item.type}:${item.taskId || item.key || item.moduleId || item.lessonId || item.appId || item.problemId || item.title}`] = value;
+  });
   const lessonDone = s.lessonDone || {};
   const problems = s.problems || [];
   const tracks = (s.tracks || []).filter((t) => t.active !== false);
@@ -486,6 +491,11 @@ function allTasksTab(app) {
     })),
   ];
 
+  allItems.forEach((item) => {
+    const key = `catchup:${item.type}:${item.taskId || item.key || item.moduleId || item.lessonId || item.appId || item.problemId || item.title}`;
+    item.done = item.done || !!checks[key];
+  });
+
   const grouped = allItems.reduce((acc, item) => {
     const cat = item.category || 'personal';
     (acc[cat] = acc[cat] || []).push(item);
@@ -495,7 +505,7 @@ function allTasksTab(app) {
   return h(
     'div',
     { class: 'stack' },
-    h('p', { class: 'small muted' }, `All tasks grouped by category. "Due today" items are from today's plan. Green = done, amber = in progress, red = not started.`),
+    h('p', { class: 'small muted' }, `All tasks grouped by category. Check off anything you completed, even if you missed updating it on the day. "Due today" items are from today's plan.`),
     ...Object.entries(grouped).map(([cat, items]) => {
       const meta = CATEGORY_LABELS[cat] || { label: cat, tone: 'off' };
       const doneCount = items.filter((i) => i.done).length;
@@ -514,7 +524,7 @@ function allTasksTab(app) {
               h(
                 'li',
                 { class: ['list-row', i.dueToday && 'due-today'] },
-                h('span', { class: ['result-dot', i.done ? 'ok' : i.dueToday ? 'miss' : 'new'] }),
+                checkbox(!!i.done, (value) => setCatchUp(i, value), i.title),
                 h('span', { class: 'grow' }, i.title, i.status ? h('span', { class: 'small muted block' }, i.status, i.stage ? ` · ${i.stage}` : '') : null, i.nextReview ? h('span', { class: 'small block review-when' }, `Review ${relDays(toDay(i.nextReview), today)}`) : null),
               )
             ),
