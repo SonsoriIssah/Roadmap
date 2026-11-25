@@ -36,16 +36,17 @@ export function weekOverrideControl(app, ws) {
   );
 }
 
-export function setModuleTask(app, id, key, value) {
+export function setModuleTask(app, id, key, value, dayOverride = null) {
+  const iso = dayOverride !== null ? toISO(dayOverride) : toISO(app.today);
   app.update((s) => {
     const p = (s.progress[id] = s.progress[id] || {});
     p.tasks = { ...(p.tasks || {}), [key]: value };
     p.taskDates = { ...(p.taskDates || {}) };
-    if (value) p.taskDates[key] = toISO(app.today);
+    if (value) p.taskDates[key] = iso;
     else delete p.taskDates[key];
     if (p.tasks.objective && p.tasks.exit) {
       p.status = 'done';
-      p.completedOn = p.completedOn || toISO(app.today);
+      p.completedOn = p.completedOn || iso;
     } else if (p.status === 'done') {
       delete p.status;
       delete p.completedOn;
@@ -53,13 +54,14 @@ export function setModuleTask(app, id, key, value) {
   });
 }
 
-export function setModuleStatus(app, id, status) {
+export function setModuleStatus(app, id, status, dayOverride = null) {
+  const iso = dayOverride !== null ? toISO(dayOverride) : toISO(app.today);
   app.update((s) => {
     const p = (s.progress[id] = s.progress[id] || {});
     if (status === 'done') {
       p.status = 'done';
       p.tasks = { objective: true, exit: true };
-      p.completedOn = toISO(app.today);
+      p.completedOn = iso;
     } else if (status === 'skipped') {
       p.status = 'skipped';
     } else {

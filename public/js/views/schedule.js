@@ -75,7 +75,7 @@ function dayCard(app, d, ws) {
       h('div', { class: 'inline' }, !d.past && d.minutes ? h('span', { class: 'small muted' }, fmtDuration(d.minutes)) : null, modeChip(d.mode)),
     ),
     d.classes.length ? h('div', { class: 'lectures' }, h('span', { class: 'small muted' }, 'Lectures: '), d.classes.map((c) => chip(`${fromMin(c.s)} ${c.code}`, { title: `${c.title} · ${c.venue || ''}` }))) : null,
-    d.past ? (d.items.length ? h('div', null, h('p', { class: 'small muted' }, 'Done that day:'), taskList(app, d)) : h('p', { class: 'small muted' }, 'Nothing recorded.')) : taskList(app, d, { interactive: isToday }),
+    d.past ? (d.items.length ? h('div', null, h('p', { class: 'small muted' }, 'Done that day (tap to adjust):'), taskList(app, d, { interactive: true, day: d.day })) : h('p', { class: 'small muted' }, 'Nothing recorded.')) : taskList(app, d, { interactive: isToday }),
   );
 }
 

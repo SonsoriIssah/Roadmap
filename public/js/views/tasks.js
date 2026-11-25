@@ -32,7 +32,7 @@ const TYPE_LABEL = {
 };
 
 /** Render a day's items as a numbered (i, ii, iii…) list. */
-export function taskList(app, day, { interactive = false } = {}) {
+export function taskList(app, day, { interactive = false, day: dayOverride = null } = {}) {
   if (!day.items.length && !day.roadmap) {
     return h('p', { class: 'muted small' }, day.mode === 'off' ? 'Off — nothing planned.' : 'Nothing planned for this day.');
   }
@@ -54,7 +54,7 @@ export function taskList(app, day, { interactive = false } = {}) {
             'aria-label': item.done ? `Mark not done: ${item.title}` : `Mark done: ${item.title}`,
             onchange: (e) => {
               e.target.checked = item.done; // the store decides; some items open a sheet first
-              toggleItem(app, item, !item.done);
+              toggleItem(app, item, !item.done, dayOverride ?? day.day);
             },
           })
         : item.done
@@ -123,8 +123,8 @@ function timeNotes(app, day, times) {
 // Ticking items
 // ---------------------------------------------------------------------------
 
-export function toggleItem(app, item, done) {
-  const iso = toISO(app.today);
+export function toggleItem(app, item, done, dayOverride = null) {
+  const iso = dayOverride !== null ? toISO(dayOverride) : toISO(app.today);
   switch (item.type) {
     case 'lesson':
       app.update((s) => {
@@ -140,9 +140,9 @@ export function toggleItem(app, item, done) {
       // Ticked = solved (or the review step done). The review is booked at
       // once; "How did it go?" adjusts it for hints, failures or confidence.
       if (done) {
-        const p = recordOutcome(app, item.problemId, item.type === 'revisit' ? 'clean' : 'alone', item.type === 'revisit');
+        const p = recordOutcome(app, item.problemId, item.type === 'revisit' ? 'clean' : 'alone', item.type === 'revisit', {}, dayOverride);
         if (p) toast(`${reviewSummary(p)}`, { action: 'How did it go?', onAction: () => openOutcome(app, item.problemId, item.type === 'revisit'), duration: 6000 });
-      } else undoAttempt(app, item.problemId);
+      } else undoAttempt(app, item.problemId, dayOverride);
       break;
     case 'module':
       if (item.key === 'baseline:dsa' || (item.moduleId === 'W1' && item.task === 'objective')) {
@@ -155,11 +155,11 @@ export function toggleItem(app, item, done) {
             delete s.checks['baseline:dsa'];
           }
         });
-        setModuleTask(app, 'W1', 'objective', done);
+        setModuleTask(app, 'W1', 'objective', done, dayOverride);
         if (done) toast('DSA baseline complete. Starting scorecard recorded.');
         break;
       }
-      setModuleTask(app, item.moduleId, item.task, done);
+      setModuleTask(app, item.moduleId, item.task, done, dayOverride);
       if (done) toast(item.task === 'exit' ? `${item.moduleId} complete. Forecast updated.` : 'Objective done. The exit task is next.');
       break;
     default:
@@ -199,18 +199,19 @@ function todaysEntry(s, problemId, iso) {
 }
 
 /**
- * Apply an outcome for today. Re-recording replaces today's earlier outcome
- * (it starts again from the problem as it was this morning).
+ * Apply an outcome for a given day. Re-recording replaces that day's earlier outcome
+ * (it starts again from the problem as it was that morning).
  */
-function recordOutcome(app, problemId, outcome, isRevisit, opts = {}) {
+function recordOutcome(app, problemId, outcome, isRevisit, opts = {}, dayOverride = null) {
   let result = null;
+  const iso = dayOverride !== null ? toISO(dayOverride) : toISO(app.today);
+  const targetDay = dayOverride !== null ? dayOverride : app.today;
   app.update((s) => {
-    const iso = toISO(app.today);
     const pi = s.problems.findIndex((x) => x.id === problemId);
     if (pi < 0) return;
     const li = todaysEntry(s, problemId, iso);
     const base = li >= 0 ? s.dsaLog[li].prev : s.problems[pi];
-    const next = applyOutcome(base, outcome, app.today, opts);
+    const next = applyOutcome(base, outcome, targetDay, opts);
     s.problems[pi] = next;
     const entry = { id: li >= 0 ? s.dsaLog[li].id : uid('l'), problemId, title: base.title, pattern: base.pattern || base.topic || '', date: iso, kind: isRevisit ? 'revisit' : 'first', outcome, independent: next.independent, minutes: Number(opts.minutes) || 0, confidence: opts.confidence || null, prev: base };
     if (li >= 0) s.dsaLog[li] = entry;
@@ -260,9 +261,9 @@ function openOutcome(app, problemId, isRevisit) {
   });
 }
 
-function undoAttempt(app, problemId) {
+function undoAttempt(app, problemId, dayOverride = null) {
+  const iso = dayOverride !== null ? toISO(dayOverride) : toISO(app.today);
   app.update((s) => {
-    const iso = toISO(app.today);
     const idx = [...s.dsaLog].reverse().findIndex((e) => e.problemId === problemId && e.date === iso && e.prev);
     const i = idx < 0 ? -1 : s.dsaLog.length - 1 - idx;
     const pi = s.problems.findIndex((x) => x.id === problemId);
