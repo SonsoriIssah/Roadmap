@@ -11,7 +11,7 @@ import { progressSeries, gapLabel } from '../progress.js';
 import { catchUp, CATCH_UP } from '../catchup.js';
 
 export function render(app, sub) {
-  const tab = ['score', 'courses', 'dsa', 'apps', 'evidence'].includes(sub) ? sub : 'score';
+  const tab = ['score', 'courses', 'dsa', 'apps', 'evidence', 'all'].includes(sub) ? sub : 'score';
   return h(
     'div',
     { class: 'stack' },
@@ -23,12 +23,13 @@ export function render(app, sub) {
         { value: 'dsa', label: 'Problems' },
         { value: 'apps', label: 'Applications' },
         { value: 'evidence', label: 'Evidence' },
+        { value: 'all', label: 'All Tasks' },
       ],
       tab,
       (v) => app.nav(`track/${v}`),
       { label: 'Track section' },
     ),
-    tab === 'score' ? scorecard(app) : tab === 'courses' ? renderCoursesTab(app) : tab === 'dsa' ? problemsTab(app) : tab === 'apps' ? applications(app) : evidence(app),
+    tab === 'score' ? scorecard(app) : tab === 'courses' ? renderCoursesTab(app) : tab === 'dsa' ? problemsTab(app) : tab === 'apps' ? applications(app) : tab === 'evidence' ? evidence(app) : allTasksTab(app),
   );
 }
 
@@ -215,13 +216,13 @@ function problemsTab(app) {
       cardHeader('Problem bank', button(bank.length ? 'Re-import' : 'Import sheet', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' }), app.state.meta.problemSource ? `From ${app.state.meta.problemSource}` : 'Import your Excel / Google Sheets tracker'),
       bank.length
         ? h('div', { class: 'stats' }, stat(String(count('new')), 'not started'), stat(String(count('solved')), 'solved'), stat(firsts.length ? `${Math.round((solo / firsts.length) * 100)}%` : '—', 'solved alone'))
-        : h('p', { class: 'small' }, 'Your daily list picks problems from here: the roadmap topic first, then your sheet’s priority (P0 → P1 → P2) and order. Solved problems come back for spaced revisits.'),
+        : h('p', { class: 'small' }, 'Your daily list picks problems from here: the roadmap topic first, then your sheet's priority (P0 → P1 → P2) and order. Solved problems come back for spaced revisits.'),
       h('div', { class: 'row-actions wrap' }, button('Add one problem', () => openManualProblem(app), { kind: 'ghost', size: 'sm', iconName: 'plus' }), bank.length ? button('Export progress CSV', exportCsv, { kind: 'ghost', size: 'sm', iconName: 'download' }) : null),
     ),
     bank.length ? readinessCard(app) : null,
-    guessed ? banner('info', 'Re-import your sheet once', 'Reviews now follow your tracker’s ladder (Solved → Reimplemented → Timed → Mastered). Re-import so each problem’s exact stage comes across; what you ticked in the app is kept.', [button('Re-import', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' })]) : null,
+    guessed ? banner('info', 'Re-import your sheet once', 'Reviews now follow your tracker's ladder (Solved → Reimplemented → Timed → Mastered). Re-import so each problem's exact stage comes across; what you ticked in the app is kept.', [button('Re-import', () => openProblemImport(app), { kind: 'primary', size: 'sm', iconName: 'upload' })]) : null,
     card(
-      h('p', { class: 'small' }, h('strong', null, 'How reviews work: '), 'tick a problem on your daily list and it counts as solved — its next review is booked straight away (3 days later: reimplement from blank). Each review moves it up your ladder: timed redo → explain aloud → Mastered (back after 21 days, then 45, then every 90). Use “How did it go?” for hints, failed attempts or confidence.'),
+      h('p', { class: 'small' }, h('strong', null, 'How reviews work: '), 'tick a problem on your daily list and it counts as solved — its next review is booked straight away (3 days later: reimplement from blank). Each review moves it up your ladder: timed redo → explain aloud → Mastered (back after 21 days, then 45, then every 90). Use "How did it go?" for hints, failed attempts or confidence.'),
     ),
     bank.length
       ? card(
@@ -265,7 +266,7 @@ function problemsTab(app) {
       : empty('No problems yet. Import your tracker — from Google Sheets use File → Download → Microsoft Excel (.xlsx).', button('Import sheet', () => openProblemImport(app), { kind: 'secondary', size: 'sm' })),
     stats.length
       ? card(
-          cardHeader('By pattern', null, 'Most unsolved attempts first — use this for “weakest patterns”'),
+          cardHeader('By pattern', null, 'Most unsolved attempts first — use this for "weakest patterns"'),
           h(
             'ul',
             { class: 'list' },
@@ -292,7 +293,7 @@ function readinessCard(app) {
       r.attempts < R.window
         ? `Counts once you've done ${R.window} first attempts at ${R.difficulty}s (${r.attempts} so far). `
         : '',
-      r.untimed ? `${r.untimed} of these ${r.untimed === 1 ? 'was' : 'were'} ticked without minutes and ${r.untimed === 1 ? "doesn't" : "don't"} count — use “How did it go?” and enter the time. ` : 'Use “How did it go?” on a new problem to log your minutes. ',
+      r.untimed ? `${r.untimed} of these ${r.untimed === 1 ? 'was' : 'were'} ticked without minutes and ${r.untimed === 1 ? "doesn't" : "don't"} count — use "How did it go?" and enter the time. ` : 'Use "How did it go?" on a new problem to log your minutes. ',
       'Reviews of problems you have seen before are not counted.',
     ),
   );
@@ -324,7 +325,7 @@ function applications(app) {
     ),
     shown.length
       ? shown.map((a) => appCard(app, a))
-      : empty('No applications yet. Add live roles now — don’t wait for a stronger portfolio. The Playbook tab lists your 22 target companies.', button('Open company playbook', () => app.nav('plan/playbook'), { kind: 'secondary', size: 'sm' })),
+      : empty('No applications yet. Add live roles now — don't wait for a stronger portfolio. The Playbook tab lists your 22 target companies.', button('Open company playbook', () => app.nav('plan/playbook'), { kind: 'secondary', size: 'sm' })),
   );
 }
 
@@ -368,6 +369,156 @@ function evidence(app) {
         cardHeader(list.title, h('span', { class: 'small muted' }, `${done}/${list.items.length}`), id === 'resume' ? null : 'Tick only when you can answer without notes'),
         progressBar(done / list.items.length, list.title),
         h('div', { class: 'tasks' }, list.items.map((i) => checkbox(!!app.state.checks[`${id}:${i.id}`], (v) => app.update((s) => { s.checks[`${id}:${i.id}`] = v; }), i.text))),
+      );
+    }),
+  );
+}
+
+// All Tasks: unified view of everything you need to do
+// ---------------------------------------------------------------------------
+function allTasksTab(app) {
+  const s = app.state;
+  const today = app.today;
+  const res = planFor(app, today, 1);
+  const day = res.days[0] || { items: [], classes: [] };
+  const checks = s.checks || {};
+  const lessonDone = s.lessonDone || {};
+  const problems = s.problems || [];
+  const tracks = (s.tracks || []).filter((t) => t.active !== false);
+  const modules = s.modules || [];
+  const progress = s.progress || {};
+  const applications = s.applications || [];
+
+  const CATEGORY_LABELS = {
+    dsa: { label: 'DSA & LeetCode', tone: 'normal' },
+    lessons: { label: 'Learning Tracks', tone: 'good' },
+    coursework: { label: 'Coursework Revision', tone: 'heavy' },
+    roadmap: { label: 'Roadmap Modules', tone: 'normal' },
+    applications: { label: 'Applications', tone: 'warning' },
+    interview: { label: 'Interview Practice', tone: 'warning' },
+    fundamentals: { label: 'Fundamentals Revisit', tone: 'break' },
+    academic: { label: 'Academic Study', tone: 'heavy' },
+    personal: { label: 'Personal', tone: 'off' },
+  };
+
+  const allItems = [
+    // Today's items with done status from checks
+    ...day.items.map((i) => ({
+      ...i,
+      category: i.category || (i.isTechnical ? 'dsa' : 'personal'),
+      done: i.done || !!checks[i.key],
+      dueToday: true,
+    })),
+    // Learning track lessons not yet done
+    ...tracks.flatMap((t) =>
+      (t.lessons || []).map((l) => ({
+        type: 'lesson',
+        trackId: t.id,
+        trackName: t.name,
+        title: `${t.name}: ${l.title}`,
+        category: 'lessons',
+        done: !!lessonDone[l.id],
+        lessonId: l.id,
+        dueToday: false,
+        min: l.min || 0,
+      }))
+    ),
+    // Problem bank status
+    ...problems.filter((p) => p.status !== 'new').map((p) => ({
+      type: 'problem',
+      title: p.title,
+      category: 'dsa',
+      done: p.status === 'solved' && !p.nextReview,
+      problemId: p.id,
+      dueToday: false,
+      status: p.status,
+      stage: p.stage,
+      nextReview: p.nextReview,
+    })),
+    // Roadmap modules not done
+    ...modules.map((m) => {
+      const st = ((progress[m.id] || {}).tasks || {});
+      return {
+        type: 'module',
+        title: `${m.id} · ${m.title}`,
+        category: 'roadmap',
+        moduleId: m.id,
+        objectiveDone: !!st.objective,
+        exitDone: !!st.exit,
+        done: !!st.objective && !!st.exit,
+        dueToday: false,
+      };
+    }),
+    // Active applications
+    ...applications.filter((a) => !['rejected', 'offer'].includes(a.status)).map((a) => ({
+      type: 'app',
+      title: `${a.company || 'Application'}: ${a.role || 'Role'} — ${a.nextAction || 'No next action'}`,
+      category: 'applications',
+      appId: a.id,
+      done: false,
+      dueToday: isISODate(a.nextActionDate) && toDay(a.nextActionDate) <= today,
+      nextActionDate: a.nextActionDate,
+    })),
+    // Interview practice
+    ...(s.settings.interviewPractice !== false ? [{
+      type: 'interview',
+      title: 'Behavioural/technical interview step',
+      category: 'interview',
+      done: false,
+      dueToday: true,
+    }] : []),
+    // Fundamentals revisit
+    ...(s.settings.basicsRevisit !== false ? [{
+      type: 'basics',
+      title: 'Upsoma fundamentals revisit',
+      category: 'fundamentals',
+      done: false,
+      dueToday: true,
+    }] : []),
+    // Academic study tasks for today
+    ...((s.academic && s.academic.studyTasks) || []).filter((t) => t.date === toISO(today)).map((t) => ({
+      type: 'academic',
+      title: `${t.courseCode}: ${t.title}`,
+      category: 'academic',
+      taskId: t.id,
+      done: !!checks[`academic:${t.id}`],
+      dueToday: true,
+    })),
+  ];
+
+  const grouped = allItems.reduce((acc, item) => {
+    const cat = item.category || 'personal';
+    (acc[cat] = acc[cat] || []).push(item);
+    return acc;
+  }, {});
+
+  return h(
+    'div',
+    { class: 'stack' },
+    h('p', { class: 'small muted' }, `All tasks grouped by category. "Due today" items are from today's plan. Green = done, amber = in progress, red = not started.`),
+    ...Object.entries(grouped).map(([cat, items]) => {
+      const meta = CATEGORY_LABELS[cat] || { label: cat, tone: 'off' };
+      const doneCount = items.filter((i) => i.done).length;
+      return card(
+        cardHeader(
+          meta.label,
+          h('span', { class: 'small muted' }, `${doneCount}/${items.length}`),
+          meta.tone !== 'off' ? `Showing ${items.filter((i) => i.dueToday).length} due today` : null,
+        ),
+        h(
+          'ul',
+          { class: 'list' },
+          items
+            .sort((a, b) => (a.done ? 1 : 0) - (b.done ? 1 : 0) || (a.dueToday ? 0 : 1) - (b.dueToday ? 0 : 1))
+            .map((i) =>
+              h(
+                'li',
+                { class: ['list-row', i.dueToday && 'due-today'] },
+                h('span', { class: ['result-dot', i.done ? 'ok' : i.dueToday ? 'miss' : 'new'] }),
+                h('span', { class: 'grow' }, i.title, i.status ? h('span', { class: 'small muted block' }, i.status, i.stage ? ` · ${i.stage}` : '') : null, i.nextReview ? h('span', { class: 'small block review-when' }, `Review ${relDays(toDay(i.nextReview), today)}`) : null),
+              )
+            ),
+        ),
       );
     }),
   );

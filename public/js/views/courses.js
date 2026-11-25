@@ -407,8 +407,7 @@ export function openCourseDetails(app, course) {
                     select(
                       TOPIC_STATUSES.map((s) => ({ value: s.id, label: s.label })),
                       st,
-                      (e) => setTopic(t.id, e.target.value),
-                      { size: 'sm' },
+                      { onchange: (e) => setTopic(t.id, e.target.value), size: 'sm' },
                     ),
                   ),
                 );
